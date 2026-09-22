@@ -89,11 +89,13 @@ final class CaptureUITests: XCTestCase {
         waitForExpectations(timeout: 10)
         reveal(app.buttons["exportButton"], in: app)
         app.buttons["exportButton"].tap()
-        // The share sheet is native. Dismiss it by dragging, then verify stop.
+        // Capture must stop before the native share sheet opens. Read the
+        // underlying state while it is presented; app swipes target the modal,
+        // not the capture scroll view, and cannot reveal the covered button.
         let sheet = app.otherElements["ActivityListView"]
-        if sheet.waitForExistence(timeout: 5) { sheet.swipeDown() }
-        else { app.swipeDown() }
-        reveal(app.buttons["captureButton"], in: app, downward: true)
+        XCTAssertTrue(sheet.waitForExistence(timeout: 5))
         XCTAssertEqual(app.buttons["captureButton"].label, "스테레오 수음 시작")
+        XCTAssertTrue(app.staticTexts["captureStatus"].label.contains("공유하기 위해"))
+        XCTAssertEqual(app.staticTexts["trackedLagValue"].label, "—")
     }
 }

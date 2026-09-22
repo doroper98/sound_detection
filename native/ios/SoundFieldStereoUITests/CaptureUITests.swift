@@ -210,6 +210,10 @@ final class CaptureUITests: XCTestCase {
         let button = app.buttons["liveCaptureButton"]
         let leftWaveform = app.descendants(matching: .any).matching(identifier: "leftWaveform").firstMatch
         let rightWaveform = app.descendants(matching: .any).matching(identifier: "rightWaveform").firstMatch
+        // DSP can finish before the independent, deliberately delayed preview.
+        expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: leftWaveform)
+        expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: rightWaveform)
+        waitForExpectations(timeout: 5)
         XCTAssertTrue(button.isHittable)
         XCTAssertEqual(leftWaveform.value as? String, "입력 없음")
         XCTAssertEqual(rightWaveform.value as? String, "입력 없음")

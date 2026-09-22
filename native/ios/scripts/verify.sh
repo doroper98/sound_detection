@@ -17,20 +17,22 @@ phones=[d for runtime,devices in data["devices"].items() if "iOS" in runtime for
 if not phones: raise SystemExit("No available iPhone simulator")
 print(phones[0]["udid"])
 ')
+test_status=0
 xcodebuild -project SoundFieldStereo.xcodeproj -scheme SoundFieldStereo \
   -configuration Debug -destination "platform=iOS Simulator,id=$device_id" \
   -derivedDataPath DerivedData -resultBundlePath DerivedData/evidence/NativeUI.xcresult \
   -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO test \
-  > DerivedData/evidence/simulator-tests.log 2>&1 || { tail -150 DerivedData/evidence/simulator-tests.log; exit 1; }
+  > DerivedData/evidence/simulator-tests.log 2>&1 || test_status=$?
 
-# Native screenshot contains an explicit synthetic-fixture banner.
-xcrun simctl boot "$device_id" 2>/dev/null || true
-xcrun simctl bootstatus "$device_id" -b
-xcrun simctl install "$device_id" DerivedData/Build/Products/Debug-iphonesimulator/SoundFieldStereo.app
-xcrun simctl launch "$device_id" dev.soundfield.stereo --synthetic-stereo
-xcrun simctl io "$device_id" screenshot DerivedData/evidence/native-start.png
+# The UI tests already capture the running camera overlay and comparison with
+# explicit synthetic banners. Export failures too; avoid booting another copy
+# of the simulator merely to capture the inactive launch screen.
 xcrun xcresulttool export attachments --path DerivedData/evidence/NativeUI.xcresult \
   --output-path DerivedData/evidence/attachments || true
+if [ "$test_status" -ne 0 ]; then
+  tail -150 DerivedData/evidence/simulator-tests.log
+  exit "$test_status"
+fi
 
 # The user can re-sign this device build on Windows. It is not installable by
 # opening a Safari link, and contains no certificate or provisioning profile.

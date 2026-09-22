@@ -2,7 +2,9 @@
 
 ## 빌드 4 L/R 미니 파형 (EXP-014)
 
-검증 대상은 최신 최대 10ms의 실제 좌우 버퍼 축소·공통 배율·표시 수명이다. Swift 4개를 추가해 총 31개: 좌우 크기 차이, 여러 샘플률에서 피크/마지막 샘플 보존, 무음과 짧은 버퍼, 비정상 입력 거부. UI 15개에서 양쪽 표시·화면 내 배치·한쪽 무음·350ms 지연 뒤 제거·중지·백그라운드를 확인한다. Mac CI 결과·합성 화면·실제 기기 결과는 구분해서 기록한다.
+**자동 검증 PASS:** 코드 `d9b5c31`, [Native iOS CI](https://github.com/doroper98/sound_detection/actions/runs/35733399591)에서 Swift 31/31·iPhone 16 Pro/iOS 18.5 UI 15/15·Xcode 16.4 Release 기기 빌드·IPA 포장 통과. 최신 최대 10ms 좌우 크기 차이, 여러 샘플률의 피크/마지막 샘플 보존, 무음/짧은 버퍼·비정상 입력 거부, 양쪽 표시/화면 내 배치/한쪽 무음/350ms 지연 후 제거/중지·백그라운드를 검증했다. [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35733399620) 단위 40/40·Chromium E2E 16/16도 PASS.
+
+[검증 결과·IPA 해시](../docs/reports/2026-09-22-native-waveform-verification.json) · [양쪽 파형](../docs/assets/native-waveform-stereo-synthetic.png) · [오른쪽 무음](../docs/assets/native-waveform-silent-right-synthetic.png). 두 합성 화면을 직접 검토하고 Windows에서 IPA의 해시·CRC·실제 iOS 실행 파일·빌드 번호·DEBUG 인자 제외를 확인했다. 기존 빌드 3의 실제 수음 성공과 새 빌드 4 파형의 기기 검증은 구분한다.
 
 ## 빌드 3 첫 실제 스테레오 수음 (EXP-013)
 

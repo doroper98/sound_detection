@@ -260,6 +260,16 @@ final class CaptureModel: ObservableObject {
         try session.setPreferredIOBufferDuration(0.02)
         try session.setActive(true)
         ownsSession = true
+        // Preserve actual session metadata even when a preferred route request
+        // is rejected before the engine is created.
+        defer {
+            let port = session.currentRoute.inputs.first
+            report.sessionChannels = session.inputNumberOfChannels
+            report.actualInputPort = port?.portType.rawValue
+            report.selectedSource = port?.selectedDataSource?.dataSourceName
+            report.selectedPolarPattern = port?.selectedDataSource?.selectedPolarPattern?.rawValue
+            report.actualOrientation = session.inputOrientation.rawValue
+        }
         guard let builtIn = session.availableInputs?.first(where: { $0.portType == .builtInMic }) else {
             throw CaptureFailure.message("내장 마이크를 찾지 못했습니다. 외부 오디오 장치를 분리하고 다시 시도하세요.")
         }

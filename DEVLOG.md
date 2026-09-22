@@ -62,6 +62,7 @@ EXP-009 · REQ-NATIVE-001/002/003 · SC-22/23/24.
 - 수명: 명시적 시작, 늦은 권한 취소, 백그라운드, route/config/인터럽트, 5초 PCM 무응답, 공유 시 해제. 처리 대기열 한 개와 건너뛴 버퍼 수. 원음·영상·장치 ID 저장/전송 없음.
 - 선택 근거: Apple 문서상 measurement는 primary microphone을 사용하므로 raw stereo 경로로 가정하지 않음. record/default/stereo/portrait로 고정. 카메라 병행과 가로 방향은 이 첫 입력 검증 범위에 포함하지 않음.
 - 검증 상태: Windows 로컬 웹 Gate 및 Mac CI 검증 진행 중. Swift 합성 지연 테스트·iOS 빌드·시뮬레이터 UI와 실제 아이폰 검사를 구분해 최종 결과를 아래에 기록한다. 웹 버전 0.4.0 유지, 네이티브는 개발용 프로젝트이며 배포 릴리즈가 아님.
+- BUG-015 (CI): 첫 Mac 실행에서 Swift 진단 테스트와 Release/iphoneos 빌드는 통과했으나, Debug 시뮬레이터 앱이 arm64+x86_64를 요청하고 로컬 Swift 패키지는 활성 arm64만 빌드하여 모듈 아키텍처 불일치로 UI 실행 전에 실패. Debug의 ONLY_ACTIVE_ARCH를 YES로 맞추어 시뮬레이터와 패키지를 동일 아키텍처로 빌드하도록 수정.
 
 ### v0.4.0 — 2026-09-22
 

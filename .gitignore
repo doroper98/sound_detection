@@ -12,3 +12,8 @@ playwright-report/
 .DS_Store
 Thumbs.db
 *.tgz
+**/.build/
+**/DerivedData/
+**/xcuserdata/
+*.xcuserstate
+*.xcresult/

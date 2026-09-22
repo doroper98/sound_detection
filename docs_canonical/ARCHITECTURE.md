@@ -30,6 +30,11 @@ flowchart LR
 
 ## 설계 결정
 
+- iPhone 네이티브 입력은 `native/ios/`의 별도 SwiftUI 앱이다. `.record`/`.default` 세션 → 내장 front/back + stereo polar pattern + portrait 입력 방향 → 실제 2채널 검사 → AVAudioEngine tap → StereoCore 신호 진단으로 이어진다. 웹 브리지나 모노 복제는 사용하지 않는다.
+- Apple 내장 스테레오의 처리 특성을 고려해 채널 지연 진단과 물리 위치 추론 사이에 교정 경계를 둔다. 기존 TypeScript 위치 엔진에 임의 센서 좌표·동기화 true를 전달하지 않는다. 앱은 좌표·카메라를 입력받지 않는다.
+- 네이티브 PCM은 버퍼 한 개만 처리하고, 처리/메인 스레드 전달 중 추가 입력은 개수만 기록하여 건너뛴다. 원음 이력·녹음 파일·네트워크 호출이 없다. 통계 공유 전에도 수음을 중지한다. sampleTime 불연속은 분석 건너뛰기를 포함하며 하드웨어 동기화 측정값이 아니다.
+- 앱 설정 과정의 자체 route/config 알림은 수음 중 경로 변경으로 오인하지 않도록 알림 발생 시점의 실행 토큰을 검사한다. 중지 시 토큰을 무효화하므로 늦은 권한 응답·분석 결과가 입력을 재개하지 못한다.
+
 - v0.4.0 `/listen`: 기존 카메라 화면과 별도로 `monitorMicrophone`이 기본 오디오 입력을 연속 수집한다. 동일 채널 보존 Worklet → `analyzeChannels` / 선택한 채널의 `analyzeSpectrum` → 스펙트럼·숫자 표시. 최신 통계 하나만 유지하고 PCM 이력·녹음·오디오 재생·서버 업로드는 없다.
 - `spectrum.ts`는 PCM·샘플률·대역만 받는 순수 함수다. 위치 SDK·가상 source·카메라 축을 받지 않는다. 4096개 샘플에서 평균 제거/주기 Hann/실수 FFT, 창 에너지 보정 단측 power를 계산한다. Nyquist bin은 두 배 하지 않는다.
 - 연속 입력은 Stop/abort, 페이지 숨김/종료, 트랙 ended, processor error, 8초 PCM 무응답에 정리한다. getUserMedia 권한 대기는 별도이며 사용자가 취소한 뒤 늦게 허용하면 즉시 트랙을 해제한다.

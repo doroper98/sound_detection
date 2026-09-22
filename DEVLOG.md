@@ -52,6 +52,17 @@
 
 <!-- improvements -->
 
+### iPhone 네이티브 스테레오 입력 — 2026-09-22
+
+EXP-009 · REQ-NATIVE-001/002/003 · SC-22/23/24.
+
+- 사용자 지시: 브라우저 모노 스펙트럼보다 위치 계산에 필요한 실제 스테레오 입력을 먼저 확보. 독립 2채널부터 검증하며 4채널을 선결 조건으로 두지 않음.
+- 변경: SwiftUI 앱과 Xcode 프로젝트, AVAudioSession 내장 front/back stereo 선택, 실제 세션·노드·PCM 채널 검사, 레벨·무음·복제·포화·정규화 상호상관 지연 후보, 좌/정면/우 통계 표시와 JSON 공유.
+- 제한: Apple의 처리된 스테레오를 물리 마이크의 독립 원음으로 단정하지 않음. 지연 부호는 right-minus-left이며 기존 SDK의 microphone0-minus1과 반대이므로 교정 없는 직접 연결을 하지 않음. physicalMicrophonesVerified/hardwareSynchronizationVerified/localizationEnabled는 false 유지.
+- 수명: 명시적 시작, 늦은 권한 취소, 백그라운드, route/config/인터럽트, 5초 PCM 무응답, 공유 시 해제. 처리 대기열 한 개와 건너뛴 버퍼 수. 원음·영상·장치 ID 저장/전송 없음.
+- 선택 근거: Apple 문서상 measurement는 primary microphone을 사용하므로 raw stereo 경로로 가정하지 않음. record/default/stereo/portrait로 고정. 카메라 병행과 가로 방향은 이 첫 입력 검증 범위에 포함하지 않음.
+- 검증 상태: Windows 로컬 웹 Gate 및 Mac CI 검증 진행 중. Swift 합성 지연 테스트·iOS 빌드·시뮬레이터 UI와 실제 아이폰 검사를 구분해 최종 결과를 아래에 기록한다. 웹 버전 0.4.0 유지, 네이티브는 개발용 프로젝트이며 배포 릴리즈가 아님.
+
 ### v0.4.0 — 2026-09-22
 
 | 변경 | 내용 |

@@ -1,6 +1,32 @@
 import XCTest
 
 final class CaptureUITests: XCTestCase {
+    func testBearingOverlayUsesEmpiricalProfileAndClearsOnStop() {
+        let app=launch(["--synthetic-bearing"],details: false)
+        app.buttons["liveCaptureButton"].tap()
+        let status=app.staticTexts["spatialStatus"]
+        expectation(for: NSPredicate(format: "label CONTAINS %@","오른쪽 12°"),evaluatedWith: status)
+        waitForExpectations(timeout: 30)
+        XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
+        let screen=XCTAttachment(screenshot: app.screenshot())
+        screen.name="native-build6-bearing-synthetic"; screen.lifetime = .keepAlways; add(screen)
+        app.buttons["liveCaptureButton"].tap()
+        XCTAssertTrue(status.label.contains("소리 방향·위치 찾기"))
+        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "soundBearingBand").firstMatch.exists)
+    }
+    func testNoCalibrationOrSilentChannelDoesNotInventSoundDirection() {
+        let app=launch(["--synthetic-bearing","--synthetic-silent-right"],details: false)
+        app.buttons["liveCaptureButton"].tap()
+        awaitLivePCM(app)
+        XCTAssertFalse(app.staticTexts["spatialStatus"].label.contains("방향 추정"))
+        XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
+        app.buttons["spatialGuideButton"].tap()
+        let start=app.buttons["rotationCalibrationStart"]
+        reveal(start,in: app)
+        XCTAssertFalse(start.isEnabled) // Simulator cannot impersonate a physical AR camera.
+        let screen=XCTAttachment(screenshot: app.screenshot())
+        screen.name="native-build6-guide-synthetic"; screen.lifetime = .keepAlways; add(screen)
+    }
     private func awaitLivePCM(_ app: XCUIApplication) {
         // Startup/lifecycle readiness means a real analysis arrived. A rolling
         // lag estimate may legitimately be withheld under simulator load.

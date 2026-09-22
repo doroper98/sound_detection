@@ -110,14 +110,18 @@ struct CaptureView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var showDetails = false
     @State private var showCalibration = false
+    @State private var showSpatialGuide = false
     private let green = Color(red: 0.48, green: 0.95, blue: 0.68)
     private var busy: Bool { camera.isBusy || model.isBusy }
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            CameraPreview(session: camera.session)
-                .ignoresSafeArea()
+            if camera.usesSpatialCamera {
+                SpatialCameraPreview(session: camera.spatialCamera.session).ignoresSafeArea()
+            } else {
+                CameraPreview(session: camera.session).ignoresSafeArea()
+            }
             if camera.phase != .running || camera.isSynthetic {
                 VStack(spacing: 14) {
                     Image(systemName: "camera").font(.system(size: 44, weight: .light))
@@ -127,11 +131,12 @@ struct CaptureView: View {
                         .accessibilityIdentifier("cameraStatus")
                 }.foregroundStyle(.white.opacity(0.75)).padding(32)
             }
+            SpatialOverlay(spatial: model.spatial,camera: camera,synthetic: model.isSynthetic)
             VStack(spacing: 0) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 5) {
                         Text("SOUNDFIELD").font(.headline.monospaced()).foregroundStyle(green)
-                        Text("카메라 · 스테레오 계측").font(.caption)
+                        Text("소리 방향 · 위치").font(.caption)
                     }
                     Spacer()
                     Button { showCalibration = true } label: {
@@ -148,6 +153,10 @@ struct CaptureView: View {
                     .accessibilityIdentifier("detailsButton")
                 }.padding(20)
                 .background(LinearGradient(colors: [.black.opacity(0.8), .clear], startPoint: .top, endPoint: .bottom))
+                Button { showSpatialGuide = true } label: {
+                    Label("소리 찾기 · 방향 보정",systemImage: "scope").font(.subheadline.bold()).padding(.horizontal,16).padding(.vertical,9)
+                }.background(.black.opacity(0.7),in: Capsule()).foregroundStyle(green)
+                    .accessibilityIdentifier("spatialGuideButton")
                 if model.isSynthetic {
                     Text("합성 테스트 · 아이폰 실측 아님").font(.caption.bold()).foregroundStyle(.orange)
                         .accessibilityIdentifier("liveSyntheticBanner")
@@ -162,7 +171,7 @@ struct CaptureView: View {
                             Text(model.report.trend?.estimateSeconds.map { String(format: "%+.1f µs", $0 * 1_000_000) } ?? "—")
                                 .font(.title3.monospacedDigit().bold()).foregroundStyle(green)
                                 .accessibilityIdentifier("liveLagValue")
-                            Text("연속 시간차 · 방향 교정 전").font(.caption2)
+                            Text("연속 신호 시간차").font(.caption2)
                         }
                     }
                     StereoWaveformPanel(display: model.waveformDisplay, green: green,
@@ -190,7 +199,7 @@ struct CaptureView: View {
                             .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 12)
                     }.buttonStyle(.borderedProminent).tint(green).foregroundStyle(.black)
                         .accessibilityIdentifier("liveCaptureButton")
-                    Text("영상·원음 저장 없음 · 빌드 5").font(.caption2).foregroundStyle(.secondary)
+                    Text("영상·원음 저장 없음 · 실험 추정 · 빌드 6").font(.caption2).foregroundStyle(.secondary)
                 }
                 .padding(18)
                 .background(.black.opacity(0.78), in: RoundedRectangle(cornerRadius: 22))
@@ -210,15 +219,23 @@ struct CaptureView: View {
                     .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("닫기") { showCalibration = false } } }
             }.presentationDetents([.large])
         }
+        .sheet(isPresented: $showSpatialGuide) {
+            NavigationStack { SpatialGuide(model: model,camera: camera) }.presentationDetents([.large])
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .background {
                 camera.stop(reason: "백그라운드로 이동해 카메라를 해제했습니다.")
                 model.enteredBackground()
             }
         }
-        .onChange(of: showDetails) { _, _ in model.waveformDisplay.setVisible(!showDetails && !showCalibration) }
-        .onChange(of: showCalibration) { _, _ in model.waveformDisplay.setVisible(!showDetails && !showCalibration) }
+        .onChange(of: showDetails) { _, _ in model.waveformDisplay.setVisible(!showDetails && !showCalibration && !showSpatialGuide) }
+        .onChange(of: showCalibration) { _, _ in model.waveformDisplay.setVisible(!showDetails && !showCalibration && !showSpatialGuide) }
+        .onChange(of: showSpatialGuide) { _, _ in model.waveformDisplay.setVisible(!showDetails && !showCalibration && !showSpatialGuide) }
         .onAppear {
+            model.spatialPoseProvider = { [weak camera] midpoint,duration in
+                camera?.spatialCamera.aligned(midpoint: midpoint,duration: duration)
+            }
+            camera.onTrackingLost = { [weak model] in model?.spatial.trackingLost() }
             // Cleanup must not depend on SwiftUI rendering an intermediate
             // phase; permission or route failure can return to idle immediately.
             model.onStopped = { [weak camera] in

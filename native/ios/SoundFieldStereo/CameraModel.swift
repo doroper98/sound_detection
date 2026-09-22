@@ -1,4 +1,5 @@
 import AVFoundation
+import ARKit
 import SwiftUI
 
 private struct CameraFailure: LocalizedError {
@@ -71,6 +72,10 @@ final class CameraModel: ObservableObject {
     enum Phase { case idle, starting, running }
     @Published private(set) var phase: Phase = .idle
     @Published private(set) var status = "카메라와 마이크를 시작하면 실시간 화면이 표시됩니다."
+    @Published private(set) var usesSpatialCamera = false
+    @Published private(set) var trackingStatus = "AR 이동 추적 대기"
+    let spatialCamera = SpatialCameraController()
+    var onTrackingLost: (() -> Void)?
     var onInterrupted: (@MainActor () -> Void)?
     private let controller = CameraController()
     private var request = 0
@@ -87,6 +92,16 @@ final class CameraModel: ObservableObject {
     }
 
     init() {
+        spatialCamera.onState = { [weak self] text in
+            guard let self else { return }
+            if self.trackingStatus != text { self.trackingStatus = text }
+            if self.spatialCamera.latestPose == nil { self.onTrackingLost?() }
+        }
+        spatialCamera.onInterrupted = { [weak self] in
+            guard let self, self.isBusy else { return }
+            self.stop(reason: "AR 카메라가 중단되었습니다. 다시 시작하세요.")
+            self.onInterrupted?()
+        }
         for name in [AVCaptureSession.wasInterruptedNotification, AVCaptureSession.runtimeErrorNotification] {
             observers.append(NotificationCenter.default.addObserver(forName: name, object: controller.session, queue: nil) { [weak self] _ in
                 Task { @MainActor [weak self] in
@@ -131,7 +146,23 @@ final class CameraModel: ObservableObject {
         do {
             let started: Bool
             if isSynthetic { started = true }
-            else { started = try await controller.start(position: front ? .front : .back, request: token) }
+            else if !front && ARWorldTrackingConfiguration.isSupported {
+                usesSpatialCamera = true
+                spatialCamera.start()
+                // Wait for video/tracking before touching the working audio route.
+                for _ in 0..<100 {
+                    if request != token || spatialCamera.latestPose != nil { break }
+                    try? await Task.sleep(nanoseconds: 100_000_000)
+                }
+                guard request == token else { return false }
+                guard spatialCamera.latestPose != nil else {
+                    throw CameraFailure(message: "AR 카메라 추적을 시작하지 못했습니다. 밝은 곳에서 무늬가 있는 주변을 비추고 다시 시작하세요.")
+                }
+                started = true
+            } else {
+                usesSpatialCamera = false
+                started = try await controller.start(position: front ? .front : .back, request: token)
+            }
             guard request == token, started else { return false }
             phase = .running
             status = isSynthetic ? "합성 UI 검사 · 실제 카메라 영상 없음" : "실시간 카메라 · 촬영 파일 저장 안 함"
@@ -146,6 +177,8 @@ final class CameraModel: ObservableObject {
     func stop(reason: String = "카메라를 중지했습니다.") {
         request = controller.nextRequest() // A late permission response cannot start capture.
         controller.stop()
+        spatialCamera.stop()
+        trackingStatus = "AR 이동 추적 중지"
         phase = .idle
         status = reason
     }

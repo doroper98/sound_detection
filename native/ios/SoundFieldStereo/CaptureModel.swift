@@ -16,6 +16,7 @@ struct FrameReading: Codable {
     let skippedBuffers: Int
     let analyzedTimelineGaps: Int
     let analysis: StereoAnalysis
+    var acousticFeatures: AcousticFeatures? = nil
 }
 
 struct MarkedReading: Codable, Identifiable {
@@ -58,8 +59,8 @@ struct AudioRouteInspection: Encodable {
 }
 
 struct NativeReport: Encodable {
-    var schemaVersion = 5
-    var appVersion = "0.4.0-native-calibration-smooth-build5"
+    var schemaVersion = 6
+    var appVersion = "0.4.0-native-spatial-build6"
     var inputOrigin = "AVAudioEngine.inputNode"
     var operatingSystem = UIDevice.current.systemVersion
     var startedAt: Date?
@@ -87,6 +88,7 @@ struct NativeReport: Encodable {
     var candidateLagFrames = 0
     var waveformDisplay: WaveformDisplayStatistics?
     var calibration: DirectionCalibrationReport?
+    var spatial: SpatialReport?
     var trend: LagTrend?
     var motionStatus = "회전 측정 대기"
     var latestOrientation: AlignedOrientation?
@@ -95,13 +97,13 @@ struct NativeReport: Encodable {
     var cameraSessionRunningAtAudioStart = false
     var startControl = "audioDetails"
     let attitudeReferenceFrame = "CoreMotion.xArbitraryZVertical; quaternion x,y,z,w"
-    let positionTrackingEnabled = false
+    var positionTrackingEnabled = false
     let acousticCalibrationVerified = false
     let physicalMicrophonesVerified = false
     let hardwareSynchronizationVerified = false
-    let localizationEnabled = false
+    var localizationEnabled = false
     let lagConvention = "right-minus-left; positive means right arrives later"
-    let note = "Processed stereo signal lag only. No microphone geometry or physical TDOA calibration. No PCM, audio files, camera frames, device IDs, or source coordinates are exported."
+    let note = "Experimental empirical bearing and AR relative-position inference; physical acoustic accuracy unverified. Statistics, relative AR poses and estimated candidates only. No PCM, audio files, camera images, saved world map, device IDs or ground-truth source coordinates."
 }
 
 @MainActor
@@ -237,7 +239,8 @@ private final class TapPipeline: @unchecked Sendable {
                 nextSampleTime = sampleTime.map { $0 + Int64(left.count) }
                 lock.lock(); let skippedCount = skipped; lock.unlock()
                 finish(.success(FrameReading(sequence: sequence, sampleTime: sampleTime, hostTime: hostTime,
-                    skippedBuffers: skippedCount, analyzedTimelineGaps: gaps, analysis: analysis)))
+                    skippedBuffers: skippedCount, analyzedTimelineGaps: gaps, analysis: analysis,
+                    acousticFeatures: AcousticFeatures.measure(left: left,right: right,analysis: analysis))))
             } catch { finish(.failure(error)) }
         }
     }
@@ -310,6 +313,8 @@ final class CaptureModel: ObservableObject {
     @Published private(set) var phase: Phase = .idle
     @Published private(set) var report = NativeReport()
     let waveformDisplay = WaveformDisplayModel()
+    let spatial = SpatialModel()
+    var spatialPoseProvider: ((Double, Double) -> SpatialPose?)?
     private var calibration = DirectionCalibration()
     @Published var source = "back"
     @Published var exportError: String?
@@ -380,6 +385,7 @@ final class CaptureModel: ObservableObject {
         report = NativeReport()
         waveformDisplay.stop()
         calibration = DirectionCalibration()
+        spatial.start()
         report.cameraSessionRunningAtAudioStart = cameraPreviewActive
         report.startControl = startControl
         configuredSampleRate = nil
@@ -426,6 +432,9 @@ final class CaptureModel: ObservableObject {
                     try startHardware(processor)
                 }
                 phase = .running
+                #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("--synthetic-bearing") { spatial.prepareSyntheticCalibration() }
+                #endif
                 waveformDisplay.start()
                 captureStartedUptime = ProcessInfo.processInfo.systemUptime
                 notificationGate.set(token)
@@ -659,6 +668,21 @@ final class CaptureModel: ObservableObject {
         }
         let midpoint = AVAudioTime.seconds(forHostTime: hostTime)
             + Double(reading.analysis.sampleCount) / (2 * reading.analysis.sampleRate)
+        let duration = Double(reading.analysis.sampleCount) / reading.analysis.sampleRate
+        if source == "back" {
+            var fixture = false
+            #if DEBUG
+            if isSynthetic && ProcessInfo.processInfo.arguments.contains("--synthetic-bearing") {
+                fixture = true
+                spatial.acceptSyntheticDisplay(at: ProcessInfo.processInfo.systemUptime,
+                    silent: reading.acousticFeatures == nil)
+            }
+            #endif
+            if !fixture { spatial.accept(features: reading.acousticFeatures,pose: spatialPoseProvider?(midpoint,duration),midpoint: midpoint) }
+        }
+        updated.spatial = spatial.report
+        updated.positionTrackingEnabled = spatial.report.trackingAvailable
+        updated.localizationEnabled = spatial.report.calibration.profile != nil
         if timeOrigin == nil { timeOrigin = midpoint }
         let orientation: AlignedOrientation?
         if isSynthetic {
@@ -684,6 +708,8 @@ final class CaptureModel: ObservableObject {
         var updated = report
         defer { report = updated } // One observable update per analysis/timer tick.
         updated.waveformDisplay = waveformDisplay.statistics
+        spatial.tick()
+        updated.spatial = spatial.report
         let now = ProcessInfo.processInfo.systemUptime
         calibration.tick(at: now)
         updated.calibration = calibration.snapshot(at: now)
@@ -696,6 +722,10 @@ final class CaptureModel: ObservableObject {
         notificationGate.set(nil)
         report.waveformDisplay = waveformDisplay.statistics
         waveformDisplay.stop()
+        spatial.stop()
+        report.spatial = spatial.report
+        report.positionTrackingEnabled = false
+        report.localizationEnabled = false
         calibration.cancel(reason: reason)
         report.calibration = calibration.snapshot(at: ProcessInfo.processInfo.systemUptime)
         generation += 1 // Invalidates permission results and queued old frames.

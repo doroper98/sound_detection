@@ -15,7 +15,7 @@
     <key>NSCameraUsageDescription</key>
     <string>소리를 계측하면서 바라보는 장면을 전체 화면에 표시합니다. 사진이나 영상 파일은 저장하거나 전송하지 않습니다.</string>
     <key>NSMotionUsageDescription</key>
-    <string>소리를 측정한 시각의 아이폰 회전을 함께 기록합니다. 이동거리나 위치는 수집하지 않습니다.</string>
+    <string>소리 위치 후보를 좁히기 위해 카메라와 함께 기기의 상대 이동과 자세를 기기 안에서 계산합니다.</string>
     <key>UILaunchScreen</key><dict/>
     <key>UISupportedInterfaceOrientations</key>
     <array><string>UIInterfaceOrientationPortrait</string></array>

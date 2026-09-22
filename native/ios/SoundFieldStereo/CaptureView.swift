@@ -14,7 +14,7 @@ private struct ShareSheet: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
 
-struct CaptureView: View {
+struct CaptureDetailsView: View {
     @ObservedObject var model: CaptureModel
     @State private var sharedReport: SharedReport?
     private let green = Color(red: 0.48, green: 0.95, blue: 0.68)
@@ -52,6 +52,8 @@ struct CaptureView: View {
                     .accessibilityIdentifier("captureButton")
                     Text(model.report.status).font(.footnote)
                         .accessibilityIdentifier("captureStatus")
+                    Text("오디오 알림 \(model.report.audioEvents.count) · 초기 재설정 \(model.report.startupEngineRestarts)")
+                        .font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("audioEventCount")
                     HStack {
                         Label("요청 2채널", systemImage: "waveform")
                         Spacer()

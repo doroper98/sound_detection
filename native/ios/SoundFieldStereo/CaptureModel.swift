@@ -25,9 +25,21 @@ struct MarkedReading: Codable, Identifiable {
     let reading: FrameReading
 }
 
+struct AudioEventReading: Encodable {
+    let time: Date
+    let event: CaptureEvent
+    let reasonCode: UInt?
+    let decision: CaptureEventDecision
+    let routeMatches: Bool
+    let engineRunning: Bool
+    let inputPort: String?
+    let sessionChannels: Int
+    let sampleRate: Double
+}
+
 struct NativeReport: Encodable {
-    var schemaVersion = 2
-    var appVersion = "0.4.0-native-continuous-prototype"
+    var schemaVersion = 3
+    var appVersion = "0.4.0-native-camera-routefix-build2"
     var inputOrigin = "AVAudioEngine.inputNode"
     var operatingSystem = UIDevice.current.systemVersion
     var startedAt: Date?
@@ -56,6 +68,9 @@ struct NativeReport: Encodable {
     var trend: LagTrend?
     var motionStatus = "회전 측정 대기"
     var latestOrientation: AlignedOrientation?
+    var audioEvents: [AudioEventReading] = []
+    var startupEngineRestarts = 0
+    var cameraSessionRunningAtAudioStart = false
     let attitudeReferenceFrame = "CoreMotion.xArbitraryZVertical; quaternion x,y,z,w"
     let positionTrackingEnabled = false
     let acousticCalibrationVerified = false
@@ -216,6 +231,8 @@ final class CaptureModel: ObservableObject {
     private var syntheticOrientation = OrientationHistory()
     private var lastFrameAt = Date()
     private var exportURL: URL?
+    private var captureStartedUptime = 0.0
+    private var configuredSampleRate: Double?
 
     var isBusy: Bool { phase != .idle }
     var isSynthetic: Bool {
@@ -231,13 +248,16 @@ final class CaptureModel: ObservableObject {
         for name in [AVAudioSession.interruptionNotification, AVAudioSession.routeChangeNotification,
                      AVAudioSession.mediaServicesWereLostNotification, AVAudioSession.mediaServicesWereResetNotification,
                      Notification.Name.AVAudioEngineConfigurationChange] {
-            // Inspect at posting time so our own setup notifications cannot be
-            // delivered later and mistaken for an in-flight route interruption.
-            let token = NotificationCenter.default.addObserver(forName: name, object: nil, queue: nil) { [weak self] _ in
+            let token = NotificationCenter.default.addObserver(forName: name, object: nil, queue: nil) { [weak self] notification in
                 guard let epoch = gate.read() else { return }
+                let reason = (notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? NSNumber)?.uintValue
+                let interruption = (notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? NSNumber)?.uintValue
+                let origin = (notification.object as? AVAudioEngine).map(ObjectIdentifier.init)
                 Task { @MainActor [weak self] in
                     guard let self, self.generation == epoch, self.phase == .running else { return }
-                    self.stop(reason: "오디오 경로 변경 또는 인터럽트로 중지했습니다. 연결 상태를 확인하고 다시 시작하세요.")
+                    if name == .AVAudioEngineConfigurationChange,
+                       origin != self.engine.map(ObjectIdentifier.init) { return }
+                    self.handleAudioEvent(name: name, reason: reason, interruption: interruption)
                 }
             }
             observers.append(token)
@@ -251,11 +271,13 @@ final class CaptureModel: ObservableObject {
         trackingTimer?.invalidate()
     }
 
-    func start() {
+    func start(cameraPreviewActive: Bool = false) {
         guard !isBusy else { return }
         generation += 1
         let token = generation
         report = NativeReport()
+        report.cameraSessionRunningAtAudioStart = cameraPreviewActive
+        configuredSampleRate = nil
         tracker = ContinuousLagTracker()
         timeOrigin = nil
         syntheticOrientation = OrientationHistory()
@@ -296,6 +318,7 @@ final class CaptureModel: ObservableObject {
                     try startHardware(processor)
                 }
                 phase = .running
+                captureStartedUptime = ProcessInfo.processInfo.systemUptime
                 notificationGate.set(token)
                 report.startedAt = Date()
                 report.status = isSynthetic ? "합성 테스트 입력 · 실기기 결과 아님" : "스테레오 수음 중 · 세로 방향을 유지하세요."
@@ -311,6 +334,9 @@ final class CaptureModel: ObservableObject {
                         self.stop(reason: "5초 동안 분석 가능한 PCM이 들어오지 않아 수음을 중지했습니다.")
                     }
                 }
+                #if DEBUG
+                scheduleSyntheticNotifications(token: token)
+                #endif
             } catch { stop(reason: error.localizedDescription) }
         }
     }
@@ -367,6 +393,7 @@ final class CaptureModel: ObservableObject {
               session.inputOrientation == .portrait else {
             throw CaptureFailure.message("요청한 스테레오 경로가 실제 입력에 적용되지 않았습니다. 보고서의 실제 채널 수와 선택 패턴을 확인하세요.")
         }
+        configuredSampleRate = actual.sampleRate
         // nil keeps the input node's actual format. No mono-to-stereo converter,
         // channel duplicator, mixer, or speaker output is installed.
         input.installTap(onBus: 0, bufferSize: 2048, format: nil) { @Sendable buffer, time in
@@ -375,6 +402,86 @@ final class CaptureModel: ObservableObject {
         tapInstalled = true
         audioEngine.prepare()
         try audioEngine.start()
+    }
+
+    private func routeStillMatches() -> Bool {
+        if isSynthetic { return true }
+        let session = AVAudioSession.sharedInstance()
+        guard let engine, let configuredSampleRate, let port = session.currentRoute.inputs.first,
+              session.category == .record, session.mode == .default,
+              port.portType == .builtInMic, port.selectedDataSource?.selectedPolarPattern == .stereo,
+              port.selectedDataSource?.orientation == (source == "back" ? .back : .front),
+              session.inputOrientation == .portrait, session.inputNumberOfChannels == 2 else { return false }
+        let input = engine.inputNode
+        let hardware = input.inputFormat(forBus: 0), actual = input.outputFormat(forBus: 0)
+        return hardware.channelCount == 2 && actual.channelCount == 2
+            && actual.commonFormat == .pcmFormatFloat32
+            && hardware.sampleRate == configuredSampleRate && actual.sampleRate == configuredSampleRate
+    }
+
+    private func handleAudioEvent(name: Notification.Name, reason: UInt?, interruption: UInt?) {
+        let event: CaptureEvent
+        switch name {
+        case AVAudioSession.routeChangeNotification:
+            switch reason.flatMap(AVAudioSession.RouteChangeReason.init(rawValue:)) {
+            case .categoryChange, .routeConfigurationChange: event = .routeSetupChanged
+            case .newDeviceAvailable, .oldDeviceUnavailable: event = .routeDeviceChanged
+            case .noSuitableRouteForCategory: event = .routeUnavailable
+            default: event = .routeUnknown
+            }
+        case AVAudioSession.interruptionNotification:
+            switch interruption.flatMap(AVAudioSession.InterruptionType.init(rawValue:)) {
+            case .began: event = .interruptionBegan
+            case .ended: event = .interruptionEnded
+            default: event = .interruptionUnknown
+            }
+        case AVAudioSession.mediaServicesWereLostNotification: event = .mediaServicesLost
+        case AVAudioSession.mediaServicesWereResetNotification: event = .mediaServicesReset
+        default: event = .engineConfigurationChanged
+        }
+        let matches = (event == .routeSetupChanged || event == .engineConfigurationChanged) && routeStillMatches()
+        let running = isSynthetic || engine?.isRunning == true
+        let decision = CaptureEventPolicy.decide(event, routeMatches: matches, engineRunning: running,
+            receivedPCM: report.analyzedFrames > 0, elapsed: ProcessInfo.processInfo.systemUptime - captureStartedUptime,
+            restartCount: report.startupEngineRestarts)
+        let session = AVAudioSession.sharedInstance()
+        report.audioEvents.append(AudioEventReading(time: Date(), event: event, reasonCode: reason ?? interruption,
+            decision: decision, routeMatches: matches, engineRunning: running,
+            inputPort: isSynthetic ? "synthetic" : session.currentRoute.inputs.first?.portType.rawValue,
+            sessionChannels: isSynthetic ? 2 : session.inputNumberOfChannels,
+            sampleRate: isSynthetic ? 48_000 : session.sampleRate))
+        if report.audioEvents.count > 32 { report.audioEvents.removeFirst() }
+        switch decision {
+        case .continueCapture: break
+        case .restartStartupEngine:
+            do { try restartStartupEngine() }
+            catch { stop(reason: "초기 오디오 엔진 재설정 실패: \(error.localizedDescription)") }
+        case .stop:
+            let cause: String
+            switch event {
+            case .interruptionBegan, .interruptionUnknown: cause = "다른 오디오 작업이 수음을 중단했습니다."
+            case .mediaServicesLost, .mediaServicesReset: cause = "iOS 오디오 서비스가 재시작되었습니다."
+            case .routeDeviceChanged: cause = "오디오 장치 연결 상태가 바뀌었습니다."
+            default: cause = "선택한 스테레오 입력 또는 오디오 엔진 상태가 바뀌었습니다."
+            }
+            stop(reason: "\(cause) 수음 중지 · \(event.rawValue)(\(reason.map(String.init) ?? "—")). 진단 JSON에 원인을 기록했습니다.")
+        }
+    }
+
+    private func restartStartupEngine() throws {
+        guard let engine, let pipeline, routeStillMatches() else {
+            throw CaptureFailure.message("요청한 내장 스테레오 입력을 확인할 수 없습니다.")
+        }
+        report.startupEngineRestarts += 1
+        engine.stop()
+        if tapInstalled { engine.inputNode.removeTap(onBus: 0) }
+        tapInstalled = false
+        engine.inputNode.installTap(onBus: 0, bufferSize: 2048, format: nil) { @Sendable buffer, time in
+            pipeline.submit(buffer, at: time)
+        }
+        tapInstalled = true
+        engine.prepare()
+        try engine.start()
     }
 
     private func recordRoute(session: AVAudioSession, hardware: AVAudioFormat, tap: AVAudioFormat) {
@@ -482,6 +589,25 @@ final class CaptureModel: ObservableObject {
     }
 
     #if DEBUG
+    private func scheduleSyntheticNotifications(token: Int) {
+        guard isSynthetic else { return }
+        let arguments = ProcessInfo.processInfo.arguments
+        guard arguments.contains("--synthetic-route-events") || arguments.contains("--synthetic-interruption") else { return }
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            guard let self, self.generation == token, self.phase == .running else { return }
+            if arguments.contains("--synthetic-route-events") {
+                NotificationCenter.default.post(name: AVAudioSession.routeChangeNotification, object: AVAudioSession.sharedInstance(),
+                    userInfo: [AVAudioSessionRouteChangeReasonKey: NSNumber(value: AVAudioSession.RouteChangeReason.categoryChange.rawValue)])
+                NotificationCenter.default.post(name: AVAudioSession.interruptionNotification, object: AVAudioSession.sharedInstance(),
+                    userInfo: [AVAudioSessionInterruptionTypeKey: NSNumber(value: AVAudioSession.InterruptionType.ended.rawValue)])
+            } else {
+                NotificationCenter.default.post(name: AVAudioSession.interruptionNotification, object: AVAudioSession.sharedInstance(),
+                    userInfo: [AVAudioSessionInterruptionTypeKey: NSNumber(value: AVAudioSession.InterruptionType.began.rawValue)])
+            }
+        }
+    }
+
     private func startSynthetic(_ processor: TapPipeline) throws {
         report.inputOrigin = "synthetic-debug-fixture"
         if ProcessInfo.processInfo.arguments.contains("--synthetic-mono") {

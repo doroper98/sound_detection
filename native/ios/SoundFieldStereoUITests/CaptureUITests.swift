@@ -1,11 +1,15 @@
 import XCTest
 
 final class CaptureUITests: XCTestCase {
-    private func launch(_ extra: [String] = []) -> XCUIApplication {
+    private func launch(_ extra: [String] = [], details: Bool = true) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--synthetic-stereo"] + extra
         app.launch()
-        XCTAssertTrue(app.staticTexts["syntheticBanner"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["liveSyntheticBanner"].waitForExistence(timeout: 10))
+        if details {
+            app.buttons["detailsButton"].tap()
+            XCTAssertTrue(app.staticTexts["syntheticBanner"].waitForExistence(timeout: 5))
+        }
         return app
     }
 
@@ -97,5 +101,70 @@ final class CaptureUITests: XCTestCase {
         XCTAssertEqual(app.buttons["captureButton"].label, "스테레오 수음 시작")
         XCTAssertTrue(app.staticTexts["captureStatus"].label.contains("공유하기 위해"))
         XCTAssertEqual(app.staticTexts["trackedLagValue"].label, "—")
+    }
+
+    func testDelayedSetupAndInterruptionEndKeepCapturing() {
+        let app = launch(["--synthetic-route-events"])
+        app.buttons["captureButton"].tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "오디오 알림 2"), evaluatedWith: app.staticTexts["audioEventCount"])
+        waitForExpectations(timeout: 10)
+        XCTAssertEqual(app.buttons["captureButton"].label, "수음 중지")
+        XCTAssertTrue(app.staticTexts["lagValue"].label.contains("+145.8"))
+    }
+
+    func testRealInterruptionEventStillStopsCapture() {
+        let app = launch(["--synthetic-interruption"])
+        app.buttons["captureButton"].tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "interruptionBegan"), evaluatedWith: app.staticTexts["captureStatus"])
+        waitForExpectations(timeout: 10)
+        XCTAssertEqual(app.buttons["captureButton"].label, "스테레오 수음 시작")
+        XCTAssertEqual(app.staticTexts["trackedLagValue"].label, "—")
+    }
+
+    func testFullscreenCameraControlsAndBackgroundRelease() {
+        let app = launch(details: false)
+        let button = app.buttons["liveCaptureButton"]
+        XCTAssertTrue(button.isHittable)
+        let preview = app.otherElements["cameraPreview"]
+        XCTAssertTrue(preview.exists)
+        XCTAssertGreaterThan(preview.frame.height, app.frame.height * 0.9)
+        button.tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["liveLagValue"])
+        waitForExpectations(timeout: 10)
+        XCTAssertTrue(app.staticTexts["cameraStatus"].label.contains("실제 카메라 영상 없음"))
+        let screen = XCTAttachment(screenshot: app.screenshot())
+        screen.name = "native-camera-overlay-synthetic"
+        screen.lifetime = .keepAlways
+        add(screen)
+        button.tap()
+        XCTAssertEqual(button.label, "카메라·수음 시작")
+        XCTAssertEqual(app.staticTexts["liveLagValue"].label, "—")
+        button.tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["liveLagValue"])
+        waitForExpectations(timeout: 10)
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        XCTAssertEqual(button.label, "카메라·수음 시작")
+        XCTAssertEqual(app.staticTexts["liveLagValue"].label, "—")
+    }
+
+    func testCameraDeniedDoesNotStartMicrophone() {
+        let app = launch(["--synthetic-camera-denied"], details: false)
+        app.buttons["liveCaptureButton"].tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "카메라 권한이 없습니다"), evaluatedWith: app.staticTexts["cameraStatus"])
+        waitForExpectations(timeout: 10)
+        XCTAssertEqual(app.buttons["liveCaptureButton"].label, "카메라·수음 시작")
+        XCTAssertEqual(app.staticTexts["liveCaptureStatus"].label, "대기")
+    }
+
+    func testCancelCameraPermissionDoesNotStartLater() {
+        let app = launch(["--delayed-camera-permission"], details: false)
+        let button = app.buttons["liveCaptureButton"]
+        button.tap()
+        XCTAssertEqual(button.label, "계측 중지")
+        button.tap()
+        let restarted = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "계측 중지"), object: button)
+        XCTAssertEqual(XCTWaiter.wait(for: [restarted], timeout: 4), .timedOut)
+        XCTAssertEqual(app.staticTexts["liveLagValue"].label, "—")
     }
 }

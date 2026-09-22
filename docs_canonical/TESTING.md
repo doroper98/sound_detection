@@ -1,5 +1,12 @@
 # 검증
 
+## 카메라 화면·실기기 시작 알림 수정 (EXP-011)
+
+- 사용자 확인: Sideloadly 설치 완료와 실제 앱 실행. 외부 오디오 장치 없이 수음 시작 직후 일반적인 경로/인터럽트 중지 문구 표시. 알림 원본 JSON이 없어 실제 발생 종류는 미확정.
+- 회귀 기준: 정상 설정/엔진 알림은 실제 동일한 내장 스테레오 경로일 때 수음 유지, 초기 엔진 재시도는 첫 PCM 전 2초·최대 2회. 장치 교체/입력 조건 변경/인터럽트 시작/미디어 서비스 실패는 중지. 종료된 인터럽트만으로 재개하지 않음.
+- 카메라: 전체 화면 미리보기와 같은 화면의 조작 버튼, 명시적 시작, 카메라 거절 시 수음 미시작, 취소 뒤 늦은 권한 결과 차단, 중지/백그라운드 해제. 합성 UI 검사는 카메라 프레임을 생성하지 않는다. 물리 카메라 영상·오디오 동시 수신은 사용자 기기에서 확인한다.
+- Swift 25개/시뮬레이터 UI 10개와 Release 기기 빌드 검증을 추가했다. Mac CI 결과는 후속 기록한다.
+
 ## 연속 네이티브 관측 추가 (EXP-010)
 
 **자동 검증 PASS (2026-09-22):** 코드 `9397574`, [Native iOS CI](https://github.com/doroper98/sound_detection/actions/runs/35721177466). Xcode 16.4/iphoneos Release 빌드, Swift 20/20, iPhone 16 Pro/iOS 18.5 시뮬레이터 UI 5/5, unsigned IPA 생성. [결과·파일 해시](../docs/reports/2026-09-22-native-continuous-verification.json) · [합성 연속 관측 화면](../docs/assets/native-continuous-synthetic.png). [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35721177518)도 Gate/단위 40/40·Chromium E2E 16/16 PASS.

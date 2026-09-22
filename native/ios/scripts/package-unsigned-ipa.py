@@ -35,6 +35,7 @@ metadata = {
     "sourceCommit": os.environ.get("GITHUB_SHA") or subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
     "bundleIdentifier": info["CFBundleIdentifier"],
+    "buildNumber": info["CFBundleVersion"],
     "minimumOSVersion": info["MinimumOSVersion"],
     "platform": "iPhoneOS",
     "configuration": "Release",

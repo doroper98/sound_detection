@@ -17,10 +17,13 @@ export function simulateFrame(source: Source, receiver: Receiver): AudioFrame {
   let filtered = 0;
   for (let i = 0; i < raw.length; i++) { filtered += alpha * ((rng() * 2 - 1) - filtered); raw[i] = filtered; }
   const channels = pair.map((point, channel) => {
-    const samples = new Float32Array(size); const amplitude = Math.min(0.8, 0.15 * 10 ** ((pressureAt(source, point) - 65) / 20));
+    // Fixed virtual gain, with headroom for the volume slider. Clip the waveform
+    // only at full scale; capping its gain made different loud inputs identical.
+    const samples = new Float32Array(size); const amplitude = 0.015 * 10 ** ((pressureAt(source, point) - 65) / 20);
     for (let i = 0; i < size; i++) {
       const t = i + maxOffset - offsets[channel]; const floor = Math.floor(t); const fraction = t - floor;
-      samples[i] = amplitude * (source.signal === 'tone' ? Math.sin(2 * Math.PI * source.frequency * t / sampleRate) : raw[floor] * (1 - fraction) + raw[floor + 1] * fraction);
+      const sample = amplitude * (source.signal === 'tone' ? Math.sin(2 * Math.PI * source.frequency * t / sampleRate) : raw[floor] * (1 - fraction) + raw[floor + 1] * fraction);
+      samples[i] = Math.max(-1, Math.min(1, sample));
     }
     return samples;
   });

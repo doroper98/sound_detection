@@ -2,9 +2,9 @@
 
 3D 공간에서 음원을 배치하고, 가상 휴대폰 마이크로 음압 분포와 음원 위치 추정을 비교하는 한국어 웹 실험실입니다.
 
-**현재 버전: 0.2.0. 가상 시뮬레이터이며 실제 마이크 수음은 포함하지 않습니다.**
+**현재 버전: 0.2.1. 가상 시뮬레이터이며 실제 마이크 수음은 포함하지 않습니다.**
 
-**v0.2.0 웹사이트:** 계정명이 없는 Cloudflare Pages 주소로 이전 준비 완료. Pages 추가 권한 승인을 기다리고 있습니다. [배포 상태](docs_canonical/DEPLOYMENT.md)
+**웹사이트:** [SoundField Lab 열기](https://soundfield-lab.pages.dev) · [배포 상태](docs_canonical/DEPLOYMENT.md)
 
 ![SoundField 데스크톱 화면](docs/assets/desktop.png)
 
@@ -19,6 +19,7 @@
 - 가구가 있는 8 × 7 × 3.2 m 공간, 클릭 배치, 회전·확대, XYZ 좌표와 높이 조절
 - 드래그·방향키로 보는 휴대폰 시점, 음성 분석으로 얻은 방향 후보를 배경에 겹치는 열지도
 - 볼륨, 주파수, 파장 연동 및 정현파 미리듣기
+- PCM 수신 음량에 반응하는 열지도 색·표시 범위, 고정 척도와 입력 포화 표시
 - 마이크 1~2개, iPhone 15 Pro / iPad Pro 11″ / Galaxy S24 / 사용자 정의 가상 배열
 - 마이크 간격 2~200 cm, 여러 위치·높이·방향에서 최대 12개 관측 누적
 - 광대역 시간차와 단일 주파수 위상 모호성 비교, 20 cm 격자 탐색
@@ -67,5 +68,6 @@ node packages/localization/examples/replay.mjs experiment.json
 - [변경 이력](CHANGELOG.md) · [릴리즈](https://github.com/doroper98/sound_detection/releases)
 - [요구사항과 성공 기준](GOAL.md) · [개발 로그](DEVLOG.md) · [작업 절차](WORKFLOWS.md)
 - [아키텍처](docs_canonical/ARCHITECTURE.md) · [코드 규칙](docs_canonical/STYLEGUIDE.md) · [검증](docs_canonical/TESTING.md) · [파일 지도](docs_canonical/REPO_MAP.md)
+- [실제 카메라·수음 웹앱 확장 계획](docs_canonical/LIVE_CAMERA_PLAN.md)
 
 사용자가 지정한 [YK_BP/docs_bp](https://github.com/doroper98/YK_BP/tree/main/docs_bp)의 요구사항 추적·CLI Gate·원자적 버전 관리·정규 문서 체계를 적용했습니다.

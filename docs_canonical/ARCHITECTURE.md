@@ -9,7 +9,7 @@
 | 소리 출력 | Web Audio OscillatorNode | 사용자 클릭 후에만 정현파 미리듣기 |
 | 빌드 | Vite, npm lockfile | 정적 배포와 재현 가능한 의존성 |
 | 검증 | Vitest + Playwright | 물리 성질과 사용자 동작을 각각 검증 |
-| 배포 | Cloudflare Pages (권한 대기) | 계정명 없는 HTTPS 주소, 서버·DB 불필요 |
+| 배포 | Cloudflare Pages | 계정명 없는 HTTPS 주소, 서버·DB 불필요 |
 
 ## 데이터 흐름
 
@@ -22,6 +22,8 @@ flowchart LR
     DSP --> Observations[관측 목록]
     Observations --> Estimator[시간차 잔차 / 격자 추정]
     Estimator --> Heat[휴대폰 방향 적합도 오버레이]
+    Synthesis --> Level[PCM RMS 레벨]
+    Level --> Heat
     State --> Pressure[별도 정답 비교 오버레이]
     State --> Export[버전 포함 JSON 다운로드]
 ```
@@ -33,6 +35,7 @@ flowchart LR
 - 원음·카메라·실제 마이크에 접근하지 않는다. 미리듣기는 출력 전용이다. 측정 신호 모델과 청각 미리듣기 신호가 같다고 주장하지 않는다.
 - 3D renderer의 생명주기와 React 입력 갱신을 분리한다. ResizeObserver로 크기를 맞추고 해제 시 geometry/material/context를 정리한다.
 - 전화 화면은 72×126개의 시야 광선에서 여러 거리의 적합도를 평가한다. 물체 geometry는 배경 렌더링에만 사용한다. 숨겨진 모바일 탭의 0×0 resize는 무시해 NaN camera를 방지한다.
+- 열지도는 PCM RMS와 방향 적합도를 고정 척도로 표시한다. 볼륨 변화는 색·면적을 바꾸지만 표시 로직이 추정 지연이나 후보 탐색을 바꾸지 않는다. src/heatmap.ts는 source/scene 입력이 없다.
 - 추정은 20 cm 격자의 실내 후보를 평가한다. 잔차 비용으로 비교하여 확률 지수의 언더플로를 피한다. 최고 비용+3 이하 후보 개수와 최고점으로부터의 최대 거리를 보여준다.
 - 수평 이동만으로 남는 고도 모호성을 줄이도록 휴대폰 높이와 시야 pitch도 변경할 수 있다.
 - 모든 데이터는 메모리에만 존재한다. 새로고침하면 초기화되며 JSON 다운로드로 보관한다. JSON 가져오기는 아직 없다.

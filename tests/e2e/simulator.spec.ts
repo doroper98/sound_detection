@@ -3,6 +3,45 @@ import { readFileSync } from 'node:fs';
 
 const version = JSON.parse(readFileSync('package.json', 'utf8')).version;
 
+for (const mobile of [false, true]) test(`volume changes heatmap area and intensity in both modes (${mobile ? 'mobile' : 'desktop'})`, async ({ page }) => {
+  if (mobile) await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const heatStats = () => page.getByTestId('heatmap-canvas').evaluate(element => {
+    const canvas = element as HTMLCanvasElement;
+    const pixels = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
+    let area = 0; let alpha = 0; let warm = 0;
+    for (let i = 0; i < pixels.length; i += 4) if (pixels[i + 3] > 0) {
+      area++; alpha += pixels[i + 3];
+      if (pixels[i] > 220 && pixels[i + 2] < 100) warm++;
+    }
+    return { area, alpha, warm };
+  });
+  for (const mode of ['마이크 추정', '정답 비교']) {
+    await page.getByRole('button', { name: mode, exact: true }).click();
+    if (mobile) await page.getByRole('button', { name: '실험 설정', exact: true }).click();
+    await expect(page.getByTestId('pcm-level')).toBeVisible();
+    await page.getByLabel('볼륨', { exact: true }).fill('50');
+    await expect.poll(async () => (await heatStats()).area).toBeGreaterThan(0);
+    const quietLevel = Number.parseFloat((await page.getByTestId('pcm-level').textContent())!);
+    await expect.poll(async () => (await heatStats()).warm).toBe(0);
+    const quiet = await heatStats();
+    await page.getByLabel('볼륨', { exact: true }).fill('90');
+    await expect.poll(async () => (await heatStats()).area).toBeGreaterThan(quiet.area * 1.1);
+    const loud = await heatStats();
+    expect(loud.alpha).toBeGreaterThan(quiet.alpha * 1.5);
+    expect(loud.warm).toBeGreaterThan(quiet.warm);
+    const loudLevel = Number.parseFloat((await page.getByTestId('pcm-level').textContent())!);
+    expect(loudLevel - quietLevel).toBeCloseTo(40, 1);
+    if (!mobile && mode === '정답 비교') await page.screenshot({ path: 'test-results/volume-90.png' });
+    await page.getByLabel('볼륨', { exact: true }).fill('50');
+    await expect.poll(async () => (await heatStats()).area).toBe(quiet.area);
+    if (!mobile && mode === '정답 비교') await page.screenshot({ path: 'test-results/volume-50.png' });
+    if (mobile) await page.getByRole('button', { name: '설정 패널 닫기', exact: true }).click();
+  }
+  await expect(page.getByTestId('phone-viewport')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight && document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
 test('places a source, links acoustics, rotates the phone, changes microphone modes and exports', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/'); await expect(page.getByRole('heading', { name: '소리가 나는 곳을, 눈으로.' })).toBeVisible();

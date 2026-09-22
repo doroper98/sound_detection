@@ -1,7 +1,7 @@
 {
   "name": "sound-detection",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "scripts": {
     "build:engine": "tsc -p packages/localization/tsconfig.json",
@@ -13,7 +13,7 @@
     "test:e2e": "playwright test",
     "check:release": "node scripts/check-release.mjs",
     "gate": "npm run build && npm test && npm run check:release",
-    "deploy": "npm run gate && wrangler pages deploy dist --project-name soundfield-lab --branch main --config wrangler.pages.jsonc",
+    "deploy": "npm run gate && wrangler pages deploy dist --project-name soundfield-lab --branch main",
     "release:prepare": "node scripts/prepare-release.mjs"
   },
   "dependencies": {

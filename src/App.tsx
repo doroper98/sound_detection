@@ -5,6 +5,7 @@ import PhoneView from './components/PhoneView';
 import { clamp, DEVICES, distance, estimate, INITIAL_RECEIVER, INITIAL_SOURCE, isDistinctObservation, pressureAt, SEARCH_VOLUME, wavelength, type Observation, type Receiver, type Source, type Vec3 } from './acoustics';
 import { useAudio } from './useAudio';
 import { captureSimulation, simulateFrame } from './simulation';
+import { HEAT_CEILING_DBFS, HEAT_FLOOR_DBFS, pcmStats } from './heatmap';
 
 const releaseFiles = import.meta.glob('../docs/releases/*.md', { query: '?raw', import: 'default', eager: true });
 const releaseNotes = String(releaseFiles[`../docs/releases/v${__APP_VERSION__}.md`] ?? '이 버전의 릴리즈 노트가 없습니다.');
@@ -44,6 +45,8 @@ export default function App() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const audio = useAudio(source, playing);
   const capture = useMemo(() => receiver.count === 2 ? captureSimulation(source, receiver) : null, [source, receiver]);
+  const frame = useMemo(() => capture?.frame ?? simulateFrame(source, receiver), [capture, source, receiver]);
+  const levels = useMemo(() => pcmStats(frame.channels), [frame]);
   const currentObservation = capture?.observation;
   const effectiveObservations = useMemo(() => !currentObservation ? [] : isDistinctObservation(currentObservation, observations) ? [...observations, currentObservation] : observations, [currentObservation, observations]);
   const result = useMemo(() => mode === 'estimate' ? estimate(effectiveObservations) : null, [mode, effectiveObservations]);
@@ -66,7 +69,6 @@ export default function App() {
     setObservations(previous => [...previous, currentObservation]); setMode('estimate'); notify(`관측 ${observations.length + 1}개 저장 · 휴대폰을 옮겨 다음 관측을 추가하세요.`);
   };
   const exportExperiment = () => {
-    const frame = capture?.frame ?? simulateFrame(source, receiver);
     const data = { schemaVersion: 2, appVersion: __APP_VERSION__, exportedAt: new Date().toISOString(), source, receiver, device, observations, result, engineInput: { ...frame, channels: frame.channels.map(channel => Array.from(channel)) }, engineOptions: { signal: source.signal, toneFrequencyHz: source.signal === 'tone' ? source.frequency : undefined }, searchVolume: SEARCH_VOLUME, engineOutput: capture?.measurement ?? null, assumptions: 'Synthetic PCM; standalone engine receives audio and microphone geometry only, never the source position. Free field; c=343 m/s; no reflections or diffraction; preset spacings are illustrative.' };
     const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
     const anchor = document.createElement('a'); anchor.href = url; anchor.download = `soundfield-v${__APP_VERSION__}-${new Date().toISOString().slice(0, 10)}.json`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -111,16 +113,17 @@ export default function App() {
             <div className="scanner-body">
               <div className="segmented view-modes"><button className={mode === 'pressure' ? 'selected' : ''} onClick={() => setMode('pressure')}><Waves size={14} />정답 비교</button><button className={mode === 'estimate' ? 'selected' : ''} onClick={() => setMode('estimate')}><Crosshair size={14} />마이크 추정</button></div>
               <div className={`phone-frame ${device === 'ipad' ? 'tablet' : ''}`}>
-                <PhoneView source={mode === 'pressure' ? source : null} candidate={mode === 'estimate' && effectiveObservations.length >= 3 && result && result.spread < 0.8 ? result.position : null} receiver={receiver} observations={effectiveObservations} mode={mode} opacity={opacity} heatmap={heatmap} onLook={(yaw, pitch) => setReceiver(previous => ({ ...previous, yaw, pitch }))} />
+                <PhoneView source={mode === 'pressure' ? source : null} candidate={mode === 'estimate' && effectiveObservations.length >= 3 && result && result.spread < 0.8 ? result.position : null} receiver={receiver} observations={effectiveObservations} levelDbfs={levels.levelDbfs} mode={mode} opacity={opacity} heatmap={heatmap} onLook={(yaw, pitch) => setReceiver(previous => ({ ...previous, yaw, pitch }))} />
                 <div className="phone-shade" /><div className="dynamic-island" />
                 <div className="phone-status"><span>9:41</span><div><Signal size={13} /><span className="battery" /></div></div>
                 <div className="phone-app-heading"><AudioLines size={16} /><strong>SoundField</strong><span>SIM</span></div>
                 <div className="phone-mode">{mode === 'pressure' ? 'REFERENCE · 정답 위치' : `${capture?.measurement.method.toUpperCase() ?? 'MONO'} · 음성 기반 추정`}</div>
-                <div className="phone-reading"><span>{mode === 'pressure' ? '수신점의 가상 음압' : receiver.count === 1 ? '방향 정보 없음' : `${effectiveObservations.length}개 관측으로 추정`}</span><strong>{mode === 'pressure' ? receivedDb.toFixed(1) : receiver.count === 1 ? '—' : result?.candidates ?? '—'}<small>{mode === 'pressure' ? 'dB SPL' : receiver.count === 1 ? '' : '후보 격자'}</small></strong><span>{mode === 'pressure' ? '정답 비교용 · 탐지 결과 아님' : '빨강 = 유력 방향 · 띠 = 남은 모호성'}</span></div>
+                <div className="phone-level">수신 <output data-testid="pcm-level">{levels.levelDbfs.toFixed(1)} dBFS</output>{levels.clipped && <span> · 입력 포화</span>}</div>
+                <div className="phone-reading"><span>{mode === 'pressure' ? '수신점의 가상 음압' : receiver.count === 1 ? '방향 정보 없음' : `${effectiveObservations.length}개 관측으로 추정`}</span><strong>{mode === 'pressure' ? receivedDb.toFixed(1) : receiver.count === 1 ? '—' : result?.candidates ?? '—'}<small>{mode === 'pressure' ? 'dB SPL' : receiver.count === 1 ? '' : '후보 격자'}</small></strong><span>{mode === 'pressure' ? '정답 비교용 · 탐지 결과 아님' : '색 = 수신 세기 × 적합도 · 띠 = 모호성'}</span></div>
                 <div className="phone-bottom"><span><span className="status-dot" />{receiver.count} MIC</span><span>{Math.round(receiver.yaw * 180 / Math.PI)}° <i>AZ</i></span><span>{source.frequency.toFixed(0)} <i>Hz</i></span></div><div className="home-indicator" />
               </div>
               <div className="drag-hint"><Move3D size={14} />화면을 드래그하여 소리 둘러보기</div>
-              <div className="heat-legend"><span>낮음</span><div /><span>{mode === 'pressure' ? '음원 중심' : '유력 방향'}</span></div>
+              <div className="heat-legend" title="고정 표시 척도 · PCM 수신 레벨에 방향 적합도를 반영한 시각화"><span>{HEAT_FLOOR_DBFS}</span><div /><span>{HEAT_CEILING_DBFS} dBFS</span></div>
               <div className="scanner-actions"><button className="button secondary" onClick={() => setHeatmap(value => !value)}><Layers3 size={14} />열지도 {heatmap ? 'ON' : 'OFF'}</button><button className="button secondary" onClick={pointAtSource} title="시뮬레이션 정답 위치를 바라봅니다"><Focus size={15} />음원 보기</button></div>
             </div>
           </section>
@@ -153,7 +156,7 @@ export default function App() {
           </section>
 
           <section className="analysis-panel card"><div className="panel-heading"><div><span className="panel-icon"><Activity size={17} /></span><h2>관측 & 위치 추정</h2></div><span className="small-tag">EXPERIMENT</span></div>
-            <div className="analysis-content"><div className="metric-grid"><div><span>수신 PCM 레벨</span><strong>{capture ? capture.measurement.levelDbfs.toFixed(1) : '—'}<small>dBFS</small></strong><em>48 kHz · 4096 samples</em></div><div><span>음성에서 추출한 시간차</span><strong>{currentObservation ? (currentObservation.delay * 1e6).toFixed(1) : '—'}<small>μs</small></strong><em>{capture?.measurement.method.toUpperCase() ?? '마이크 2개 필요'}</em></div></div>
+            <div className="analysis-content"><div className="metric-grid"><div><span>수신 PCM 레벨</span><strong>{levels.levelDbfs.toFixed(1)}<small>dBFS</small></strong><em>{levels.clipped ? '입력 포화 · 볼륨을 낮추세요' : '48 kHz · 4096 samples'}</em></div><div><span>음성에서 추출한 시간차</span><strong>{currentObservation ? (currentObservation.delay * 1e6).toFixed(1) : '—'}<small>μs</small></strong><em>{capture?.measurement.method.toUpperCase() ?? '마이크 2개 필요'}</em></div></div>
               <div className="analysis-note"><span className="note-dot" /><p>{receiver.count === 1 ? '마이크 1개로는 방향을 알 수 없습니다. 2개로 바꾸어 도착 시간차를 비교해 보세요.' : observations.length < 3 ? '마이크 2개의 한 번 관측으로는 위치가 하나로 정해지지 않습니다. 위치·높이를 바꿔 관측을 모아 보세요.' : `20 cm 격자 탐색 · 후보 범위 ${result ? result.spread.toFixed(2) : '—'} m. 여러 후보가 남으면 다른 위치와 높이에서 관측하세요.`}</p></div>
               <div className="signal-control"><label htmlFor="signal">측정 신호 모델</label><select id="signal" value={source.signal} onChange={event => changeSource({ signal: event.target.value as Source['signal'] })}><option value="broadband">광대역 · 비주기 시간차</option><option value="tone">단일 주파수 · 위상 모호성</option></select></div>
               <div className="observation-actions"><button className="button primary" onClick={saveObservation} disabled={receiver.count === 1}><Plus size={15} />관측 저장 <span>{observations.length}/12</span></button><button className="icon-button" aria-label="관측 지우기" title="관측 지우기" onClick={() => { setObservations([]); notify('저장한 관측을 지웠습니다.'); }}><RotateCcw size={16} /></button></div>
@@ -169,7 +172,8 @@ export default function App() {
     {modal === 'guide' && <Modal title="SoundField 실험 가이드" onClose={() => setModal(null)}>
       <p>소리가 발생하는 위치와 가상 마이크의 관측을 비교하는 3D 실험실입니다.</p>
       <ol><li><strong>음원 배치</strong> — 왼쪽 물체나 바닥을 클릭하고, 음원 높이를 조절합니다.</li><li><strong>신호 설정</strong> — 볼륨과 주파수를 바꿉니다. 파장은 음속 343 m/s에 맞춰 연동됩니다. 미리듣기는 작은 음량의 정현파이며 dB SPL 보정 출력이 아닙니다.</li><li><strong>둘러보기</strong> — 오른쪽 화면을 드래그하거나 방향키로 회전합니다. ‘음원 보기’는 설정한 정답 방향을 보여주는 보조 기능입니다.</li><li><strong>위치 추정</strong> — 마이크 2개를 선택하고 관측을 저장합니다. 왼쪽 휴대폰 도구로 장치를 옮기고 높이·방향도 바꾸어 3개 이상의 관측을 수집합니다.</li><li><strong>비교·저장</strong> — 간격과 신호 모델을 바꾸어 후보가 얼마나 넓게 남는지 비교하고, 결과를 JSON으로 내보냅니다.</li></ol>
-      <h3>열지도 읽기</h3><p><strong>음압 분포</strong>는 정답 위치를 표시하는 비교용 모드입니다. 음원을 중심으로 색을 겹쳐 보여주며 실제 탐지 결과가 아닙니다. 숫자는 가상 수신 음압입니다. <strong>마이크 추정</strong>은 마이크 PCM에서 얻은 시간차만으로 시야의 방향 후보를 계산합니다. 3D 물체나 음원 좌표를 사용하지 않습니다. 빨간 띠가 넓게 남으면 방향을 아직 구분할 수 없는 상태입니다.</p>
+      <h3>열지도 읽기</h3><p><strong>정답 비교</strong>는 정답 위치에 비교용 표식을 겹치며 실제 탐지 결과가 아닙니다. <strong>마이크 추정</strong>은 PCM에서 얻은 시간차로 시야의 방향 후보를 계산합니다. 3D 물체나 음원 좌표를 사용하지 않습니다. 띠가 넓게 남으면 방향을 아직 구분할 수 없는 상태입니다.</p>
+      <p>두 모드 모두 PCM 수신 레벨을 고정 색상 척도에 반영합니다. 볼륨이 커지면 색이 강해지고 표시 임계값을 넘는 영역이 넓어집니다. 표시 면적은 음원의 실제 크기나 위치 정확도가 아닙니다. dBFS는 디지털 신호 레벨이며 실제 dB SPL로 교정되지 않았습니다. 입력 포화가 표시되면 볼륨을 낮추세요.</p>
       <h3>독립 음향 엔진</h3><p>합성 마이크 PCM → GCC-PHAT 또는 순음 위상 측정 → 후보 위치 탐색으로 처리합니다. 엔진은 음성 샘플, 샘플링 주파수, 동기화 여부, 마이크 배치만 받습니다. 탐색 범위는 호출하는 앱이 지정합니다. 내보낸 JSON의 engineInput은 3D 화면 없이 다시 분석할 수 있으며 정답 좌표는 별도의 비교 데이터입니다.</p>
       <h3>배열 방향</h3><p>좌우 배열은 좌우 방위에, 세로 배열은 높낮이에 민감합니다. 두 마이크 중 한 배열이 모든 3D 방향에 더 정확한 것은 아닙니다. 여러 위치·높이에서 관측하거나 다채널 배열이 필요합니다.</p>
       <h3>이번 실험의 가정</h3><p>벽과 물체는 배경입니다. 반사·흡음·회절·차폐와 실제 장치 잡음은 포함하지 않습니다. PCM은 합성한 동기화 채널이며 실제 수음은 아닙니다. 광대역 모델은 주파수 설정의 2배를 필터 척도로 쓰는 잡음, 순음 모델은 설정 주파수의 정현파입니다. 기종별 간격은 예시값입니다.</p>

@@ -30,6 +30,7 @@ h1 { font-size: 25px; }
 .phone-bottom { bottom: 22px; padding-top: 8px; }
 .phone-app-heading { top: 42px; }
 .phone-mode { top: 66px; }
+.phone-level { position: absolute; top: 88px; left: 10px; right: 10px; width: fit-content; margin: auto; padding: 4px 7px; border-radius: 5px; background: #193328c9; color: white; font-size: 9px; font-variant-numeric: tabular-nums; pointer-events: none; }
 .drag-hint { margin-top: 11px; flex-shrink: 0; }
 .heat-legend { margin-top: 9px; margin-bottom: 11px; flex-shrink: 0; }
 .scanner-actions { flex-shrink: 0; }
@@ -148,6 +149,7 @@ footer { padding: 10px 1px 11px; flex-shrink: 0; }
   [data-sheet='true'] .scanner-panel > .panel-heading, [data-sheet='true'] .scanner-body > :not(.phone-frame) { display: none; }
   [data-sheet='true'] .scanner-body { padding: 7px; }
   [data-sheet='true'] .phone-frame { height: 100%; min-height: 0; border-width: 3px; border-radius: 14px; }
+  [data-sheet='true'] .phone-level { top: 7px; font-size: 9px; }
   [data-sheet='true'] .phone-app-heading, [data-sheet='true'] .phone-status, [data-sheet='true'] .phone-mode, [data-sheet='true'] .dynamic-island, [data-sheet='true'] .phone-reading, [data-sheet='true'] .phone-bottom, [data-sheet='true'] .home-indicator { display: none; }
   [data-sheet='true'] .scene-status, [data-sheet='true'] .scene-panel > .panel-heading, [data-sheet='true'] .scene-bottom, [data-sheet='true'] .scene-legend { display: none; }
   [data-sheet='true'] .scene-tools { flex-direction: row; top: 9px; left: auto; right: 8px; }

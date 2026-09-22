@@ -21,7 +21,8 @@
 | REQ-ARRAY-001 | 좌우/세로 마이크 비교 | SC-11: 배열 선택 및 센서 축/간격 테스트 | PASS |
 | REQ-VIEW-002 | Fluke류의 영상 위 직접 표시 | SC-12: PCM 기반 방향 열지도, 정답 비교를 명시적으로 분리 | PASS |
 | REQ-UI-002 | 데스크톱/모바일 긴 스크롤 제거 | SC-13: 1440×900/390×844 페이지 넘침 없음, 모바일 설정 중 미리보기 | PASS |
-| REQ-DEPLOY-002 | 계정명이 없는 Cloudflare URL | SC-14: Pages 영구 URL 응답과 원격 E2E | 추가 Pages 권한 대기 |
+| REQ-DEPLOY-002 | 계정명이 없는 Cloudflare URL | SC-14: Pages 영구 URL 응답과 원격 E2E | PASS: soundfield-lab.pages.dev, 원격 E2E 4/4 |
+| REQ-VIEW-003 | 데시벨 변화가 열지도에 반영 | SC-15: 데스크톱/모바일 두 모드에서 50→90 dB 색·면적 증가, 복귀 시 동일, PCM 지연 독립 | PASS |
 
 ## 후속 검증
 

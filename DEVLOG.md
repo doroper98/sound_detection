@@ -50,6 +50,24 @@
 
 <!-- improvements -->
 
+### v0.2.1 — 2026-09-22
+
+| 변경 | 내용 |
+|---|---|
+| 릴리즈 | 데시벨에 반응하는 열지도와 계정명 없는 공개 주소 |
+
+EXP-003 · REQ-VIEW-003 / REQ-DEPLOY-002 · SC-15 / SC-14.
+
+- BUG-007: PhoneView가 정규화된 방향 적합도/고정 Gaussian만 그려 수신 음량을 반영하지 않았음. PCM RMS를 별도로 전달하고 고정 척도에서 색·alpha·표시 임계값에 반영. 위치 추정 코드는 변경하지 않음.
+- BUG-008: 시뮬레이터의 amplitude 상한이 큰 볼륨 입력을 같은 PCM으로 만듦. 고정 이득에 여유를 두고 실제 샘플만 ±1에서 포화, 포화 표시 추가.
+- 변경: src/heatmap.ts, simulation.ts, PhoneView/App, 모바일에서도 보이는 수신 레벨과 tests/heatmap.test.ts/E2E.
+- 검증: Gate 및 단위 테스트 25개 PASS. 두 신호의 40~100 dB 단계별 PCM 10 dB 증가와 지연 불변 PASS. 데스크톱/모바일 E2E 4개 PASS. 정답 비교 50/90 dB 및 모바일 설정 화면을 직접 검토하고 docs/assets에 보관. 원격 배포 검증은 아래에 기록.
+- 첫 모바일 회귀 테스트가 열린 설정 패널에서 숨겨진 모드 버튼을 클릭해 시간 초과. 실제 사용자 순서에 맞게 패널 닫기 → 모드 선택 → 설정 열기로 수정.
+- Pages 추가 OAuth 인증 성공. Wrangler 4.136의 기본 Pages 생성 명령이 Workers로 자동 위임되어 이전 주소에 v0.2.0을 배포하는 동작을 확인. 사용자의 계정명 없는 URL 요구에 따라 `pages project create --force`로 Pages 프로젝트를 명시적으로 생성. 기존 프로젝트 배포에는 force가 필요하지 않음.
+- 실제 카메라 웹앱 문의에 대해 HTTPS/권한/후면 video, PCM 채널 진단, 독립 수음 검증, 카메라 축 교정을 단계별로 docs_canonical/LIVE_CAMERA_PLAN.md에 기록. 실제 촬영·수음은 이번 수정에 포함하지 않음.
+- BUG-009: Pages 배포가 `--config wrangler.pages.jsonc`를 거부. Pages는 사용자 정의 설정 경로를 지원하지 않아 표준 wrangler.jsonc에 pages_build_output_dir를 설정하고 npm/CI 명령의 --config 제거.
+- 배포: https://soundfield-lab.pages.dev, deployment 7efc0de4. HTTP 200/version.json 0.2.1/보안 헤더 확인 및 원격 Chromium E2E 4/4 PASS. 페이지에 계정명이 없는 URL 요구 완료.
+
 ### v0.2.0 — 2026-09-22
 
 | 변경 | 내용 |

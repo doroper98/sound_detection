@@ -1,6 +1,15 @@
 # Cloudflare 배포
 
-## v0.2.0 현재 상태 (2026-09-22)
+## v0.2.1 공개 배포 (2026-09-22)
+
+- 영구 주소: https://soundfield-lab.pages.dev
+- Pages OAuth 추가 인증, 프로젝트 생성 및 배포 완료. 배포 주소: https://7efc0de4.soundfield-lab.pages.dev
+- 영구 주소 HTTP 200, version.json 0.2.1 및 CSP/Permissions-Policy/nosniff 확인. 공개 사이트 Chromium E2E 4/4 PASS (데스크톱/모바일 볼륨 회귀 포함).
+- 로컬 Gate/25개 단위 테스트 및 4개 E2E PASS. 실제 하드웨어 캡처는 미포함.
+- Wrangler 4.136은 신규 Pages 생성 명령을 Workers에 위임할 수 있다. 신규 계정에서 반드시 pages.dev 주소가 필요하면 아래 생성 명령의 `--force`로 Pages를 선택한다. 기존 프로젝트로의 이후 배포에는 필요하지 않다.
+- Pages는 Wrangler 설정의 사용자 정의 경로를 지원하지 않는다. `wrangler.jsonc`의 pages_build_output_dir를 사용하고 `--config`를 전달하지 않는다.
+
+## v0.2.0 이력
 
 - 계정명이 없는 Pages 주소를 요청받아 `wrangler.pages.jsonc`와 배포 명령/workflow를 준비했다.
 - `pages:write` 권한이 없는 기존 Workers OAuth로 Pages 프로젝트 생성을 시도했으나 Cloudflare API code 10000으로 거부됐다.
@@ -22,7 +31,7 @@
 ```sh
 npx wrangler login --scopes account:read user:read workers:write workers_scripts:write pages:write
 npx wrangler whoami
-npx wrangler pages project create soundfield-lab --production-branch main
+npx wrangler pages project create soundfield-lab --production-branch main --force
 npm run deploy
 ```
 

@@ -3,15 +3,16 @@ import * as THREE from 'three';
 import { clamp, distance, heatColor, type Observation, type Receiver, type Source, type Vec3 } from '../acoustics';
 import { rayLikelihood } from '../../packages/localization/src/index';
 import { createRoom, disposeScene, lightScene } from '../room';
+import { heatIntensity } from '../heatmap';
 
-type Props = { source: Source | null; candidate: Vec3 | null; receiver: Receiver; observations: Observation[]; mode: 'pressure' | 'estimate'; opacity: number; heatmap: boolean; onLook: (yaw: number, pitch: number) => void };
+type Props = { source: Source | null; candidate: Vec3 | null; receiver: Receiver; observations: Observation[]; levelDbfs: number; mode: 'pressure' | 'estimate'; opacity: number; heatmap: boolean; onLook: (yaw: number, pitch: number) => void };
 
 export default function PhoneView(props: Props) {
   const host = useRef<HTMLDivElement>(null); const heat = useRef<HTMLCanvasElement>(null);
   const marker = useRef<HTMLDivElement>(null);
   const current = useRef(props); current.current = props;
   const update = useRef<() => void>(() => {}); const [error, setError] = useState(false);
-  useEffect(() => { update.current(); }, [props.source, props.candidate, props.receiver, props.observations, props.mode, props.opacity, props.heatmap]);
+  useEffect(() => { update.current(); }, [props.source, props.candidate, props.receiver, props.observations, props.levelDbfs, props.mode, props.opacity, props.heatmap]);
   useEffect(() => {
     const container = host.current!;
     let renderer: THREE.WebGLRenderer;
@@ -27,7 +28,7 @@ export default function PhoneView(props: Props) {
     const ranges = [0.3, 0.5, 0.8, 1.2, 1.8, 2.5, 3.5, 5, 7, 10];
     let pending = 0;
     const draw = () => {
-      const { source, candidate, receiver, observations, mode, opacity, heatmap } = current.current;
+      const { source, candidate, receiver, observations, levelDbfs, mode, opacity, heatmap } = current.current;
       camera.position.set(...receiver.position);
       camera.lookAt(camera.position.clone().add(new THREE.Vector3(Math.sin(receiver.yaw) * Math.cos(receiver.pitch), Math.sin(receiver.pitch), -Math.cos(receiver.yaw) * Math.cos(receiver.pitch))));
       camera.updateMatrixWorld(); renderer.render(scene, camera);
@@ -52,11 +53,12 @@ export default function PhoneView(props: Props) {
         } else if (mode === 'estimate') {
           value = rayLikelihood(receiver.position, raycaster.ray.direction.toArray() as Vec3, observations, samplingRanges);
         }
-        if (value < 0.1) continue;
+        const intensity = heatIntensity(value, levelDbfs);
+        if (intensity <= 0) continue;
         const offset = (y * width + x) * 4;
-        const color = heatColor(value);
+        const color = heatColor(intensity);
         data.data[offset] = color[0]; data.data[offset + 1] = color[1]; data.data[offset + 2] = color[2];
-        data.data[offset + 3] = Math.round(opacity * 255 * Math.sqrt(value));
+        data.data[offset + 3] = Math.round(opacity * 255 * Math.sqrt(intensity));
       }
       context.putImageData(data, 0, 0);
     };

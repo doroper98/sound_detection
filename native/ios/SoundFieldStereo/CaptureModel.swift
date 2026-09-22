@@ -18,6 +18,11 @@ struct FrameReading: Codable {
     let analysis: StereoAnalysis
 }
 
+private struct CapturedFrame {
+    let reading: FrameReading
+    let waveform: StereoWaveformPreview?
+}
+
 struct MarkedReading: Codable, Identifiable {
     let id: UUID
     let declaredSoundSide: String
@@ -59,7 +64,7 @@ struct AudioRouteInspection: Encodable {
 
 struct NativeReport: Encodable {
     var schemaVersion = 4
-    var appVersion = "0.4.0-native-override-fix-build3"
+    var appVersion = "0.4.0-native-waveform-build4"
     var inputOrigin = "AVAudioEngine.inputNode"
     var operatingSystem = UIDevice.current.systemVersion
     var startedAt: Date?
@@ -166,9 +171,9 @@ private final class TapPipeline: @unchecked Sendable {
     private var sequence = 0
     private var gaps = 0
     private var nextSampleTime: Int64?
-    private let deliver: @MainActor (Result<FrameReading, Error>) -> Void
+    private let deliver: @MainActor (Result<CapturedFrame, Error>) -> Void
 
-    init(deliver: @escaping @MainActor (Result<FrameReading, Error>) -> Void) {
+    init(deliver: @escaping @MainActor (Result<CapturedFrame, Error>) -> Void) {
         self.deliver = deliver
     }
 
@@ -215,13 +220,15 @@ private final class TapPipeline: @unchecked Sendable {
                 if let expected = nextSampleTime, let actual = sampleTime, expected != actual { gaps += 1 }
                 nextSampleTime = sampleTime.map { $0 + Int64(left.count) }
                 lock.lock(); let skippedCount = skipped; lock.unlock()
-                finish(.success(FrameReading(sequence: sequence, sampleTime: sampleTime, hostTime: hostTime,
-                    skippedBuffers: skippedCount, analyzedTimelineGaps: gaps, analysis: analysis)))
+                let reading = FrameReading(sequence: sequence, sampleTime: sampleTime, hostTime: hostTime,
+                    skippedBuffers: skippedCount, analyzedTimelineGaps: gaps, analysis: analysis)
+                let waveform = StereoWaveformPreview.make(left: left, right: right, sampleRate: sampleRate)
+                finish(.success(CapturedFrame(reading: reading, waveform: waveform)))
             } catch { finish(.failure(error)) }
         }
     }
 
-    private func finish(_ result: Result<FrameReading, Error>) {
+    private func finish(_ result: Result<CapturedFrame, Error>) {
         Task { @MainActor [self] in
             deliver(result)
             gate.signal()
@@ -234,6 +241,7 @@ final class CaptureModel: ObservableObject {
     enum Phase { case idle, requestingPermission, running }
     @Published private(set) var phase: Phase = .idle
     @Published private(set) var report = NativeReport()
+    @Published private(set) var waveform: StereoWaveformPreview?
     @Published var source = "back"
     @Published var exportError: String?
     var onStopped: (@MainActor () -> Void)?
@@ -301,6 +309,7 @@ final class CaptureModel: ObservableObject {
         generation += 1
         let token = generation
         report = NativeReport()
+        waveform = nil
         report.cameraSessionRunningAtAudioStart = cameraPreviewActive
         report.startControl = startControl
         configuredSampleRate = nil
@@ -330,7 +339,9 @@ final class CaptureModel: ObservableObject {
                 let processor = TapPipeline { [weak self] result in
                     guard let self, self.generation == token, self.phase == .running else { return }
                     switch result {
-                    case .success(let reading): self.accept(reading)
+                    case .success(let frame):
+                        self.waveform = frame.waveform
+                        self.accept(frame.reading)
                     case .failure(let error): self.stop(reason: error.localizedDescription)
                     }
                 }
@@ -594,13 +605,16 @@ final class CaptureModel: ObservableObject {
     }
 
     private func refreshTrend() {
-        guard phase == .running, let origin = timeOrigin else { return }
+        guard phase == .running else { return }
+        if Date().timeIntervalSince(lastFrameAt) > 0.35 { waveform = nil }
+        guard let origin = timeOrigin else { return }
         report.trend = tracker.snapshot(at: ProcessInfo.processInfo.systemUptime - origin)
         if report.trend?.state == .stale { report.latestOrientation = nil }
     }
 
     func stop(reason: String = "수음을 중지하고 마이크를 해제했습니다.") {
         notificationGate.set(nil)
+        waveform = nil
         generation += 1 // Invalidates permission results and queued old frames.
         watchdog?.invalidate(); watchdog = nil
         syntheticTimer?.invalidate(); syntheticTimer = nil
@@ -696,11 +710,17 @@ final class CaptureModel: ObservableObject {
             state = state &* 6364136223846793005 &+ 1
             return Float(Double(state >> 33) / Double(UInt32.max) - 0.25)
         }
-        let right: [Float] = (0..<2048).map { $0 >= 7 ? left[$0 - 7] : 0 }
+        let arguments = ProcessInfo.processInfo.arguments
+        let right: [Float] = arguments.contains("--synthetic-silent-right")
+            ? [Float](repeating: 0, count: left.count)
+            : (0..<2048).map { $0 >= 7 ? left[$0 - 7] : 0 }
+        let fixtureStartedAt = ProcessInfo.processInfo.systemUptime
         var position: Int64 = 0
         syntheticTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self, self.syntheticPCMEnabled, self.phase == .running else { return }
+                if arguments.contains("--synthetic-waveform-stale"),
+                   ProcessInfo.processInfo.systemUptime - fixtureStartedAt > 4 { return }
                 processor.submitSynthetic(left: left, right: right, sampleTime: position)
                 position += 2048
             }

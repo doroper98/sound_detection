@@ -150,7 +150,11 @@ final class CaptureUITests: XCTestCase {
     func testFullscreenCameraControlsAndBackgroundRelease() {
         let app = launch(details: false)
         let button = app.buttons["liveCaptureButton"]
+        let leftWaveform = app.descendants(matching: .any).matching(identifier: "leftWaveform").firstMatch
+        let rightWaveform = app.descendants(matching: .any).matching(identifier: "rightWaveform").firstMatch
         XCTAssertTrue(button.isHittable)
+        XCTAssertEqual(leftWaveform.value as? String, "입력 없음")
+        XCTAssertEqual(rightWaveform.value as? String, "입력 없음")
         let preview = app.otherElements["cameraPreview"]
         XCTAssertTrue(preview.exists)
         XCTAssertGreaterThan(preview.frame.height, app.frame.height * 0.9)
@@ -158,6 +162,12 @@ final class CaptureUITests: XCTestCase {
         expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["liveLagValue"])
         waitForExpectations(timeout: 10)
         XCTAssertTrue(app.staticTexts["cameraStatus"].label.contains("실제 카메라 영상 없음"))
+        XCTAssertEqual(leftWaveform.value as? String, "수신 중")
+        XCTAssertEqual(rightWaveform.value as? String, "수신 중")
+        XCTAssertTrue(leftWaveform.isHittable)
+        XCTAssertTrue(rightWaveform.isHittable)
+        XCTAssertTrue(app.frame.contains(leftWaveform.frame))
+        XCTAssertTrue(app.frame.contains(rightWaveform.frame))
         let screen = XCTAttachment(screenshot: app.screenshot())
         screen.name = "native-camera-overlay-synthetic"
         screen.lifetime = .keepAlways
@@ -165,6 +175,8 @@ final class CaptureUITests: XCTestCase {
         button.tap()
         XCTAssertEqual(button.label, "카메라·수음 시작")
         XCTAssertEqual(app.staticTexts["liveLagValue"].label, "—")
+        XCTAssertEqual(leftWaveform.value as? String, "입력 없음")
+        XCTAssertEqual(rightWaveform.value as? String, "입력 없음")
         button.tap()
         expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["liveLagValue"])
         waitForExpectations(timeout: 10)
@@ -172,6 +184,37 @@ final class CaptureUITests: XCTestCase {
         app.activate()
         XCTAssertEqual(button.label, "카메라·수음 시작")
         XCTAssertEqual(app.staticTexts["liveLagValue"].label, "—")
+        XCTAssertEqual(leftWaveform.value as? String, "입력 없음")
+        XCTAssertEqual(rightWaveform.value as? String, "입력 없음")
+    }
+
+    func testWaveformsKeepSilentRightChannelFlat() {
+        let app = launch(["--synthetic-silent-right"], details: false)
+        app.buttons["liveCaptureButton"].tap()
+        let left = app.descendants(matching: .any).matching(identifier: "leftWaveform").firstMatch, right = app.descendants(matching: .any).matching(identifier: "rightWaveform").firstMatch
+        expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: left)
+        waitForExpectations(timeout: 10)
+        XCTAssertEqual(right.value as? String, "평탄")
+        XCTAssertEqual(app.buttons["liveCaptureButton"].label, "계측 중지")
+        let screen = XCTAttachment(screenshot: app.screenshot())
+        screen.name = "native-waveform-silent-right"
+        screen.lifetime = .keepAlways
+        add(screen)
+        app.buttons["liveCaptureButton"].tap()
+        XCTAssertEqual(left.value as? String, "입력 없음")
+        XCTAssertEqual(right.value as? String, "입력 없음")
+    }
+
+    func testStaleWaveformsClearBeforeCaptureWatchdogStops() {
+        let app = launch(["--synthetic-waveform-stale"], details: false)
+        app.buttons["liveCaptureButton"].tap()
+        let left = app.descendants(matching: .any).matching(identifier: "leftWaveform").firstMatch, right = app.descendants(matching: .any).matching(identifier: "rightWaveform").firstMatch
+        expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: left)
+        waitForExpectations(timeout: 5)
+        expectation(for: NSPredicate(format: "value == %@", "입력 없음"), evaluatedWith: left)
+        waitForExpectations(timeout: 6)
+        XCTAssertEqual(right.value as? String, "입력 없음")
+        XCTAssertEqual(app.buttons["liveCaptureButton"].label, "계측 중지")
     }
 
     func testCameraDeniedDoesNotStartMicrophone() {

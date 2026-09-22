@@ -1,5 +1,59 @@
 import AVFoundation
 import SwiftUI
+import StereoCore
+
+private struct InputWaveform: View {
+    let label: String
+    let columns: [WaveformColumn]
+    let amplitudeRange: Float
+    let tint: Color
+    let identifier: String
+
+    private var signalState: String {
+        if columns.isEmpty { return "입력 없음" }
+        return columns.allSatisfy { $0.minimum == 0 && $0.maximum == 0 } ? "평탄" : "수신 중"
+    }
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Text(label).font(.caption2.monospaced().bold()).foregroundStyle(tint)
+            Canvas { context, size in
+                let center = size.height / 2
+                var grid = Path()
+                grid.move(to: CGPoint(x: 0, y: center))
+                grid.addLine(to: CGPoint(x: size.width, y: center))
+                for fraction in [0.25, 0.5, 0.75] {
+                    let x = size.width * fraction
+                    grid.move(to: CGPoint(x: x, y: 0))
+                    grid.addLine(to: CGPoint(x: x, y: size.height))
+                }
+                context.stroke(grid, with: .color(.white.opacity(0.12)), lineWidth: 0.5)
+                guard !columns.isEmpty, amplitudeRange > 0 else { return }
+                let scale = size.height * 0.44 / CGFloat(amplitudeRange)
+                var extent = Path(), trace = Path()
+                for (index, column) in columns.enumerated() {
+                    let x = (CGFloat(index) + 0.5) * size.width / CGFloat(columns.count)
+                    let high = center - CGFloat(column.maximum) * scale
+                    let low = center - CGFloat(column.minimum) * scale
+                    extent.move(to: CGPoint(x: x, y: high))
+                    extent.addLine(to: CGPoint(x: x, y: low))
+                    let midpoint = CGPoint(x: x, y: (high + low) / 2)
+                    if index == 0 { trace.move(to: midpoint) } else { trace.addLine(to: midpoint) }
+                }
+                context.stroke(extent, with: .color(tint.opacity(0.8)), lineWidth: 1)
+                context.stroke(trace, with: .color(tint), lineWidth: 1)
+            }
+            .frame(height: 30)
+            .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 4))
+            .clipped()
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(label) 입력 파형")
+        .accessibilityValue(signalState)
+        .accessibilityIdentifier(identifier)
+    }
+}
 
 private final class CameraSurface: UIView {
     override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
@@ -83,6 +137,16 @@ struct CaptureView: View {
                             Text("연속 시간차 · 방향 교정 전").font(.caption2)
                         }
                     }
+                    VStack(spacing: 4) {
+                        HStack(spacing: 12) {
+                            InputWaveform(label: "L", columns: model.waveform?.left ?? [],
+                                amplitudeRange: model.waveform?.amplitudeRange ?? 1, tint: green, identifier: "leftWaveform")
+                            InputWaveform(label: "R", columns: model.waveform?.right ?? [],
+                                amplitudeRange: model.waveform?.amplitudeRange ?? 1, tint: .cyan, identifier: "rightWaveform")
+                        }
+                        Text(model.waveform.map { String(format: "최근 %.0fms · 공통 자동 배율", $0.durationSeconds * 1_000) } ?? "실시간 파형 · 공통 자동 배율")
+                            .font(.system(size: 10)).foregroundStyle(.secondary)
+                    }
                     Text(model.report.status).font(.caption).frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityIdentifier("liveCaptureStatus")
                     Picker("카메라와 마이크 방향", selection: $model.source) {
@@ -105,7 +169,7 @@ struct CaptureView: View {
                             .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 12)
                     }.buttonStyle(.borderedProminent).tint(green).foregroundStyle(.black)
                         .accessibilityIdentifier("liveCaptureButton")
-                    Text("영상·원음 저장 없음 · 빌드 3").font(.caption2).foregroundStyle(.secondary)
+                    Text("영상·원음 저장 없음 · 빌드 4").font(.caption2).foregroundStyle(.secondary)
                 }
                 .padding(18)
                 .background(.black.opacity(0.78), in: RoundedRectangle(cornerRadius: 22))

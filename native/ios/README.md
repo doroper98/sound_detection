@@ -4,6 +4,12 @@
 
 현재는 입력·채널 간 신호 지연을 검증하는 개발용 앱이다. 웹 제품 버전은 0.4.0을 유지한다. App Store/TestFlight 배포나 아이폰 실측 성공을 의미하지 않는다.
 
+## 빌드 4: 작은 좌우 입력 파형
+
+카메라 화면 하단에서 L(초록)/R(청록) 파형을 따로 볼 수 있다. 두 그래프는 같은 최근 최대 10ms를 공통 자동 배율로 표시하며, 절대 음량은 기존 dBFS로 읽는다. 수음 중지/백그라운드/재시작 또는 350ms 이상 새 입력이 없으면 파형을 지운다. 화면 표시용 자료만 메모리에 두며 JSON·녹음 파일에는 포함하지 않는다.
+
+현재 설치 사용자는 **SoundFieldStereo-build4-unsigned.ipa**를 Sideloadly에 새로 선택해 덮어쓰고 앱 하단 **빌드 4**를 확인한다. 빌드 3의 사용자 실측에서 48kHz 실제 2채널·245개 좌우 활성 구간이 확인됐으며, 파형 추가 후 실제 기기 동작은 별도 확인한다. [빌드 3 실측 해석](../../docs/reports/2026-09-22-iphone17pro-native-build3-analysis.json).
+
 ## 빌드 3: 실기기 override 알림 수정
 
 사용자 빌드 2 JSON은 후면 Stereo·세션/하드웨어/tap 2채널·48kHz까지 설정한 뒤 첫 분석 전 `routeUnknown(4)`로 중지했다. 실제 원인은 출력 override 알림을 누락한 처리이며, `routeMatches=false`도 이 알림에서는 실제 검사한 결과가 아니었다. 빌드 3은 해당 알림에서도 입력 조건을 직접 검사해 동일한 스테레오 경로는 유지하고 실제 변경은 거부한다. [Apple override 설명](https://developer.apple.com/documentation/avfaudio/avaudiosession/routechangereason/override).

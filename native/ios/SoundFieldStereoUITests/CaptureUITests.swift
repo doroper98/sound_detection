@@ -29,6 +29,10 @@ final class CaptureUITests: XCTestCase {
         let app=launch(["--synthetic-bearing","--synthetic-silent-right"],details: false)
         app.buttons["liveCaptureButton"].tap()
         awaitLivePCM(app)
+        let reticle=app.descendants(matching: .any).matching(identifier: "cameraAlignmentReticle").firstMatch
+        XCTAssertTrue(reticle.exists)
+        XCTAssertEqual(reticle.frame.midX,app.frame.midX,accuracy: 2)
+        XCTAssertEqual(reticle.frame.midY,app.frame.midY,accuracy: 2)
         XCTAssertFalse(app.staticTexts["spatialStatus"].label.contains("방향 추정"))
         XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
         app.buttons["spatialGuideButton"].tap()

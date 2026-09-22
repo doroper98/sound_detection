@@ -17,6 +17,7 @@ struct SpatialOverlay: View {
                         .foregroundStyle(.white).shadow(color: .black,radius: 2)
                         .position(x: size.width/2,y: size.height/2)
                         .accessibilityLabel("소리 정렬용 카메라 중앙 기준점")
+                        .accessibilityIdentifier("cameraAlignmentReticle")
                 }
                 if let bearing=data.bearing {
                     let range=band(bearing,size: size)
@@ -63,7 +64,12 @@ struct SpatialOverlay: View {
                             .accessibilityIdentifier("rotationAlignmentDone")
                         Button("취소") { spatial.cancelCalibration() }.font(.caption)
                     }.padding(16).background(.black.opacity(0.8),in: RoundedRectangle(cornerRadius: 16))
-                        .frame(maxWidth: size.width-40).position(x: size.width/2,y: size.height*0.29)
+                        .frame(maxWidth: size.width-40).position(x: size.width/2,y: size.height*0.34)
+                } else if data.solution?.estimate != nil {
+                    Text("실험적 위치 후보 · 계산상 민감도 범위")
+                        .font(.caption.bold()).padding(10).background(.black.opacity(0.65),in: Capsule())
+                        .position(x: size.width/2,y: size.height*0.25)
+                        .accessibilityIdentifier("spatialStatus")
                 } else {
                     VStack(spacing: 7) {
                         Image(systemName: data.bearing == nil ? "ear" : "waveform")
@@ -74,7 +80,7 @@ struct SpatialOverlay: View {
                     }
                     .padding(14).background(.black.opacity(0.58),in: RoundedRectangle(cornerRadius: 14))
                     .frame(maxWidth: size.width-48)
-                    .position(x: size.width/2,y: size.height*(data.solution?.estimate == nil ? 0.30 : 0.24))
+                    .position(x: size.width/2,y: size.height*0.32)
                 }
             }.frame(width: size.width,height: size.height)
         }

@@ -132,6 +132,7 @@ struct CaptureView: View {
                 }.foregroundStyle(.white.opacity(0.75)).padding(32)
             }
             SpatialOverlay(spatial: model.spatial,camera: camera,synthetic: model.isSynthetic)
+                .ignoresSafeArea() // Projection viewport must match the edge-to-edge ARSCNView.
             VStack(spacing: 0) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 5) {

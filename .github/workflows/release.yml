@@ -1,0 +1,30 @@
+name: Release
+on:
+  push:
+    tags: ['v*.*.*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run gate
+      - name: Verify tag matches package
+        run: node --input-type=module -e "import fs from 'node:fs'; if ('v' + JSON.parse(fs.readFileSync('package.json')).version !== process.env.GITHUB_REF_NAME) process.exit(1);"
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Package website
+        run: zip -r soundfield-site.zip dist
+      - name: Publish versioned notes and build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=()
+          if [[ "$GITHUB_REF_NAME" == v0.* ]]; then flags+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" soundfield-site.zip --verify-tag --title "SoundField $GITHUB_REF_NAME" --notes-file "docs/releases/$GITHUB_REF_NAME.md" "${flags[@]}"

@@ -314,8 +314,11 @@ final class CaptureUITests: XCTestCase {
         app.buttons["liveCaptureButton"].tap()
         let left = app.descendants(matching: .any).matching(identifier: "leftWaveform").firstMatch, right = app.descendants(matching: .any).matching(identifier: "rightWaveform").firstMatch
         expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: left)
+        // A separate AX snapshot can stall the instrumented main loop beyond
+        // the intentional 350ms stale cutoff. Wait for each fresh state instead
+        // of assuming the later right-hand query shares the left snapshot.
+        expectation(for: NSPredicate(format: "value == %@", "평탄"), evaluatedWith: right)
         waitForExpectations(timeout: 30)
-        XCTAssertEqual(right.value as? String, "평탄")
         XCTAssertEqual(app.buttons["liveCaptureButton"].label, "계측 중지")
         let screen = XCTAttachment(screenshot: app.screenshot())
         screen.name = "native-waveform-silent-right"

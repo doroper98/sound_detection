@@ -9,6 +9,7 @@
 | S1.3 내보내기/문서 | DATA-001, DOC-001 | 07,08 | EXP-001 | PASS (로컬) |
 | S1.4 배포 | DEPLOY-001 | 09 | EXP-001 | PASS |
 | S1.6 야외 수음 논의·가능성 문서 | DOC-002 | 19 | EXP-006 | PASS (문서·계산 검증, 야외 실측 아님) |
+| S1.7 iPhone 17 Pro 첫 실기기 진단 기록 | LIVE-002 | 17 | EXP-007 | 결과 확보 (Chrome for iOS 모노, 4채널 미확인, Safari 앱 미검사) |
 
 ## EXP-001 · S1.1–S1.4 — 최초 가상 실험실
 
@@ -50,6 +51,18 @@
 ## 개선 로그
 
 <!-- improvements -->
+
+### iPhone 17 Pro 첫 실기기 진단 결과 기록 — 2026-09-22
+
+EXP-007 · REQ-LIVE-002 · SC-17.
+
+- 사용자가 실제 iPhone 17 Pro에서 공개 /diagnostics를 실행한 JSON 보고서를 전달. 원본을 docs/reports/2026-09-22-iphone17pro-crios-diagnostics.json에 보존하고 TESTING/LIVE_CAMERA_PLAN/GOAL/DEPLOYMENT/README/FIELD_ACOUSTICS_FEASIBILITY/REPO_MAP을 갱신.
+- 환경: userAgent `iPhone OS 27_0_0`, `CriOS/153.0.8010.24`. 검사 절차가 요구한 Safari 앱이 아니라 Chrome for iOS(WebKit)다. iOS 버전 입력란은 비어 있었다. 카메라 켠 상태로 후면 1280×720 30 fps 확인.
+- 결과: 4채널 exact·2채널 exact·기본 입력 모두 captured, 각 20 프레임 81,920 샘플 48 kHz. PCM 2채널이 도착했으나 채널 2는 세 요청 모두 peak 0. 채널 1 레벨 −54~−60 dBFS. 앱 판정 "4채널 안정 수신 미확인".
+- 해석: `getSupportedConstraints()`에 channelCount가 없어 exact 요청은 거절이 아니라 무시됐다. 실효 입력은 모노이며 방향 추정에 필요한 다채널 입력은 이 경로에서 확보되지 않았다. 채널 2의 0이 브라우저 변환인지 캡처 형식인지는 판정 불가. 물리 마이크 수·독립성·동기화 판정으로 쓰지 않는다.
+- 미검증: Safari 앱 결과, 카메라 끈 상태, 권한 거절·회전·잠금 복귀. 한 기기·한 브라우저·한 회의 결과로 다른 iOS/브라우저에 일반화하지 않는다.
+- 범위: 문서와 보고서 보존이며 제품 버전은 v0.3.0 유지. 코드·UI 변경 없음.
+- 검증: JSON 파싱과 프레임×4096=샘플 수 일치 확인. npm run gate PASS: 빌드·타입 검사·단위 테스트 30/30·v0.3.0 릴리즈 메타데이터. git diff --check PASS. UI/런타임 변경 없음.
 
 ### 야외 수음 가능성과 사용자 논의 기록 — 2026-09-22
 

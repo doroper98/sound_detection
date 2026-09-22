@@ -6,7 +6,7 @@
 
 **웹사이트:** [SoundField Lab 열기](https://soundfield-lab.pages.dev) · [배포 상태](docs_canonical/DEPLOYMENT.md)
 
-**iPhone Safari:** [카메라·마이크 진단](https://soundfield-lab.pages.dev/diagnostics)에서 카메라를 켜고 ‘4채널 검사 시작’을 누릅니다. 요청·설정·실제 전달된 PCM 채널 수를 분리해 기록합니다. 결과 복사/JSON 저장으로 확인할 수 있으며 영상·음성은 서버로 전송하지 않습니다. 4채널 수신만으로 4개 물리 마이크의 독립 원음을 검증한 것은 아닙니다.
+**iPhone Safari:** [카메라·마이크 진단](https://soundfield-lab.pages.dev/diagnostics)에서 카메라를 켜고 ‘4채널 검사 시작’을 누릅니다. 요청·설정·실제 전달된 PCM 채널 수를 분리해 기록합니다. 결과 복사/JSON 저장으로 확인할 수 있으며 영상·음성은 서버로 전송하지 않습니다. 4채널 수신만으로 4개 물리 마이크의 독립 원음을 검증한 것은 아닙니다. 2026-09-22 iPhone 17 Pro(iOS 27.0, Chrome for iOS) 첫 결과는 2채널 PCM 중 1채널만 신호가 있어 4채널 수신이 확인되지 않았습니다. [실기기 결과](docs_canonical/TESTING.md#iphone-17-pro-실기기-진단-첫-보고서-2026-09-22-chrome-for-ios)
 
 ![SoundField 데스크톱 화면](docs/assets/desktop.png)
 

@@ -1,6 +1,6 @@
 # 실제 카메라·수음 진단과 방향 추정 계획
 
-상태: v0.3.0에서 **실제 카메라 + 실제 PCM 음량 + 채널 진단** 구현. iPhone 17 Pro의 실제 Safari 결과는 아직 확보하지 않았다. 실제 방향 열지도와 cm 정확도는 미검증이다.
+상태: v0.3.0에서 **실제 카메라 + 실제 PCM 음량 + 채널 진단** 구현. 2026-09-22 iPhone 17 Pro(iOS 27.0, Chrome for iOS 153)의 첫 실기기 보고서를 확보했다. 세 요청 모두 2채널 PCM 중 채널 1만 신호가 있어 4채널 수신은 미확인이다. Safari 앱 자체의 결과는 아직 없다. 실제 방향 열지도와 cm 정확도는 미검증이다. [실기기 결과](#iphone-17-pro-첫-실기기-결과-2026-09-22)
 
 야외 주파수 지도, 먼 음원 거리, 500m 드론의 ±50m 목표와 이동 마이크 논의는 [야외 음향 가능성 검토](FIELD_ACOUSTICS_FEASIBILITY.md)에 별도로 기록한다.
 
@@ -27,6 +27,13 @@
 
 2026-09-22 공개 사이트 추가 점검에서는 Chromium 153.0.8010.12의 브라우저 가상 카메라/마이크를 사용해 native getUserMedia 경로를 확인했다. JavaScript 미디어 API 대체 없이 1280×720 프레임 증가, 3회 재시작, 세로/가로 viewport, 마이크 동시 사용, pagehide 이벤트 뒤 재시작과 새로고침을 확인했다. **이는 iPhone 실기기, 실제 광학 카메라, OS 화면 잠금 또는 실제 권한 거절 검증을 대체하지 않는다.** [검증 기록](TESTING.md#공개-사이트-native-캡처-경로-추가-점검-2026-09-22)
 
+### iPhone 17 Pro 첫 실기기 결과 (2026-09-22)
+
+- 환경: iOS 27.0.0, Chrome for iOS 153.0.8010.24(WebKit), 카메라 켠 상태. 후면 1280×720 30 fps 선택 확인. 원본은 [docs/reports/2026-09-22-iphone17pro-crios-diagnostics.json](../docs/reports/2026-09-22-iphone17pro-crios-diagnostics.json), 해석은 [TESTING.md](TESTING.md#iphone-17-pro-실기기-진단-첫-보고서-2026-09-22-chrome-for-ios)에 기록한다.
+- 4채널 exact·2채널 exact·기본 입력 모두 captured, PCM 2채널, 신호는 채널 1뿐(채널 2 peak 0). `channelCount` 제약을 브라우저가 인식하지 않아 exact 요청은 거절이 아니라 무시됐다.
+- 결론: 이 경로의 실효 입력은 모노다. 물리 마이크 수·독립성·동기화는 여전히 미검증이며, 이 결과를 Safari 앱이나 다른 iOS 버전으로 일반화하지 않는다.
+- 남은 검사: Safari 앱에서 같은 절차, 카메라 끈 상태, iOS 버전 입력, 손뼉 같은 뚜렷한 소리, 권한 거절·회전·잠금 복귀.
+
 ### 채널 판정
 
 | 결과 | 확인한 것 | 아직 확인하지 않은 것 |
@@ -50,7 +57,7 @@
 
 ## 실제 방향 열지도로 확장하기
 
-1. 이 진단 결과를 iPhone 17 Pro의 실제 iOS/Safari에서 확보한다.
+1. 이 진단 결과를 iPhone 17 Pro의 실제 iOS/Safari에서 확보한다. Chrome for iOS 첫 결과는 모노였으므로 Safari 앱 결과를 추가로 확보하고, 같다면 5번 항목으로 진행한다.
 2. 독립된 동시 채널, 물리 센서 위치, 채널 간 고정 지연과 자동 처리의 영향을 교정한다. 채널별 자극 실험 및 알려진 방향/거리의 음원으로 검증한다.
 3. 조건이 확보된 입력만 `packages/localization`에 연결한다. 카메라 축·화각·회전·크롭을 교정해 추정 방향을 영상에 투영한다. 가상 음원 좌표는 사용하지 않는다.
 4. 실제 실내 잡음/반사, 주파수·거리·입사각별 오차와 처리 지연을 측정해 지원 범위를 정한다. 움직이며 관측을 누적하려면 별도 자세/위치 추적이 필요하다.
@@ -60,7 +67,7 @@ Fluke처럼 실제 소리의 위치를 표시하려면 위의 하드웨어·교�
 
 ## 검증 상태와 공식 자료
 
-소프트웨어 자동 검증은 합성 입력을 사용한다. 권한 오류, 취소·중지, 채널 전달/복제, 결과 다운로드와 모바일 화면을 확인하며 실기기의 마이크 검증과 구분한다. 최초 iPhone 17 Pro 보고서를 받으면 iOS/Safari 버전과 JSON 근거를 별도로 기록한다.
+소프트웨어 자동 검증은 합성 입력을 사용한다. 권한 오류, 취소·중지, 채널 전달/복제, 결과 다운로드와 모바일 화면을 확인하며 실기기의 마이크 검증과 구분한다. 최초 iPhone 17 Pro 보고서(2026-09-22, Chrome for iOS)는 iOS 버전과 JSON 근거를 [TESTING.md](TESTING.md#iphone-17-pro-실기기-진단-첫-보고서-2026-09-22-chrome-for-ios)와 docs/reports/에 기록했다. Safari 앱 보고서는 같은 방식으로 추가한다.
 
 - [Apple iPhone 17 Pro 기술 사양](https://support.apple.com/en-my/125090): 마이크 4개 장착과 Safari의 독립 채널 노출은 별개다.
 - [MDN getUserMedia](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia): HTTPS·사용자 권한·카메라 요청.

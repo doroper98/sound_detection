@@ -169,6 +169,7 @@ struct CaptureView: View {
                         freshFPS: model.report.waveformDisplay?.recentFreshFPS ?? 0)
                     Text(model.report.status).font(.caption).frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityIdentifier("liveCaptureStatus")
+                        .accessibilityValue("분석 \(model.report.analyzedFrames)구간")
                     Picker("카메라와 마이크 방향", selection: $model.source) {
                         Text("후면").tag("back")
                         Text("전면").tag("front")

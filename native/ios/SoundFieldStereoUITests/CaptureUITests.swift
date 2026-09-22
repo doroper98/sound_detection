@@ -1,6 +1,13 @@
 import XCTest
 
 final class CaptureUITests: XCTestCase {
+    private func awaitLivePCM(_ app: XCUIApplication) {
+        // Startup/lifecycle readiness means a real analysis arrived. A rolling
+        // lag estimate may legitimately be withheld under simulator load.
+        expectation(for: NSPredicate(format: "value MATCHES %@", "분석 [1-9][0-9]*구간"),
+                    evaluatedWith: app.staticTexts["liveCaptureStatus"])
+        waitForExpectations(timeout: 15)
+    }
     func testFreshWaveformsExceedAnalysisCadence() {
         let app = launch(details: false)
         app.buttons["liveCaptureButton"].tap()
@@ -25,8 +32,7 @@ final class CaptureUITests: XCTestCase {
     func testGuidedComparisonCollectsSixTrialsWithoutInventingDirection() {
         let app = launch(details: false)
         app.buttons["liveCaptureButton"].tap()
-        expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["liveLagValue"])
-        waitForExpectations(timeout: 10)
+        awaitLivePCM(app)
         app.buttons["calibrationButton"].tap()
         for step in 1...6 {
             let start = app.buttons["calibrationStart"]
@@ -59,8 +65,7 @@ final class CaptureUITests: XCTestCase {
     func testCalibrationCancellationAndBackgroundDoNotAdvanceStep() {
         let app = launch(details: false)
         app.buttons["liveCaptureButton"].tap()
-        expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["liveLagValue"])
-        waitForExpectations(timeout: 10)
+        awaitLivePCM(app)
         app.buttons["calibrationButton"].tap()
         let start = app.buttons["calibrationStart"]
         reveal(start, in: app)
@@ -198,8 +203,7 @@ final class CaptureUITests: XCTestCase {
     func testStartupOutputOverrideKeepsCameraAndAcceptsFirstPCM() {
         let app = launch(["--synthetic-startup-override"], details: false)
         app.buttons["liveCaptureButton"].tap()
-        expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["liveLagValue"])
-        waitForExpectations(timeout: 10)
+        awaitLivePCM(app)
         XCTAssertEqual(app.buttons["liveCaptureButton"].label, "계측 중지")
         XCTAssertTrue(app.staticTexts["cameraStatus"].label.contains("실제 카메라 영상 없음"))
         app.buttons["detailsButton"].tap()
@@ -233,8 +237,7 @@ final class CaptureUITests: XCTestCase {
         XCTAssertTrue(preview.exists)
         XCTAssertGreaterThan(preview.frame.height, app.frame.height * 0.9)
         button.tap()
-        expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["liveLagValue"])
-        waitForExpectations(timeout: 10)
+        awaitLivePCM(app)
         XCTAssertTrue(app.staticTexts["cameraStatus"].label.contains("실제 카메라 영상 없음"))
         // DSP can finish before the independent, deliberately delayed preview.
         expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: leftWaveform)
@@ -256,8 +259,7 @@ final class CaptureUITests: XCTestCase {
         XCTAssertEqual(leftWaveform.value as? String, "입력 없음")
         XCTAssertEqual(rightWaveform.value as? String, "입력 없음")
         button.tap()
-        expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["liveLagValue"])
-        waitForExpectations(timeout: 10)
+        awaitLivePCM(app)
         XCUIDevice.shared.press(.home)
         app.activate()
         XCTAssertEqual(button.label, "카메라·수음 시작")

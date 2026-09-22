@@ -45,4 +45,15 @@ Remove-Item Env:PLAYWRIGHT_BASE_URL
 - 실제 iPhone/iPad Safari 및 Android의 touch 회전·높이 입력·내보내기.
 - 낮은 GPU 성능, WebGL 비활성 환경의 안내.
 - 같은 평면 관측에 남는 고도 모호성, 단일 주파수에서 간격 확대 시 후보 증가.
-- 실제 수음·장치 정확도는 현 버전 범위 밖이다. 소프트웨어 테스트를 실측 정확도 증거로 사용하지 않는다.
+- 실제 수음 접근성은 /diagnostics에서 기기별로 확인한다. 장치의 위치 정확도는 미검증이며 소프트웨어 테스트를 실측 정확도 증거로 사용하지 않는다.
+
+## v0.3.0 추가 검증
+
+- 단위 테스트 30개: 무음/복제/상이한 채널, 요청과 PCM 불일치 판정, 실제 Worklet 코드의 가변 블록·채널 변경 처리, 취소 후 늦게 응답한 입력 해제.
+- Chromium E2E 총 13개: 기존 4개 + 설정 축소/미리보기/패널 넘침 1개 + 실제 입력 UI 8개. 캡처는 합성 fixture다. 카메라 프레임, 스트림 해제, 채널 요청/전달, 권한 오류/미지원, JSON의 민감 데이터 제외를 검증한다.
+- Chromium의 MediaStreamAudioSource 변환이 1/4채널 fixture를 2채널로 만들므로 그 경로는 실제 2채널을 기대한다. 4채널·복제·설정 무시 UI 테스트는 해당 경계에서 native Web Audio 소스를 주입하고 실제 Worklet/분석을 실행한다. 센서 입력이나 Safari 결과로 간주하지 않는다.
+- Windows Playwright WebKit 26.6은 캡처 API가 없어 5개 수음 시나리오를 수행하지 못했다. 미지원 오류/보고서 다운로드/모바일 넘침 시나리오 1개는 PASS. 실제 iPhone의 Safari와 다른 환경이다.
+
+WebKit의 미지원 처리 재현: `npx playwright install webkit` 후 PowerShell에서 `$env:PLAYWRIGHT_BROWSER='webkit'`를 설정하고 `npx playwright test tests/e2e/diagnostics.spec.ts --grep 'unsupported capture' --output test-results-webkit`를 실행한다. 기본 CI 브라우저는 Chromium이다.
+
+실기기에서는 [검사 순서](LIVE_CAMERA_PLAN.md)대로 iOS 버전과 진단 보고서를 확보한다. 카메라 동시 사용 유무, 권한 최초/거절, 화면 회전, 탭 숨김 후 캡처 해제도 확인한다.

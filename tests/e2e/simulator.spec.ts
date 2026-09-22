@@ -63,6 +63,7 @@ test('places a source, links acoustics, rotates the phone, changes microphone mo
   const initialAzimuth = await page.locator('.phone-bottom').textContent();
   await page.mouse.move(bounds.x + 100, bounds.y + 160); await page.mouse.down(); await page.mouse.move(bounds.x + 160, bounds.y + 175, { steps: 8 }); await page.mouse.up();
   await expect(page.locator('.phone-bottom')).not.toHaveText(initialAzimuth!);
+  await page.getByRole('button', { name: '마이크', exact: true }).click();
   await page.getByRole('button', { name: '마이크 1개', exact: true }).click(); await page.getByRole('button', { name: '마이크 추정', exact: true }).click();
   await expect(page.getByText('방향 정보 없음', { exact: true })).toBeVisible();
   await analysis();
@@ -74,13 +75,13 @@ test('places a source, links acoustics, rotates the phone, changes microphone mo
   await analysis();
   await page.getByRole('button', { name: /관측 저장/ }).click();
   await expect(page.getByRole('button', { name: /관측 저장/ })).toContainText('1/12');
-  await settings(); await page.getByLabel('음원 높이', { exact: true }).fill('1.5');
+  await settings(); await page.getByRole('button', { name: '공간·표시', exact: true }).click(); await page.getByLabel('음원 높이', { exact: true }).fill('1.5');
   await expect(page.locator('.dock-tabs').getByRole('button', { name: /관측/ })).toContainText('0');
-  await page.getByLabel('가상 장치 프리셋').selectOption('ipad');
+  await page.getByRole('button', { name: '마이크', exact: true }).click(); await page.getByLabel('가상 장치 프리셋').selectOption('ipad');
   await expect(page.getByLabel('마이크 간격', { exact: true })).toHaveValue('20');
   await analysis();
   await page.getByRole('button', { name: /관측 저장/ }).click();
-  await settings(); await page.getByLabel('휴대폰 높이', { exact: true }).fill('2.5'); await analysis();
+  await settings(); await page.getByRole('button', { name: '공간·표시', exact: true }).click(); await page.getByLabel('휴대폰 높이', { exact: true }).fill('2.5'); await analysis();
   await page.getByRole('button', { name: /관측 저장/ }).click();
   await page.getByText('좌표로 정밀 배치', { exact: true }).click();
   await page.getByLabel('휴대폰 X 좌표', { exact: true }).fill('-2');
@@ -96,12 +97,34 @@ test('places a source, links acoustics, rotates the phone, changes microphone mo
   await page.getByRole('button', { name: '닫기', exact: true }).click();
   await page.getByRole('button', { name: '초기화', exact: true }).click();
   await settings();
+  await page.getByRole('button', { name: '음원', exact: true }).click();
   await expect(page.getByLabel('주파수', { exact: true })).toHaveValue('1000');
+  await page.getByRole('button', { name: '마이크', exact: true }).click();
   await expect(page.getByRole('button', { name: '마이크 2개', exact: true })).toHaveClass('selected');
   expect(errors).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight)).toBe(true);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: 'test-results/desktop.png', fullPage: true });
+});
+
+test('compact controls preserve scene space on laptop and phone', async ({ page }) => {
+  for (const viewport of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport); await page.goto('/');
+    if (viewport.width < 760) {
+      await page.getByRole('button', { name: '3D 공간', exact: true }).click();
+      await page.getByRole('button', { name: '실험 설정', exact: true }).click();
+    }
+    for (const tab of ['음원', '마이크', '공간·표시']) {
+      await page.getByRole('button', { name: tab, exact: true }).click();
+      const panel = (await page.locator('.parameters').boundingBox())!;
+      const scene = (await page.getByTestId('spatial-canvas').boundingBox())!;
+      expect(panel.height).toBeLessThanOrEqual(viewport.width < 760 ? 180 : 115);
+      expect(scene.height).toBeGreaterThan(360);
+      expect(await page.locator('.parameters').evaluate(el => el.scrollHeight <= el.clientHeight && el.scrollWidth <= el.clientWidth)).toBe(true);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight && document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: `test-results/compact-${viewport.width}.png` });
+  }
 });
 
 test('has a functional heatmap and accessible guide on mobile', async ({ page }) => {

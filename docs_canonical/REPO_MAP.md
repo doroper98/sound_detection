@@ -3,6 +3,11 @@
 | 경로 | 역할 |
 |---|---|
 | src/App.tsx | 실험 상태, 입력 패널, 관측, 내보내기, 가이드/릴리즈 |
+| src/main.tsx | / 시뮬레이터와 /diagnostics 실제 입력 화면의 lazy 분리 |
+| src/live/ | 실제 카메라, 권한/캡처 수명 관리, PCM 채널 진단, JSON 내보내기 |
+| public/audio-diagnostics.worklet.js | 입력 PCM 채널 수를 유지하는 음성 수집, 무음 출력 |
+| tests/live.test.ts | 채널/복제/무음 판정, Worklet 전송, 늦은 권한 응답 취소 |
+| tests/e2e/diagnostics.spec.ts | 합성 입력의 UI/캡처 해제/채널 불일치 검증, 실기기 검증 아님 |
 | src/acoustics.ts | 시뮬레이터의 물리 기준값·장치 프리셋·센서 배치, 독립 엔진의 호출 범위 |
 | packages/localization/ | 3D 화면과 독립된 PCM/DSP/위치 추정 패키지, API 문서와 CLI replay |
 | src/simulation.ts | 정답 위치를 아는 유일한 PCM 합성 어댑터 |

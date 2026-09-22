@@ -32,7 +32,7 @@ flowchart LR
 
 - 정답 음압과 추정 적합도를 별도 모드로 분리한다. `estimate()`와 `likelihood()`에는 음원 정답 좌표를 전달하지 않는다.
 - `src/simulation.ts`만 정답에서 마이크 PCM을 생성한다. `measureFrame()`에는 PCM과 마이크 배치만 제공한다. 이론 시간차로 만든 fixture는 테스트 파일에만 남아 있다. UI의 오차 비교는 검증용 정답을 사용한다.
-- 원음·카메라·실제 마이크에 접근하지 않는다. 미리듣기는 출력 전용이다. 측정 신호 모델과 청각 미리듣기 신호가 같다고 주장하지 않는다.
+- 시뮬레이터는 실제 입력에 접근하지 않는다. 별도 /diagnostics 화면에서 시작 버튼을 누른 경우만 실제 카메라/마이크를 연다. 미리듣기는 출력 전용이다.
 - 3D renderer의 생명주기와 React 입력 갱신을 분리한다. ResizeObserver로 크기를 맞추고 해제 시 geometry/material/context를 정리한다.
 - 전화 화면은 72×126개의 시야 광선에서 여러 거리의 적합도를 평가한다. 물체 geometry는 배경 렌더링에만 사용한다. 숨겨진 모바일 탭의 0×0 resize는 무시해 NaN camera를 방지한다.
 - 열지도는 PCM RMS와 방향 적합도를 고정 척도로 표시한다. 볼륨 변화는 색·면적을 바꾸지만 표시 로직이 추정 지연이나 후보 탐색을 바꾸지 않는다. src/heatmap.ts는 source/scene 입력이 없다.
@@ -42,7 +42,11 @@ flowchart LR
 - v2 JSON에는 직렬화된 engineInput/engineOptions/searchVolume을 포함한다. SDK의 CLI replay로 화면 없이 분석할 수 있다.
 - 전체 페이지는 100dvh에 맞춘다. 데스크톱은 하단 설정/관측 탭, 모바일은 공간/스캔 탭과 열린 동안에도 미리보기를 유지하는 설정 패널을 사용한다. 긴 내용은 패널 내부에서만 스크롤한다.
 - 폰 프리셋은 실제 마이크 캡처 설정이 아니다. 레이아웃/예시 간격일 뿐이다.
+- 시뮬레이터와 실제 진단은 경로별 lazy chunk로 분리한다. 진단은 source/scene/DSP 엔진을 import하지 않으며 실제 영상에 임의 위치 열지도를 만들지 않는다.
+- 진단 흐름은 getUserMedia → MediaStreamAudioSourceNode → AudioWorklet(입력 채널 수 유지) → 채널 RMS/차이/상관 통계다. Web Audio 연결 전 브라우저가 혼합·복제할 수 있어 getSettings, getCapabilities와 PCM 수를 별개로 기록한다. 4채널로 강제 upmix하지 않는다. 출력은 항상 무음이다.
+- 취소 후 늦게 도착한 권한 응답도 track.stop() 처리한다. 검사별 스트림과 AudioContext를 정리하며 페이지 숨김/종료 시 모든 캡처를 해제한다. 다운로드에는 원음·영상·deviceId·groupId를 포함하지 않는다.
+- 설정은 데스크톱 112px, 모바일 174px로 줄이고 세부 항목을 탭으로 선택한다. 관측 패널은 펼쳤을 때만 별도 높이를 사용한다.
 
 ## 보안 경계
 
-정적 클라이언트 앱이며 서버 저장·API 호출이 없다. Cloudflare 인증은 CLI 또는 GitHub Actions secrets에만 둔다. 브라우저에는 시크릿을 제공하지 않는다. `public/_headers`에서 CSP, iframe 차단, MIME 보호, 카메라/마이크 차단을 설정한다. 가이드의 외부 링크는 GitHub 문서로만 연결된다. 폰트는 앱과 함께 배포한다.
+정적 클라이언트 앱이며 서버 저장·API 호출이 없다. Cloudflare 인증은 CLI 또는 GitHub Actions secrets에만 둔다. 브라우저에는 시크릿을 제공하지 않는다. `public/_headers`에서 CSP, iframe 차단, MIME 보호, 동일 origin의 카메라/마이크만 허용한다. 실제 브라우저 권한 동의가 별도로 필요하다. 폰트와 Worklet은 앱과 같은 사이트에서 제공한다.

@@ -30,6 +30,10 @@ flowchart LR
 
 ## 설계 결정
 
+- v0.4.0 `/listen`: 기존 카메라 화면과 별도로 `monitorMicrophone`이 기본 오디오 입력을 연속 수집한다. 동일 채널 보존 Worklet → `analyzeChannels` / 선택한 채널의 `analyzeSpectrum` → 스펙트럼·숫자 표시. 최신 통계 하나만 유지하고 PCM 이력·녹음·오디오 재생·서버 업로드는 없다.
+- `spectrum.ts`는 PCM·샘플률·대역만 받는 순수 함수다. 위치 SDK·가상 source·카메라 축을 받지 않는다. 4096개 샘플에서 평균 제거/주기 Hann/실수 FFT, 창 에너지 보정 단측 power를 계산한다. Nyquist bin은 두 배 하지 않는다.
+- 연속 입력은 Stop/abort, 페이지 숨김/종료, 트랙 ended, processor error, 8초 PCM 무응답에 정리한다. getUserMedia 권한 대기는 별도이며 사용자가 취소한 뒤 늦게 허용하면 즉시 트랙을 해제한다.
+
 - 정답 음압과 추정 적합도를 별도 모드로 분리한다. `estimate()`와 `likelihood()`에는 음원 정답 좌표를 전달하지 않는다.
 - `src/simulation.ts`만 정답에서 마이크 PCM을 생성한다. `measureFrame()`에는 PCM과 마이크 배치만 제공한다. 이론 시간차로 만든 fixture는 테스트 파일에만 남아 있다. UI의 오차 비교는 검증용 정답을 사용한다.
 - 시뮬레이터는 실제 입력에 접근하지 않는다. 별도 /diagnostics 화면에서 시작 버튼을 누른 경우만 실제 카메라/마이크를 연다. 미리듣기는 출력 전용이다.

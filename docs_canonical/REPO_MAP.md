@@ -5,6 +5,10 @@
 | src/App.tsx | 실험 상태, 입력 패널, 관측, 내보내기, 가이드/릴리즈 |
 | src/main.tsx | / 시뮬레이터와 /diagnostics 실제 입력 화면의 lazy 분리 |
 | src/live/ | 실제 카메라, 권한/캡처 수명 관리, PCM 채널 진단, JSON 내보내기 |
+| src/live/LiveSpectrum.tsx | /listen 연속 수음 UI, 주파수·채널 선택, 통계 JSON |
+| src/live/monitor.ts | 연속 입력 수집과 취소·장치 종료·무응답 정리 |
+| src/live/spectrum.ts | DOM/위치 정보 없는 주파수·대역 RMS 분석 |
+| tests/spectrum.test.ts, tests/monitor.test.ts | 주파수·진폭·대역 분리·무음·포화, 캡처 수명 검증 |
 | public/audio-diagnostics.worklet.js | 입력 PCM 채널 수를 유지하는 음성 수집, 무음 출력 |
 | tests/live.test.ts | 채널/복제/무음 판정, Worklet 전송, 늦은 권한 응답 취소 |
 | tests/e2e/diagnostics.spec.ts | 합성 입력의 UI/캡처 해제/채널 불일치 검증, 실기기 검증 아님 |

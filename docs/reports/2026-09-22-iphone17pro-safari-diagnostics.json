@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 1,
+  "appVersion": "0.3.0",
+  "startedAt": "2026-09-22T09:05:59.558Z",
+  "exportedAt": "2026-09-22T09:06:32.419Z",
+  "declaredDevice": "iPhone 17 Pro",
+  "declaredOs": "",
+  "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1",
+  "secureContext": true,
+  "status": "검사가 끝나 마이크를 해제했습니다. 결과를 복사해 공유할 수 있습니다.",
+  "environment": {
+    "getUserMedia": true,
+    "audioContext": true,
+    "audioWorkletNode": true
+  },
+  "supportedConstraints": {
+    "aspectRatio": true,
+    "backgroundBlur": true,
+    "deviceId": true,
+    "displaySurface": true,
+    "echoCancellation": true,
+    "facingMode": true,
+    "frameRate": true,
+    "groupId": true,
+    "height": true,
+    "powerEfficient": true,
+    "sampleRate": true,
+    "sampleSize": true,
+    "torch": true,
+    "volume": true,
+    "whiteBalanceMode": true,
+    "width": true,
+    "zoom": true
+  },
+  "cameraActiveAtProbeStart": true,
+  "cameraSettings": {
+    "width": 1280,
+    "height": 720,
+    "frameRate": 30,
+    "facingMode": "environment"
+  },
+  "completed": true,
+  "attempts": [
+    {
+      "requested": 4,
+      "status": "captured",
+      "observedChannelCounts": [
+        2
+      ],
+      "frameCount": 20,
+      "sampleCount": 81920,
+      "activeChannels": [
+        1
+      ],
+      "duplicatePairs": [],
+      "settings": {
+        "sampleRate": 48000,
+        "echoCancellation": false
+      },
+      "capabilities": {
+        "sampleRate": {
+          "max": 96000,
+          "min": 8000
+        }
+      },
+      "pcmSampleRate": 48000,
+      "latest": {
+        "channels": [
+          {
+            "levelDbfs": -58.14895368120344,
+            "peak": 0.004759124480187893,
+            "active": true
+          },
+          {
+            "levelDbfs": null,
+            "peak": 0,
+            "active": false
+          }
+        ],
+        "pairs": [
+          {
+            "channels": [
+              1,
+              2
+            ],
+            "correlation": null,
+            "relativeDifference": null,
+            "duplicateSuspected": false
+          }
+        ]
+      }
+    },
+    {
+      "requested": 2,
+      "status": "captured",
+      "observedChannelCounts": [
+        2
+      ],
+      "frameCount": 20,
+      "sampleCount": 81920,
+      "activeChannels": [
+        1
+      ],
+      "duplicatePairs": [],
+      "settings": {
+        "sampleRate": 48000,
+        "echoCancellation": false
+      },
+      "capabilities": {
+        "sampleRate": {
+          "max": 96000,
+          "min": 8000
+        }
+      },
+      "pcmSampleRate": 48000,
+      "latest": {
+        "channels": [
+          {
+            "levelDbfs": -53.705978326583946,
+            "peak": 0.008104841224849224,
+            "active": true
+          },
+          {
+            "levelDbfs": null,
+            "peak": 0,
+            "active": false
+          }
+        ],
+        "pairs": [
+          {
+            "channels": [
+              1,
+              2
+            ],
+            "correlation": null,
+            "relativeDifference": null,
+            "duplicateSuspected": false
+          }
+        ]
+      }
+    },
+    {
+      "requested": "default",
+      "status": "captured",
+      "observedChannelCounts": [
+        2
+      ],
+      "frameCount": 20,
+      "sampleCount": 81920,
+      "activeChannels": [
+        1
+      ],
+      "duplicatePairs": [],
+      "settings": {
+        "sampleRate": 48000,
+        "echoCancellation": false
+      },
+      "capabilities": {
+        "sampleRate": {
+          "max": 96000,
+          "min": 8000
+        }
+      },
+      "pcmSampleRate": 48000,
+      "latest": {
+        "channels": [
+          {
+            "levelDbfs": -51.65983992204311,
+            "peak": 0.010037432424724102,
+            "active": true
+          },
+          {
+            "levelDbfs": null,
+            "peak": 0,
+            "active": false
+          }
+        ],
+        "pairs": [
+          {
+            "channels": [
+              1,
+              2
+            ],
+            "correlation": null,
+            "relativeDifference": null,
+            "duplicateSuspected": false
+          }
+        ]
+      }
+    }
+  ],
+  "audioRoute": "getUserMedia → MediaStreamAudioSourceNode → AudioWorklet",
+  "verdict": "4채널 안정 수신 미확인",
+  "physicalMicrophonesVerified": false,
+  "hardwareSynchronizationVerified": false,
+  "localizationEnabled": false,
+  "note": "Browser PCM channel count is not physical microphone count. No camera frames, voice samples, device IDs, or group IDs are included. No source coordinates are used."
+}

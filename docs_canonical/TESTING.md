@@ -1,5 +1,22 @@
 # 검증
 
+## v0.4.0 연속 주파수 분석
+
+로컬 Gate PASS, Chromium E2E 16/16 PASS. 화면 조정 후 연속 분석 1/1 추가 PASS. 390×844/1366×768에서 페이지 양축 넘침 없음, 카메라·그래프·전체/대역/peak 수치가 함께 보이는지 확인했다. 합성 입력 스크린샷은 `docs/assets/live-spectrum-mobile.png`, `live-spectrum-desktop.png`다.
+
+- 40개 단위 테스트: 기존 30개 + 스펙트럼 7개 + 연속 캡처 수명 3개. 44.1/48 kHz의 1 kHz tone peak 오차 한 bin 이내, 0.1 진폭 RMS 약 −23.01 dBFS, 10배 진폭 20 dB, 저역/고역 분리, 무음·DC·포화·Nyquist를 검증한다.
+- 모의 타이머와 미디어 객체로 무응답 timeout, 트랙 ended, 사용자 Stop 뒤 트랙/포트/타이머 정리를 검증한다.
+- 브라우저 시나리오: 카메라 병행 300 Hz 합성 입력/무음 CH 2, 대역/채널 선택, 통계 JSON, 정지·재시작·pagehide, 권한 거절/미지원, 늦은 권한 허용 취소. 실제 AudioWorklet/FFT를 실행하며 물리 마이크 성능 검증으로 간주하지 않는다.
+- iPhone의 연속 분석, 실제 OS 잠금·회전·수음 처리·성능은 사용자의 후속 실기기 검증 대상이다.
+
+## Safari 실기기 보고서 추가 (2026-09-22)
+
+[원본 JSON](../docs/reports/2026-09-22-iphone17pro-safari-diagnostics.json)은 사용자가 제공한 값이며 새 자동 테스트 결과가 아니다. v0.3.0, startedAt `09:05:59.558Z`, exportedAt `09:06:32.419Z`, 사용자 입력 기종 iPhone 17 Pro, OS 입력 공란. UA의 `iPhone OS 18_7`와 `Version/27.0`을 그대로 기록하고 실제 iOS 버전을 단정하지 않는다.
+
+후면 카메라 1280×720/30 fps를 켠 상태에서 4채널 exact·2채널 exact·기본 모두 captured. 각 20프레임/81,920 samples/48 kHz, 관측 2채널, 활성 채널은 CH 1뿐이다. CH 1 최종 레벨은 각각 −58.15/−53.71/−51.66 dBFS, CH 2 peak는 모두 0이다. 상관은 null, 물리 독립성·동기화·localization은 false다. channelCount 제약·설정·capability는 미보고다.
+
+Chrome과 정성적으로 같으며 두 경로에서 위치 추정에 필요한 독립 다채널은 확보되지 않았다. 카메라 끈 상태와 네이티브 API의 가능성을 이 결과로 판정하지 않는다. 아래의 최초 Chrome 기록은 당시 확인 범위로 보존한다.
+
 ## 자동 Gate
 
 ```sh

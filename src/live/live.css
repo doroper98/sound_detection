@@ -56,6 +56,23 @@
 .probe-details pre { font-size: 10px; overflow: auto; padding: 10px; border-radius: 6px; background: #f6f8f5; }
 .live-privacy { font-size: 10px; line-height: 1.9; margin-top: 15px; color: #8a998d; }
 .live-link { white-space: nowrap; }
+.live-mode-nav { display: flex; gap: 6px; padding-bottom: 12px; flex-shrink: 0; }
+.live-mode-nav a { font-size: 12px; padding: 8px 15px; border-radius: 7px; color: #5b7565; border: 1px solid #d4e2d8; }
+.live-mode-nav a[aria-current] { background: #2e6650; color: white; border-color: #2e6650; }
+.spectrum-actions { margin-top: 15px; }
+.live-listening .live-status { min-height: 0; margin: 8px 0 10px; font-size: 10px; line-height: 1.5; }
+.spectrum-selects { display: grid; grid-template-columns: 1fr 1.35fr; gap: 10px; }
+.spectrum-selects label { min-width: 0; font-size: 10px; color: #708475; }
+.spectrum-selects select { width: 100%; margin-top: 6px; padding: 9px 4px; border: 1px solid #dce6df; border-radius: 6px; background: #fcfefc; color: #294c3a; font: inherit; font-size: 12px; }
+.spectrum-plot { margin: 14px 0; padding: 8px 8px 10px; border-radius: 10px; background: #15372e; }
+.spectrum-plot svg { width: 100%; max-height: 145px; display: block; }
+.spectrum-plot text { font-size: 9px; fill: #b3d2bc; }
+.spectrum-plot figcaption { text-align: center; color: #b3d2bc; font-size: 9px; }
+.spectrum-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+.spectrum-metrics > div { display: flex; flex-direction: column; gap: 5px; padding: 10px 5px; background: #f2f7f3; border-radius: 7px; text-align: center; }
+.spectrum-metrics span, .spectrum-metrics small { font-size: 9px; color: #688171; }
+.spectrum-metrics strong { font-size: 20px; color: #2d5c44; font-variant-numeric: tabular-nums; font-weight: 600; }
+.spectrum-warning { background: #fff3e1; padding: 9px; border-radius: 6px; color: #855324; font-size: 11px; }
 @media (max-width: 760px) {
   .live-page { padding: 0 12px 10px; }
   .live-header { height: 45px; }
@@ -65,6 +82,14 @@
   .live-title h1 { font-size: 18px; }
   .live-title p { font-size: 9px; margin-top: 3px; }
   .live-title .eyebrow, .live-target { display: none; }
+  .live-mode-nav { padding-bottom: 8px; }
+  .live-mode-nav a { font-size: 10px; padding: 6px 12px; }
+  .spectrum-selects select { font-size: 16px; }
+  .live-listening .live-grid { grid-template-rows: minmax(130px, 24dvh) minmax(0, 1fr); }
+  .live-listening .spectrum-plot { margin: 10px 0; padding: 5px; }
+  .live-listening .spectrum-plot svg { max-height: 123px; }
+  .live-listening .spectrum-actions { margin-top: 10px; }
+  .live-listening .spectrum-metrics > div { padding: 7px 4px; }
   .live-grid { display: grid; grid-template-columns: 1fr; grid-template-rows: minmax(140px, 30dvh) minmax(0, 1fr); gap: 10px; }
   .live-preview { border-radius: 12px; }
   .live-preview-top { top: 8px; left: 9px; right: 9px; }

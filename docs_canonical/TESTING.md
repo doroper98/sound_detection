@@ -2,9 +2,13 @@
 
 ## 연속 네이티브 관측 추가 (EXP-010)
 
+**자동 검증 PASS (2026-09-22):** 코드 `9397574`, [Native iOS CI](https://github.com/doroper98/sound_detection/actions/runs/35721177466). Xcode 16.4/iphoneos Release 빌드, Swift 20/20, iPhone 16 Pro/iOS 18.5 시뮬레이터 UI 5/5, unsigned IPA 생성. [결과·파일 해시](../docs/reports/2026-09-22-native-continuous-verification.json) · [합성 연속 관측 화면](../docs/assets/native-continuous-synthetic.png). [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35721177518)도 Gate/단위 40/40·Chromium E2E 16/16 PASS.
+
 - Swift: 단발 이상치의 중앙값 안정성, 0.5초 내 계단 변화 반영, 최신 무음 즉시 보류, stale/stop/restart, 큰 산포 표시, 유효 비율, 버퍼 상한/역행 시각, 자세의 근접 시각·90° 회전·오래된 값 거부·quaternion 부호/배율 동치·잘못된 quaternion 검증을 추가한다.
 - UI: 연속 중앙값과 기기 회전 표시·변화 그래프, 중지 후 누적값 보류를 기존 시작/공유/백그라운드 흐름에 추가한다. 합성 PCM과 합성 quaternion은 표시·보고서에 명시한다.
 - 포장: 검증한 Release/iphoneos 실행 파일을 Payload 구조의 unsigned IPA로 만든다. Info.plist 플랫폼·CRC·SHA-256을 확인하며 개인 프로비저닝 프로필이 있으면 포장을 거부한다.
+- 내려받은 IPA를 Windows에서 다시 검사해 SHA-256·CRC 일치, Mach-O arm64 실행 파일과 iOS 플랫폼(시뮬레이터 아님), 실제 Info.plist와 메타데이터 일치, DEBUG 합성 입력 실행 인자 제외를 확인했다. 파일 크기는 191,303바이트다. CI의 `sourceCommit`은 PR merge ref이고 결과 JSON에 별도로 PR head를 남겼다.
+- 첫 실행 `35720277567`은 UI 4/5: 공유창 뒤의 버튼을 앱 스크롤로 드러내려는 자동 조작이 실패했다. 공유창이 열린 시점의 수음 중지·누적값 보류를 직접 검증하도록 수정 후 전체 UI 5/5 PASS. 공유창 닫기 제스처 성공으로 기록하지 않는다.
 - 실제 Core Motion과 오디오 시각 대응, Windows 개인 서명 설치, 실제 iPhone 17 Pro 수음·추정 정확도는 자동 합성 테스트에 포함되지 않는다.
 
 ## iPhone 네이티브 스테레오 진단 (EXP-009)

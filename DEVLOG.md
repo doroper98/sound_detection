@@ -63,6 +63,8 @@ EXP-010 · REQ-NATIVE-004/005/006 · SC-25/26/27.
 - 배포 준비: Mac CI에서 검증한 Release/iphoneos .app을 unsigned IPA로 포장하고 CRC·플랫폼·실행 파일·SHA-256을 검증. Windows Sideloadly와 사용자 Apple 계정으로 개인 서명할 수 있도록 안내. 기업 링크 설치는 별도 Apple 배포 서명이 필요하며 설치 경험만으로 자격이 생기지 않음. 비밀번호·인증서 수집/외부 전송 없음.
 - 검증: 로컬 웹 Gate 40/40 PASS. 신규 Swift 누적·시각·자세 테스트 10개와 기존 10개, iOS UI·IPA 포장은 Mac CI에서 검증 예정. 설치 성공·실기기 스테레오·정밀도와 구분해 후속 결과 기록.
 - 첫 Mac CI `35720277567`: Swift 20/20 및 Release 기기 빌드 PASS, UI 4/5. 공유 검사에서 수음 중지 상태 검사는 통과했지만, 열린 네이티브 공유창을 앱 스크롤로 닫으려 하여 뒤쪽 시작 버튼의 hittable 검사가 실패했다. 공유창이 열린 시점에 이미 수음과 누적값이 중지되어야 하는 요구로 검사를 구체화해 공유창 존재·중지 버튼 상태·공유 중지 사유·누적값 보류를 함께 확인하도록 수정했다. 공유창 닫기 제스처 검증과 구분한다.
+- 재검증 PASS: 코드 `9397574`, Native iOS `35721177466`에서 Swift 20/20·iPhone 16 Pro/iOS 18.5 UI 5/5·Xcode 16.4 Release 기기 빌드·unsigned IPA 포장 통과. Verify `35721177518`에서 Gate/단위 40/40·Chromium E2E 16/16 통과. 합성 연속 관측 화면을 직접 검토했다.
+- 전달 검사: IPA 191,303바이트, SHA-256 `49b5fef58a2a0487e5d406511d04761b6061858752c1e34034f088f6ee840592`. Windows에서 ZIP CRC·해시·Info.plist·arm64 Mach-O iOS 플랫폼과 DEBUG fixture 인자 제외를 재확인했다. 영구 결과는 `docs/reports/2026-09-22-native-continuous-verification.json`; 개인 서명 설치와 실제 수음·회전 센서는 아직 미검증이다.
 
 ### iPhone 네이티브 스테레오 입력 — 2026-09-22
 

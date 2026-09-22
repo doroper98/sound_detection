@@ -61,6 +61,7 @@ export default function SpatialView(props: Props) {
     renderer.domElement.addEventListener('pointerdown', onDown); renderer.domElement.addEventListener('pointerup', onUp);
     const resize = new ResizeObserver(() => {
       const { width, height } = container.getBoundingClientRect();
+      if (width < 1 || height < 1) return;
       renderer.setSize(width, height); camera.aspect = width / height; camera.updateProjectionMatrix();
     }); resize.observe(container);
     let frame = 0; let elapsed = 0; let lastTime = 0;
@@ -75,7 +76,7 @@ export default function SpatialView(props: Props) {
         ring.position.copy(sourceMarker.position); ring.scale.setScalar(0.5 + phase * 4);
         ring.material.opacity = (1 - phase) * 0.45;
       });
-      phone.position.set(...receiver.position); phone.rotation.set(0, -receiver.yaw, 0);
+      phone.position.set(...receiver.position); phone.rotation.set(receiver.pitch, -receiver.yaw, 0, 'YXZ');
       const pair = microphones(receiver);
       pairMarkers.forEach((marker, index) => { marker.position.set(...pair[index]); marker.visible = receiver.count === 2; });
       baseline.geometry.setFromPoints(pair.map(position => new THREE.Vector3(...position))); baseline.visible = receiver.count === 2;

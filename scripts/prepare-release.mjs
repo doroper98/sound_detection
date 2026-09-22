@@ -16,6 +16,10 @@ const readme = read('README.md');
 pkg.version = version; lock.version = version; lock.packages[''].version = version;
 writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
 writeFileSync('package-lock.json', JSON.stringify(lock, null, 2) + '\n');
+if (existsSync('packages/localization/package.json')) {
+  const engine = JSON.parse(read('packages/localization/package.json')); engine.version = version;
+  writeFileSync('packages/localization/package.json', JSON.stringify(engine, null, 2) + '\n');
+}
 writeFileSync('README.md', readme.replace(/현재 버전: \d+\.\d+\.\d+/, `현재 버전: ${version}`));
 writeFileSync(notesPath, `# v${version} — ${date}\n\n${summary}\n\n## 변경\n\n- TODO: 사용자에게 달라진 동작을 구체적으로 기록합니다.\n\n## 검증\n\n- TODO: CLI Gate와 브라우저 검증 결과를 기록합니다.\n\n## 제한\n\n- TODO: 해당 버전의 알려진 제한을 기록합니다.\n`);
 writeFileSync('CHANGELOG.md', changelog.replace('<!-- releases -->', `<!-- releases -->\n\n## [${version}] — ${date}\n\n- ${summary}\n- [릴리즈 노트](docs/releases/v${version}.md)`));

@@ -50,6 +50,26 @@
 
 <!-- improvements -->
 
+### v0.2.0 — 2026-09-22
+
+| 변경 | 내용 |
+|---|---|
+| 릴리즈 | 3D 화면과 독립된 PCM 음향 엔진 및 Pages 주소 |
+
+EXP-002 · REQ-ENGINE-001 / REQ-ARRAY-001 / REQ-UI-002 / REQ-VIEW-002 / REQ-DEPLOY-002.
+
+- 엔진을 packages/localization으로 분리. DOM 없는 TypeScript 빌드. PCM → GCC-PHAT/순음 위상 → 위치 후보.
+- 합성 신호 생성은 src/simulation.ts, 렌더링은 src/components에 한정. 정답 시간차를 바로 공급하는 코드는 테스트 fixture에만 남김.
+- JSON engineInput/engineOptions와 CLI replay, npm 패키지 구성 추가.
+- 좌우/세로 배열, 영상 위 방향 열지도, 데스크톱 viewport 고정 및 모바일 탭/하단 패널.
+- 21개 단위 테스트, 데스크톱/모바일 E2E 2개 PASS. 실제 하드웨어/Safari 미검증.
+- DOM 없는 엔진 빌드와 별도 consumer 설치/import PASS. CLI replay의 정답 좌표를 바꿔도 출력 동일, 6 sample 지연 복원 PASS. 패키지 약 6.7 kB, JavaScript/타입 선언/예제 포함.
+- BUG-005: 숨긴 모바일 탭의 ResizeObserver가 0×0을 보고해 camera aspect NaN이 발생. 0 크기 resize를 건너뛰고 탭 전환 후 열지도/console error 회귀 검증 추가.
+- BUG-006: CSS로 숨긴 모바일 가이드 텍스트의 접근성 이름 누락. aria-label 추가 후 가이드 테스트 통과.
+- Git push의 기존 PAT에 workflow scope가 없어 거부됨. 기존 연결된 GitHub 앱으로 workflow만 작성하고 나머지는 git으로 전송하여 권한 범위에 맞게 게시. 별도 사용자 인증 불필요.
+- Pages API는 기존 Workers OAuth의 pages:write 부족으로 code 10000 거부. 여러 로그인 창이 응답 없이 만료되어 추가 인증을 기다림. 계정 전체 workers.dev 이름은 다른 사이트에 영향을 주므로 변경하지 않음.
+- v0.1.0 GitHub Verify/Release workflow 모두 PASS 확인. 기존 기록 보존.
+
 ### v0.1.0 — 2026-09-22
 
 | 항목 | 변경 파일 | 내용 |

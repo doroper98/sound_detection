@@ -10,3 +10,4 @@ playwright-report/
 .local/
 .DS_Store
 Thumbs.db
+*.tgz

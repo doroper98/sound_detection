@@ -2,8 +2,9 @@ import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Activity, ArrowDownToLine, ArrowUpRight, AudioLines, BookOpen, Box, Check, ChevronDown, CircleHelp, Crosshair, Focus, GitFork, History, Layers3, Maximize, Mic, MousePointer2, Move3D, Pause, Play, Plus, Radio, RotateCcw, ScanLine, Settings2, Signal, Smartphone, Volume2, VolumeX, Waves, X } from 'lucide-react';
 import SpatialView from './components/SpatialView';
 import PhoneView from './components/PhoneView';
-import { clamp, DEVICES, distance, estimate, INITIAL_RECEIVER, INITIAL_SOURCE, isDistinctObservation, observe, pressureAt, wavelength, type Observation, type Receiver, type Source, type Vec3 } from './acoustics';
+import { clamp, DEVICES, distance, estimate, INITIAL_RECEIVER, INITIAL_SOURCE, isDistinctObservation, pressureAt, SEARCH_VOLUME, wavelength, type Observation, type Receiver, type Source, type Vec3 } from './acoustics';
 import { useAudio } from './useAudio';
+import { captureSimulation, simulateFrame } from './simulation';
 
 const releaseFiles = import.meta.glob('../docs/releases/*.md', { query: '?raw', import: 'default', eager: true });
 const releaseNotes = String(releaseFiles[`../docs/releases/v${__APP_VERSION__}.md`] ?? '이 버전의 릴리즈 노트가 없습니다.');
@@ -27,7 +28,7 @@ export default function App() {
   const [source, setSource] = useState<Source>(INITIAL_SOURCE);
   const [receiver, setReceiver] = useState<Receiver>(INITIAL_RECEIVER);
   const [device, setDevice] = useState('iphone');
-  const [mode, setMode] = useState<'pressure' | 'estimate'>('pressure');
+  const [mode, setMode] = useState<'pressure' | 'estimate'>('estimate');
   const [placement, setPlacement] = useState<'source' | 'receiver' | 'orbit'>('source');
   const [playing, setPlaying] = useState(true);
   const [heatmap, setHeatmap] = useState(true);
@@ -36,10 +37,15 @@ export default function App() {
   const [resetKey, setResetKey] = useState(0);
   const [modal, setModal] = useState<'guide' | 'releases' | null>(null);
   const [toast, setToast] = useState('');
+  const [controlTab, setControlTab] = useState<'settings' | 'analysis'>('settings');
+  const [mobileView, setMobileView] = useState<'space' | 'scanner'>('scanner');
+  const [mobileSheet, setMobileSheet] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<'source' | 'device' | 'view'>('source');
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const audio = useAudio(source, playing);
-  const currentObservation = useMemo(() => observe(source, receiver), [source, receiver]);
-  const effectiveObservations = useMemo(() => receiver.count === 1 ? [] : isDistinctObservation(currentObservation, observations) ? [...observations, currentObservation] : observations, [currentObservation, observations, receiver.count]);
+  const capture = useMemo(() => receiver.count === 2 ? captureSimulation(source, receiver) : null, [source, receiver]);
+  const currentObservation = capture?.observation;
+  const effectiveObservations = useMemo(() => !currentObservation ? [] : isDistinctObservation(currentObservation, observations) ? [...observations, currentObservation] : observations, [currentObservation, observations]);
   const result = useMemo(() => mode === 'estimate' ? estimate(effectiveObservations) : null, [mode, effectiveObservations]);
   const receivedDb = pressureAt(source, receiver.position);
   const notify = (message: string) => { setToast(message); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(''), 3500); };
@@ -51,16 +57,17 @@ export default function App() {
     if (target === 'source') changeSource({ position }); else setReceiver(previous => ({ ...previous, position }));
   };
   const reset = () => {
-    setSource(INITIAL_SOURCE); setReceiver(INITIAL_RECEIVER); setDevice('iphone'); setMode('pressure'); setPlacement('source'); setObservations([]); setPlaying(true); setHeatmap(true); setOpacity(0.68); setResetKey(value => value + 1); audio.stop(); notify('실험을 처음 상태로 되돌렸습니다.');
+    setSource(INITIAL_SOURCE); setReceiver(INITIAL_RECEIVER); setDevice('iphone'); setMode('estimate'); setPlacement('source'); setObservations([]); setPlaying(true); setHeatmap(true); setOpacity(0.68); setResetKey(value => value + 1); audio.stop(); notify('실험을 처음 상태로 되돌렸습니다.');
   };
   const saveObservation = () => {
-    if (receiver.count === 1) { notify('도착 시간차 관측에는 마이크 두 개가 필요합니다.'); return; }
+    if (!currentObservation) { notify('도착 시간차 관측에는 마이크 두 개가 필요합니다.'); return; }
     if (!isDistinctObservation(currentObservation, observations)) { notify('휴대폰의 위치나 방향을 바꾼 뒤 다시 관측해 주세요.'); return; }
     if (observations.length >= 12) { notify('최대 12개 관측입니다. 관측을 지우고 다시 실험해 주세요.'); return; }
     setObservations(previous => [...previous, currentObservation]); setMode('estimate'); notify(`관측 ${observations.length + 1}개 저장 · 휴대폰을 옮겨 다음 관측을 추가하세요.`);
   };
   const exportExperiment = () => {
-    const data = { schemaVersion: 1, appVersion: __APP_VERSION__, exportedAt: new Date().toISOString(), source, receiver, device, observations, result, assumptions: 'Virtual microphones; free field; c=343 m/s; no reflections or diffraction; preset spacings are illustrative, not hardware specifications.' };
+    const frame = capture?.frame ?? simulateFrame(source, receiver);
+    const data = { schemaVersion: 2, appVersion: __APP_VERSION__, exportedAt: new Date().toISOString(), source, receiver, device, observations, result, engineInput: { ...frame, channels: frame.channels.map(channel => Array.from(channel)) }, engineOptions: { signal: source.signal, toneFrequencyHz: source.signal === 'tone' ? source.frequency : undefined }, searchVolume: SEARCH_VOLUME, engineOutput: capture?.measurement ?? null, assumptions: 'Synthetic PCM; standalone engine receives audio and microphone geometry only, never the source position. Free field; c=343 m/s; no reflections or diffraction; preset spacings are illustrative.' };
     const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
     const anchor = document.createElement('a'); anchor.href = url; anchor.download = `soundfield-v${__APP_VERSION__}-${new Date().toISOString().slice(0, 10)}.json`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     notify('실험 설정과 관측 결과를 JSON으로 내보냈습니다.');
@@ -70,7 +77,7 @@ export default function App() {
     setReceiver(previous => ({ ...previous, yaw: Math.atan2(delta[0], -delta[2]), pitch: clamp(Math.atan2(delta[1], Math.hypot(delta[0], delta[2])), -1.2, 1.2) }));
   };
 
-  return <div className="app-shell">
+  return <div className="app-shell" data-mobile-view={mobileView} data-sheet={mobileSheet} data-controls={controlTab} data-settings={settingsTab}>
     <aside className="rail">
       <a className="brand-mark" href="#" aria-label="SoundField 홈"><AudioLines size={25} /></a>
       <div className="rail-navigation"><button className="rail-button active" title="시뮬레이터" aria-label="시뮬레이터" onClick={() => setModal(null)}><Box size={21} /></button><button className="rail-button" title="사용 가이드" aria-label="사용 가이드" onClick={() => setModal('guide')}><BookOpen size={21} /></button><button className="rail-button" title="릴리즈 노트" aria-label="릴리즈 노트" onClick={() => setModal('releases')}><History size={21} /></button></div>
@@ -78,9 +85,10 @@ export default function App() {
       <div className="avatar">SF</div>
     </aside>
     <div className="main-shell">
-      <header className="topbar"><div className="wordmark">soundfield<span>LAB</span></div><div className="breadcrumb">워크스페이스 <span>/</span> <strong>음향 위치 실험실</strong></div><div className="header-right"><span className="version-tag">v{__APP_VERSION__}</span><button className="text-button" onClick={() => setModal('guide')}><CircleHelp size={16} /><span>사용 가이드</span><ArrowUpRight size={14} /></button></div></header>
+      <header className="topbar"><div className="wordmark">soundfield<span>LAB</span></div><div className="breadcrumb">워크스페이스 <span>/</span> <strong>음향 위치 실험실</strong></div><div className="header-right"><span className="version-tag">v{__APP_VERSION__}</span><button className="text-button" aria-label="사용 가이드" onClick={() => setModal('guide')}><CircleHelp size={16} /><span>사용 가이드</span><ArrowUpRight size={14} /></button></div></header>
       <main>
         <div className="page-heading"><div><div className="eyebrow"><span /> SPATIAL ACOUSTICS SIMULATOR</div><h1>소리가 나는 곳을, 눈으로.</h1><p>공간에 소리를 놓고, 가상 마이크로 소리의 방향을 탐색해 보세요.</p></div><div className="heading-actions"><button className="button secondary" onClick={reset}><RotateCcw size={16} />초기화</button><button className="button primary" onClick={exportExperiment}><ArrowDownToLine size={16} />실험 내보내기</button></div></div>
+        <div className="mobile-view-tabs segmented"><button className={mobileView === 'space' ? 'selected' : ''} onClick={() => setMobileView('space')}><Box size={15} />3D 공간</button><button className={mobileView === 'scanner' ? 'selected' : ''} onClick={() => setMobileView('scanner')}><ScanLine size={15} />사운드 스캔</button></div>
         <div className="workspace">
           <section className="scene-panel card">
             <div className="panel-heading"><div><span className="panel-icon"><Box size={17} /></span><h2>가상 공간</h2><span className="small-tag">3D SCENE</span></div><span className="room-label">스튜디오 룸 <ChevronDown size={14} /></span></div>
@@ -101,25 +109,26 @@ export default function App() {
           <section className="scanner-panel card">
             <div className="panel-heading"><div><span className="panel-icon"><ScanLine size={18} /></span><h2>사운드 스캐너</h2></div><span className="live-badge"><span />SIMULATED</span></div>
             <div className="scanner-body">
-              <div className="segmented view-modes"><button className={mode === 'pressure' ? 'selected' : ''} onClick={() => setMode('pressure')}><Waves size={14} />음압 분포</button><button className={mode === 'estimate' ? 'selected' : ''} onClick={() => setMode('estimate')}><Crosshair size={14} />마이크 추정</button></div>
+              <div className="segmented view-modes"><button className={mode === 'pressure' ? 'selected' : ''} onClick={() => setMode('pressure')}><Waves size={14} />정답 비교</button><button className={mode === 'estimate' ? 'selected' : ''} onClick={() => setMode('estimate')}><Crosshair size={14} />마이크 추정</button></div>
               <div className={`phone-frame ${device === 'ipad' ? 'tablet' : ''}`}>
-                <PhoneView source={source} receiver={receiver} observations={effectiveObservations} mode={mode} opacity={opacity} heatmap={heatmap} onLook={(yaw, pitch) => setReceiver(previous => ({ ...previous, yaw, pitch }))} />
+                <PhoneView source={mode === 'pressure' ? source : null} candidate={mode === 'estimate' && effectiveObservations.length >= 3 && result && result.spread < 0.8 ? result.position : null} receiver={receiver} observations={effectiveObservations} mode={mode} opacity={opacity} heatmap={heatmap} onLook={(yaw, pitch) => setReceiver(previous => ({ ...previous, yaw, pitch }))} />
                 <div className="phone-shade" /><div className="dynamic-island" />
                 <div className="phone-status"><span>9:41</span><div><Signal size={13} /><span className="battery" /></div></div>
                 <div className="phone-app-heading"><AudioLines size={16} /><strong>SoundField</strong><span>SIM</span></div>
-                <div className="phone-mode">{mode === 'pressure' ? 'SOUND PRESSURE' : 'LOCATION LIKELIHOOD'}</div>
-                <div className="crosshair"><i /><i /><i /><i /></div>
-                <div className="phone-reading"><span>{mode === 'pressure' ? '수신점의 가상 음압' : receiver.count === 1 ? '방향 정보 없음' : `${effectiveObservations.length}개 관측으로 추정`}</span><strong>{mode === 'pressure' ? receivedDb.toFixed(1) : receiver.count === 1 ? '—' : result?.candidates ?? '—'}<small>{mode === 'pressure' ? 'dB SPL' : receiver.count === 1 ? '' : '후보 격자'}</small></strong><span>{mode === 'pressure' ? '색상은 보이는 표면의 음압' : '색상은 표면 위치의 상대 적합도'}</span></div>
+                <div className="phone-mode">{mode === 'pressure' ? 'REFERENCE · 정답 위치' : `${capture?.measurement.method.toUpperCase() ?? 'MONO'} · 음성 기반 추정`}</div>
+                <div className="phone-reading"><span>{mode === 'pressure' ? '수신점의 가상 음압' : receiver.count === 1 ? '방향 정보 없음' : `${effectiveObservations.length}개 관측으로 추정`}</span><strong>{mode === 'pressure' ? receivedDb.toFixed(1) : receiver.count === 1 ? '—' : result?.candidates ?? '—'}<small>{mode === 'pressure' ? 'dB SPL' : receiver.count === 1 ? '' : '후보 격자'}</small></strong><span>{mode === 'pressure' ? '정답 비교용 · 탐지 결과 아님' : '빨강 = 유력 방향 · 띠 = 남은 모호성'}</span></div>
                 <div className="phone-bottom"><span><span className="status-dot" />{receiver.count} MIC</span><span>{Math.round(receiver.yaw * 180 / Math.PI)}° <i>AZ</i></span><span>{source.frequency.toFixed(0)} <i>Hz</i></span></div><div className="home-indicator" />
               </div>
               <div className="drag-hint"><Move3D size={14} />화면을 드래그하여 소리 둘러보기</div>
-              <div className="heat-legend"><span>{mode === 'pressure' ? '38 dB' : '낮음'}</span><div /><span>{mode === 'pressure' ? '80+ dB' : '높음'}</span></div>
+              <div className="heat-legend"><span>낮음</span><div /><span>{mode === 'pressure' ? '음원 중심' : '유력 방향'}</span></div>
               <div className="scanner-actions"><button className="button secondary" onClick={() => setHeatmap(value => !value)}><Layers3 size={14} />열지도 {heatmap ? 'ON' : 'OFF'}</button><button className="button secondary" onClick={pointAtSource} title="시뮬레이션 정답 위치를 바라봅니다"><Focus size={15} />음원 보기</button></div>
             </div>
           </section>
 
+          <div className="dock-tabs"><button className={controlTab === 'settings' ? 'selected' : ''} onClick={() => { setMobileSheet(previous => controlTab === 'settings' ? !previous : true); setControlTab('settings'); }}><Settings2 size={15} />실험 설정</button><button className={controlTab === 'analysis' ? 'selected' : ''} onClick={() => { setMobileSheet(previous => controlTab === 'analysis' ? !previous : true); setControlTab('analysis'); }}><Activity size={15} />관측 & 추정 <span>{observations.length}</span></button><button className="sheet-close" aria-label="설정 패널 닫기" onClick={() => setMobileSheet(false)}><ChevronDown size={16} /></button></div>
           <section className="parameters card">
             <div className="panel-heading"><div><span className="panel-icon"><Settings2 size={17} /></span><h2>실험 설정</h2></div><span className="muted small">변경 사항이 바로 반영됩니다</span></div>
+            <div className="settings-tabs segmented"><button className={settingsTab === 'source' ? 'selected' : ''} onClick={() => setSettingsTab('source')}>음원</button><button className={settingsTab === 'device' ? 'selected' : ''} onClick={() => setSettingsTab('device')}>마이크</button><button className={settingsTab === 'view' ? 'selected' : ''} onClick={() => setSettingsTab('view')}>공간·표시</button></div>
             <div className="parameter-columns">
               <div className="parameter-group"><h3><span className="section-number">01</span>음원 설정 <button className={`icon-button audio-button ${audio.enabled ? 'enabled' : ''}`} aria-label={audio.enabled ? '소리 끄기' : '주파수 미리듣기'} title="주파수 미리듣기 · 정현파" onClick={() => void audio.toggle()}>{audio.enabled ? <Volume2 size={16} /> : <VolumeX size={16} />}</button></h3>
                 <Control label="볼륨" value={source.db} min={40} max={100} unit="dB @1m" onChange={db => changeSource({ db })} />
@@ -130,6 +139,7 @@ export default function App() {
               <div className="parameter-group"><h3><span className="section-number">02</span>수음 장치</h3>
                 <label className="field-label" htmlFor="device">가상 장치 프리셋</label><div className="select-wrap"><Smartphone size={16} /><select id="device" value={device} onChange={event => { setDevice(event.target.value); changeArray({ spacing: DEVICES.find(item => item.id === event.target.value)!.spacing }); }}>{DEVICES.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><ChevronDown size={14} /></div>
                 <div className="segmented mic-select"><button className={receiver.count === 1 ? 'selected' : ''} onClick={() => changeArray({ count: 1 })}><Mic size={14} />마이크 1개</button><button className={receiver.count === 2 ? 'selected' : ''} onClick={() => changeArray({ count: 2 })}><AudioLines size={14} />마이크 2개</button></div>
+                <div className="array-layout"><label htmlFor="array-layout">배열 방향</label><select id="array-layout" value={receiver.layout} onChange={event => changeArray({ layout: event.target.value as Receiver['layout'] })}><option value="horizontal">좌우 · 방위 구분</option><option value="vertical">세로 · 고도 구분</option></select></div>
                 <Control label="마이크 간격" value={receiver.spacing * 100} min={2} max={200} step={1} unit="cm" digits={0} onChange={cm => { setDevice('custom'); changeArray({ spacing: cm / 100 }); }} />
                 <div className="group-foot">기종 이름은 실험 프리셋입니다. 실제 마이크 사양이 아닙니다.</div>
               </div>
@@ -143,7 +153,7 @@ export default function App() {
           </section>
 
           <section className="analysis-panel card"><div className="panel-heading"><div><span className="panel-icon"><Activity size={17} /></span><h2>관측 & 위치 추정</h2></div><span className="small-tag">EXPERIMENT</span></div>
-            <div className="analysis-content"><div className="metric-grid"><div><span>음원까지 거리</span><strong>{distance(source.position, receiver.position).toFixed(2)}<small>m</small></strong><em>설정값 기준</em></div><div><span>도착 시간차</span><strong>{receiver.count === 2 ? (currentObservation.delay * 1e6).toFixed(1) : '—'}<small>μs</small></strong><em>가상 측정값</em></div></div>
+            <div className="analysis-content"><div className="metric-grid"><div><span>수신 PCM 레벨</span><strong>{capture ? capture.measurement.levelDbfs.toFixed(1) : '—'}<small>dBFS</small></strong><em>48 kHz · 4096 samples</em></div><div><span>음성에서 추출한 시간차</span><strong>{currentObservation ? (currentObservation.delay * 1e6).toFixed(1) : '—'}<small>μs</small></strong><em>{capture?.measurement.method.toUpperCase() ?? '마이크 2개 필요'}</em></div></div>
               <div className="analysis-note"><span className="note-dot" /><p>{receiver.count === 1 ? '마이크 1개로는 방향을 알 수 없습니다. 2개로 바꾸어 도착 시간차를 비교해 보세요.' : observations.length < 3 ? '마이크 2개의 한 번 관측으로는 위치가 하나로 정해지지 않습니다. 위치·높이를 바꿔 관측을 모아 보세요.' : `20 cm 격자 탐색 · 후보 범위 ${result ? result.spread.toFixed(2) : '—'} m. 여러 후보가 남으면 다른 위치와 높이에서 관측하세요.`}</p></div>
               <div className="signal-control"><label htmlFor="signal">측정 신호 모델</label><select id="signal" value={source.signal} onChange={event => changeSource({ signal: event.target.value as Source['signal'] })}><option value="broadband">광대역 · 비주기 시간차</option><option value="tone">단일 주파수 · 위상 모호성</option></select></div>
               <div className="observation-actions"><button className="button primary" onClick={saveObservation} disabled={receiver.count === 1}><Plus size={15} />관측 저장 <span>{observations.length}/12</span></button><button className="icon-button" aria-label="관측 지우기" title="관측 지우기" onClick={() => { setObservations([]); notify('저장한 관측을 지웠습니다.'); }}><RotateCcw size={16} /></button></div>
@@ -159,8 +169,10 @@ export default function App() {
     {modal === 'guide' && <Modal title="SoundField 실험 가이드" onClose={() => setModal(null)}>
       <p>소리가 발생하는 위치와 가상 마이크의 관측을 비교하는 3D 실험실입니다.</p>
       <ol><li><strong>음원 배치</strong> — 왼쪽 물체나 바닥을 클릭하고, 음원 높이를 조절합니다.</li><li><strong>신호 설정</strong> — 볼륨과 주파수를 바꿉니다. 파장은 음속 343 m/s에 맞춰 연동됩니다. 미리듣기는 작은 음량의 정현파이며 dB SPL 보정 출력이 아닙니다.</li><li><strong>둘러보기</strong> — 오른쪽 화면을 드래그하거나 방향키로 회전합니다. ‘음원 보기’는 설정한 정답 방향을 보여주는 보조 기능입니다.</li><li><strong>위치 추정</strong> — 마이크 2개를 선택하고 관측을 저장합니다. 왼쪽 휴대폰 도구로 장치를 옮기고 높이·방향도 바꾸어 3개 이상의 관측을 수집합니다.</li><li><strong>비교·저장</strong> — 간격과 신호 모델을 바꾸어 후보가 얼마나 넓게 남는지 비교하고, 결과를 JSON으로 내보냅니다.</li></ol>
-      <h3>열지도 읽기</h3><p><strong>음압 분포</strong>는 알려진 음원 위치로 계산한 표면 음압입니다. 빨강이 크고 파랑이 작습니다. <strong>마이크 추정</strong>은 각 표면 위치가 관측 시간차와 얼마나 일치하는지 나타냅니다. 빨강이 곧 확정 위치는 아닙니다. 공중의 음원은 표면 열지도에 직접 표시되지 않을 수 있습니다.</p>
-      <h3>이번 실험의 가정</h3><p>벽과 물체는 시각적 표면입니다. 반사·흡음·회절·차폐, 실제 하드웨어 잡음과 장치 간 동기화는 계산하지 않습니다. 측정은 잡음 없는 합성 시간차이며, 적합도 폭에는 단순 시간차 불확실성 모델을 사용합니다. 기종별 간격은 예시값입니다.</p>
+      <h3>열지도 읽기</h3><p><strong>음압 분포</strong>는 정답 위치를 표시하는 비교용 모드입니다. 음원을 중심으로 색을 겹쳐 보여주며 실제 탐지 결과가 아닙니다. 숫자는 가상 수신 음압입니다. <strong>마이크 추정</strong>은 마이크 PCM에서 얻은 시간차만으로 시야의 방향 후보를 계산합니다. 3D 물체나 음원 좌표를 사용하지 않습니다. 빨간 띠가 넓게 남으면 방향을 아직 구분할 수 없는 상태입니다.</p>
+      <h3>독립 음향 엔진</h3><p>합성 마이크 PCM → GCC-PHAT 또는 순음 위상 측정 → 후보 위치 탐색으로 처리합니다. 엔진은 음성 샘플, 샘플링 주파수, 동기화 여부, 마이크 배치만 받습니다. 탐색 범위는 호출하는 앱이 지정합니다. 내보낸 JSON의 engineInput은 3D 화면 없이 다시 분석할 수 있으며 정답 좌표는 별도의 비교 데이터입니다.</p>
+      <h3>배열 방향</h3><p>좌우 배열은 좌우 방위에, 세로 배열은 높낮이에 민감합니다. 두 마이크 중 한 배열이 모든 3D 방향에 더 정확한 것은 아닙니다. 여러 위치·높이에서 관측하거나 다채널 배열이 필요합니다.</p>
+      <h3>이번 실험의 가정</h3><p>벽과 물체는 배경입니다. 반사·흡음·회절·차폐와 실제 장치 잡음은 포함하지 않습니다. PCM은 합성한 동기화 채널이며 실제 수음은 아닙니다. 광대역 모델은 주파수 설정의 2배를 필터 척도로 쓰는 잡음, 순음 모델은 설정 주파수의 정현파입니다. 기종별 간격은 예시값입니다.</p>
       <p>마이크 1개는 방향 정보가 없고, 2개는 한 번의 측정으로 3D 좌표를 유일하게 결정하지 못합니다. 단일 주파수에서는 간격이 커지면 위상 모호성이 늘 수 있습니다. 관측 누적은 고정된 음원과 정확히 알려진 마이크 위치·방향을 가정합니다. 음원·신호·배열 설정을 바꾸면 기존 관측을 지웁니다.</p>
       <p><a href="https://github.com/doroper98/sound_detection/blob/main/docs_canonical/ACOUSTICS.md" target="_blank" rel="noreferrer">음향 모델과 실제 휴대폰 확장 계획 <ArrowUpRight size={13} /></a></p>
     </Modal>}

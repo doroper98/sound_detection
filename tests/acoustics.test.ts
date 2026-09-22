@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { delayAt, distance, estimate, INITIAL_RECEIVER, INITIAL_SOURCE, isDistinctObservation, likelihood, microphones, observe, pressureAt, wavelength, type Receiver, type Source, type Vec3 } from '../src/acoustics';
+import { delayAt, distance, estimate, INITIAL_RECEIVER, INITIAL_SOURCE, isDistinctObservation, likelihood, microphones, pressureAt, wavelength, type Receiver, type Source, type Vec3, type Observation } from '../src/acoustics';
+
+// Analytic fixtures for solver geometry tests only. The app uses PCM through captureSimulation.
+function observe(source: Source, receiver: Receiver): Observation {
+  const pair = microphones(receiver);
+  const snr = Math.min(40, Math.max(0, pressureAt(source, receiver.position) - 35));
+  return { microphones: pair, delay: delayAt(source.position, pair), sigma: Math.max(5e-6, 1 / (2 * Math.PI * source.frequency * Math.sqrt(10 ** (snr / 10)))), frequency: source.frequency, signal: source.signal };
+}
 
 describe('free-field acoustics and observability', () => {
   it('links frequency and wavelength at 343 m/s', () => { expect(wavelength(1000)).toBeCloseTo(0.343); expect(wavelength(343)).toBe(1); });

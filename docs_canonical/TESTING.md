@@ -17,10 +17,14 @@ Gate는 TypeScript strict, Vite 프로덕션 빌드, 물리 테스트, 버전·l
 
 ## 브라우저 테스트 (2개 시나리오)
 
+v0.2.0에서 PCM 엔진 테스트 12개를 추가해 총 21개다. ±지연, 무음/비동기 입력 거부, 고정 PCM에 대한 정답 좌표 독립성, demo 외부 좌표계, 수평/수직 센서 배열, production code의 UI import 부재를 검증한다. `npm run build:engine`은 DOM lib 없이 별도로 빌드한다.
+
 1. 데스크톱: 화면, 클릭 배치, 주파수↔파장, 폰 드래그, 단일 마이크 제약, 저장 관측 초기화, 기종 간격, 다른 높이/위치의 3관측 누적과 결과 표시, JSON 내용 검증, 릴리즈 노트, 전체 초기화, console pageerror 없음.
-2. 390×844 모바일: 가로 넘침 없음, heatmap alpha가 실제 생성됨, OFF 시 비어 있음, native dialog 열기/Escape 닫기.
+2. 390×844 모바일: 페이지 가로/세로 넘침 없음, heatmap ON/OFF, native dialog, 하단 패널에서 설정하면서 스캔 화면 유지, 설정 세부 탭, 공간/스캔 전환 후 유효한 열지도와 console pageerror 없음.
 
 `test-results/desktop.png`, `mobile.png`를 화면 검토 증거로 생성한다. Git에는 넣지 않으며 CI에서 artifact로 보관한다. 테스트 환경의 SwiftShader는 기능 확인용이며 실제 GPU 성능을 대표하지 않는다.
+
+공유용 화면은 별도로 docs/assets에 복사한다. 모바일 설정 중 미리보기는 mobile-settings.png로 검토한다. v0.2.0 패키지를 npm pack 후 별도 consumer에 설치/import했고, CLI replay에서 source.position만 변경해도 출력 전체가 동일하며 6 sample 지연을 복원하는 것을 확인했다.
 
 ## 배포 후
 

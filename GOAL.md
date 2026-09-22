@@ -17,6 +17,11 @@
 | REQ-DEPLOY-001 | Cloudflare 웹사이트 공개 | SC-09: 공개 HTTPS URL 및 배포 후 동작 확인 | PASS |
 | NFR-001 | 사용자의 환경에 대한 불필요한 접근 없음 | 마이크/카메라 요청·서버 저장 없음 | PASS |
 | NFR-002 | 명시적인 정확도 범위 | 가상/정답/추정 구분 및 가정 명시 | PASS |
+| REQ-ENGINE-001 | 앱에서 재사용하는 독립 PCM 엔진 | SC-10: DOM 없이 빌드, 음원 좌표를 바꿔도 같은 PCM 결과 불변, demo 밖 좌표계 | PASS |
+| REQ-ARRAY-001 | 좌우/세로 마이크 비교 | SC-11: 배열 선택 및 센서 축/간격 테스트 | PASS |
+| REQ-VIEW-002 | Fluke류의 영상 위 직접 표시 | SC-12: PCM 기반 방향 열지도, 정답 비교를 명시적으로 분리 | PASS |
+| REQ-UI-002 | 데스크톱/모바일 긴 스크롤 제거 | SC-13: 1440×900/390×844 페이지 넘침 없음, 모바일 설정 중 미리보기 | PASS |
+| REQ-DEPLOY-002 | 계정명이 없는 Cloudflare URL | SC-14: Pages 영구 URL 응답과 원격 E2E | 추가 Pages 권한 대기 |
 
 ## 후속 검증
 

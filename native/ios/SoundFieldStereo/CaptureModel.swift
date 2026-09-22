@@ -205,10 +205,9 @@ private final class TapPipeline: @unchecked Sendable {
     }
 
     #if DEBUG
-    func submitSynthetic(left: [Float], right: [Float], sampleTime: Int64) {
+    func submitSynthetic(left: [Float], right: [Float], sampleTime: Int64, bufferStart: Double) {
         let analysisReady = gate.wait(timeout: .now()) == .success
         let previewReady = previewGate.wait(timeout: .now()) == .success
-        let bufferStart = ProcessInfo.processInfo.systemUptime - Double(left.count) / 48_000
         process(left: left, right: right, sampleRate: 48_000, sampleTime: sampleTime,
             hostTime: AVAudioTime.hostTime(forSeconds: bufferStart),
             analysisReady: analysisReady, previewReady: previewReady)
@@ -789,16 +788,20 @@ final class CaptureModel: ObservableObject {
             ? [Float](repeating: 0, count: left.count)
             : (0..<4800).map { $0 >= 7 ? left[$0 - 7] : 0 }
         let fixtureStartedAt = ProcessInfo.processInfo.systemUptime
-        var position: Int64 = 0
-        syntheticTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self, self.syntheticPCMEnabled, self.phase == .running else { return }
                 if arguments.contains("--synthetic-waveform-stale"),
                    ProcessInfo.processInfo.systemUptime - fixtureStartedAt > 4 { return }
-                processor.submitSynthetic(left: left, right: right, sampleTime: position)
-                position += 4800
+                // Use the fixture's sample clock, not jitter between main-loop
+                // timer callbacks. Missed slots remain real timeline gaps.
+                let slot = max(0, Int(floor((ProcessInfo.processInfo.systemUptime - fixtureStartedAt) * 10)) - 1)
+                processor.submitSynthetic(left: left, right: right, sampleTime: Int64(slot * 4800),
+                    bufferStart: fixtureStartedAt + Double(slot) / 10)
             }
         }
+        syntheticTimer = timer
+        RunLoop.main.add(timer, forMode: .common)
     }
     #endif
 }

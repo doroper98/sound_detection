@@ -35,6 +35,7 @@ final class SpatialModel: ObservableObject {
         guard running else { return }
         tracker=BearingTracker(); accumulator.reset()
         calibrator.begin(pose: pose)
+        report.lastBearing=nil; report.lastCandidate=nil
         report.bearing=nil; report.solution=nil; report.calibration=calibrator.snapshot(); report.state="calibrating"
     }
     func cancelCalibration() {
@@ -43,7 +44,7 @@ final class SpatialModel: ObservableObject {
         report.bearing=nil; report.solution=nil; report.calibration=calibrator.snapshot(); report.state="needsCalibration"
     }
     func resetMap() {
-        accumulator.reset(); report.solution=nil
+        accumulator.reset(); report.solution=nil; report.lastCandidate=nil
     }
     func trackingLost() {
         guard running else { return }
@@ -121,6 +122,20 @@ final class SpatialModel: ObservableObject {
         report.trackingAvailable=true
         report.latestPose=SpatialPose(time: now,origin: .zero,right: .init(1,0,0),up: .init(0,1,0),forward: .init(0,0,-1))
         lastAccepted=now
+        if !silent && ProcessInfo.processInfo.arguments.contains("--synthetic-position") {
+            var fixtureAccumulator=SpatialAccumulator()
+            let source=Vector3(0.1,0.15,-1.6)
+            for i in 0..<24 {
+                let roll=Double(i/8-1)*35 * .pi/180
+                let origin=Vector3(Double(i%8)*0.13-0.45,Double(i/8)*0.1,Double(i%3)*0.04)
+                let pose=SpatialPose(time: now-2.3+Double(i)/10,origin: origin,
+                    right: .init(cos(roll),sin(roll),0),up: .init(-sin(roll),cos(roll),0),forward: .init(0,0,-1))
+                fixtureAccumulator.append(.init(pose: pose,angleDegrees: pose.bearing(of: source-origin),uncertaintyDegrees: 4))
+                report.latestPose=pose
+            }
+            report.solution=fixtureAccumulator.solve(at: now)
+            report.state=report.solution?.estimate == nil ? "bearing" : "positionCandidate"
+        }
     }
     #endif
 }

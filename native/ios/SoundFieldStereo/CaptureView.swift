@@ -39,7 +39,7 @@ struct CaptureDetailsView: View {
                     }
                     .pickerStyle(.segmented).disabled(model.isBusy)
                     .accessibilityIdentifier("sourcePicker")
-                    Text("아이폰을 세로로 고정하고 소리를 왼쪽·정면·오른쪽에서 번갈아 내세요.")
+                    Text("여기는 입력 상세 검사입니다. 방향·위치 표시는 카메라 화면의 소리 찾기에서 시작하세요.")
                         .font(.subheadline).foregroundStyle(.secondary)
                     Button {
                         if model.isBusy { model.stop() } else { model.start() }
@@ -110,7 +110,7 @@ struct CaptureDetailsView: View {
                     }
                     Text(model.report.latestOrientation.map { String(format: "시작 대비 기기 회전 %.1f°", $0.rotationFromStartDegrees) } ?? model.report.motionStatus)
                         .font(.footnote).accessibilityIdentifier("motionStatus")
-                    Text("회전은 기기 자세입니다. 음원 방향·이동거리 추정은 아직 교정 전입니다.")
+                    Text("이 회전 값은 기기 자세입니다. 카메라의 소리 찾기는 별도 AR 이동 추적과 경험적 보정을 사용합니다.")
                         .font(.caption).foregroundStyle(.secondary)
                 }.card()
 
@@ -128,14 +128,14 @@ struct CaptureDetailsView: View {
                     Text("기록 \(model.report.markedReadings.count)/12 · 최근 기록 유지")
                         .font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("markCount")
                 }.card()
-                Text("내장 스테레오에는 기기 음향 처리가 포함될 수 있습니다. 이 시간차는 아직 물리 마이크의 도달 시간차로 교정되지 않아 방향·거리로 환산하지 않습니다.")
+                Text("내장 스테레오에는 기기 음향 처리가 포함될 수 있습니다. 시간차를 물리 마이크 간격으로 바로 환산하지 않습니다. 카메라의 방향·위치 후보는 보정된 경험적 응답을 사용하며 정확도는 미검증입니다.")
                     .font(.footnote).foregroundStyle(.secondary)
                 Button {
                     if let url = model.export() { sharedReport = SharedReport(url: url) }
                 } label: {
                     Label("진단 JSON 공유", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity)
                 }.buttonStyle(.bordered).accessibilityIdentifier("exportButton")
-                Text("녹음 파일·원음·영상은 저장하지 않습니다. 공유를 누르면 수음을 중지합니다.")
+                Text("녹음 파일·원음·영상은 저장하지 않습니다. 공유에는 상대 AR 좌표와 마지막 추정 통계가 포함되며, 수음을 중지합니다.")
                     .font(.caption).foregroundStyle(.secondary)
             }.padding(20)
         }

@@ -24,10 +24,10 @@ struct SpatialOverlay: View {
                     }
                 }
                 if let estimate=data.solution?.estimate,
-                   let p=camera.spatialCamera.project(estimate.point,size: size),
+                   let p=project(estimate.point,size: size),
                    let pose=data.latestPose {
                     if (20...size.width-20).contains(p.x) && (110...size.height-260).contains(p.y) {
-                        let edge=camera.spatialCamera.project(estimate.point+pose.right*estimate.uncertaintyRadiusMeters,size: size)
+                        let edge=project(estimate.point+pose.right*estimate.uncertaintyRadiusMeters,size: size)
                         let radius=min(90,max(24,abs((edge?.x ?? p.x+35)-p.x)))
                         ZStack {
                             Circle().fill(tint.opacity(0.15))
@@ -111,6 +111,18 @@ struct SpatialOverlay: View {
         }
         guard let left=projection(b.degrees-b.uncertaintyDegrees),let right=projection(b.degrees+b.uncertaintyDegrees) else { return nil }
         return (max(-size.width,min(left.x,right.x)),min(size.width*2,max(left.x,right.x)))
+    }
+    private func project(_ point: Vector3, size: CGSize) -> CGPoint? {
+        #if DEBUG
+        if synthetic, let pose=data.latestPose {
+            let delta=point-pose.origin, depth=delta.dot(pose.forward)
+            guard depth>0 else { return nil }
+            let scale=Double(size.width)/1.2
+            return .init(x: Double(size.width)/2+delta.dot(pose.right)/depth*scale,
+                         y: Double(size.height)/2-delta.dot(pose.up)/depth*scale)
+        }
+        #endif
+        return camera.spatialCamera.project(point,size: size)
     }
 }
 

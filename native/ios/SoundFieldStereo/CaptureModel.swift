@@ -710,6 +710,8 @@ final class CaptureModel: ObservableObject {
         updated.waveformDisplay = waveformDisplay.statistics
         spatial.tick()
         updated.spatial = spatial.report
+        updated.positionTrackingEnabled = spatial.report.trackingAvailable
+        updated.localizationEnabled = spatial.report.calibration.profile != nil
         let now = ProcessInfo.processInfo.systemUptime
         calibration.tick(at: now)
         updated.calibration = calibration.snapshot(at: now)

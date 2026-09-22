@@ -1,5 +1,15 @@
 # 아키텍처
 
+빌드 6은 후면에서 `ARWorldTrackingConfiguration(providesAudioData=false)`와 ARSCNView로 영상/기기 자세를 얻으며 기존 AVCaptureSession을 동시에 실행하지 않는다. `[ARCamera.viewMatrix(for: .portrait)]⁻¹`의 축으로 화면 오른쪽/위/전방을 정의한다. AR 시각을 오디오 버퍼 중간 host 시각과 최대 60ms 안에서 맞추고 버퍼 전후 2.5cm/3° 이상 움직이면 관측을 거부한다. 추적 손실과 세션 재시작은 위치 누적을 지운다.
+
+`AcousticFeatures`는 실제 동일 PCM의 레벨 차이·유효한 신호 지연·대략적인 세 대역 에너지 비율을 만든다. 이는 소리 일치 검사이며 음원 인식이 아니다. `RotationCalibrator`는 중앙 정렬을 사용자가 선언한 고정 소리를 제자리 회전하여 6개 구간에서 측정하고, 레벨/지연의 각도 응답을 반복 검증한다. ±25° 보정 구간을 벗어난 응답·상반된 특성·대역 비율 변화·약한 신호를 거부한다. `BearingTracker`는 표시만 평활화하고 공간 계산에는 각 버퍼의 원래 추정과 대응 자세를 사용한다.
+
+`SpatialAccumulator`의 관측 법선은 `n = cos(θ) × viewRight − sin(θ) × viewForward`이며 `n·(p−cameraOrigin)=0`인 평면 제약이다. 같은 위치/방향의 관측을 반복해서 독립 증거로 세지 않는다. 최근 12초/최대 60관측으로 가중 최소제곱을 풀고 8개 이상 자세·30cm 이동·고유값 조건·전방·0.4~8m 범위·각도 잔차·계산상 반경을 검사한다. 수평 자세만 사용해 높이를 관측할 수 없거나 제자리 회전만으로 거리를 정할 수 없는 경우 후보를 내지 않는다. 정확도는 가정과 실제 기기 음향에 의존하며 검증된 확률 신뢰구간이 아니다.
+
+`SpatialModel`은 보정/현재 방향/공간 후보/오래된 값 해제를 관리하고 `SpatialOverlay`는 방향 띠와 조건부 후보를 AR 카메라에 투영한다. 중지 뒤에는 현재 표시를 제거하고 시각이 있는 `lastBearing`/`lastCandidate`만 통계 공유에 남긴다. 새 보정/위치 초기화는 이전 후보도 지운다. PCM·이미지·world map은 보고서에 없다.
+
+API 근거: [Apple AR 세계 추적](https://developer.apple.com/documentation/arkit/arworldtrackingconfiguration), [AR 오디오 캡처 설정](https://developer.apple.com/documentation/arkit/arconfiguration/providesaudiodata), [카메라 view matrix](https://developer.apple.com/documentation/arkit/arcamera/viewmatrixfororientation:), [카메라 점 투영](https://developer.apple.com/documentation/arkit/arcamera/projectpoint:orientation:viewportsize:), [AR 프레임 시각](https://developer.apple.com/documentation/arkit/arframe/timestamp). 기존 iOS 17 API로 빌드하며 새 베타 회전 API에 의존하지 않는다.
+
 빌드 5는 `TapPipeline`의 DSP/표시 작업에 각각 최대 한 개의 처리·메인 전달만 허용한다. PCM 복사는 공유하며 별도 표시 큐에서 버퍼 내부 실제 구간을 `WaveformBatch`로 축소한다. `WaveformPlayback`은 최대 24개 축소 표시만 유지하고 기본 120ms 지연으로 묶음 도착을 흡수하며 CADisplayLink가 최대 60Hz로 표시한다. 오래 밀린 구간은 버리고 350ms 동안 새로운 오디오가 없으면 지운다. 보고서·계산은 기존 주기이며 작은 파형 뷰만 별도 관찰한다. 표시 속도는 최근 1초에 새로 선택한 PCM 창 개수이며 물리 디스플레이 refresh rate 보장이 아니다. 상세/방향 비교 시트로 가려지면 display link를 중지하고 복귀 때 최신 프레임으로 재개한다. 상세에는 마지막 보이는 동안의 fps를 유지하며 JSON에 측정 시각을 함께 남긴다.
 
 `DirectionCalibration`은 6단계 통계 수집기다. 동일 수음 세션 안에서 하나의 폰 자세를 기준으로 사용자가 선언한 좌/정면/우를 두 번 비교한다. 3초 준비와 5초 관측 안에 완전히 포함된 분석 버퍼만 사용하며 종료 뒤 200ms 전달 여유를 둔다. 구간 길이 합·중복 시간 거부·자세 가용성·움직임·샘플률·시간차 품질을 검사한다. 중단도 최대 12개 시도에 포함해 보존한다. schemaVersion 5의 calibration에는 구간별 통계(최대 600개/시도)와 비교 결과만 포함하며 PCM·미니 파형·물리 좌표는 없다. 반복 분리 관찰도 물리 교정/위치 활성화로 승격하지 않는다.

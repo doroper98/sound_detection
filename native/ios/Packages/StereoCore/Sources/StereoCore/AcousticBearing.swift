@@ -78,10 +78,11 @@ public struct BearingProfile: Codable, Sendable {
         let candidates: [(Double,Double,String)] = responses.compactMap { response in
             guard let value=response.value(features), abs(response.slope)>1e-9 else { return nil }
             let angle=(value-response.intercept)/response.slope
-            guard angle.isFinite, abs(angle)<=28 else { return nil }
+            guard angle.isFinite else { return nil }
             return (angle,max(4,response.errorDegrees*2),response.method)
         }
-        guard let best=candidates.min(by: { $0.1<$1.1 }) else { return nil }
+        guard !candidates.isEmpty, candidates.allSatisfy({ abs($0.0)<=28 }),
+              let best=candidates.min(by: { $0.1<$1.1 }) else { return nil }
         if candidates.count>1, abs(candidates[0].0-candidates[1].0)>12 { return nil }
         return BearingEstimate(degrees: best.0, uncertaintyDegrees: best.1, method: best.2, time: time)
     }

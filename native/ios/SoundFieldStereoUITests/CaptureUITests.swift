@@ -1,6 +1,17 @@
 import XCTest
 
 final class CaptureUITests: XCTestCase {
+    func testIndependentPoseFixtureProjectsCandidateAndClearsInBackground() {
+        let app=launch(["--synthetic-bearing","--synthetic-position"],details: false)
+        app.buttons["liveCaptureButton"].tap()
+        XCTAssertTrue(app.staticTexts["soundPositionCandidate"].waitForExistence(timeout: 30))
+        XCTAssertTrue(app.staticTexts["soundPositionCandidate"].label.contains("위치 후보"))
+        let screen=XCTAttachment(screenshot: app.screenshot())
+        screen.name="native-build6-position-synthetic"; screen.lifetime = .keepAlways; add(screen)
+        XCUIDevice.shared.press(.home); app.activate()
+        XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
+        XCTAssertEqual(app.buttons["liveCaptureButton"].label,"카메라·수음 시작")
+    }
     func testBearingOverlayUsesEmpiricalProfileAndClearsOnStop() {
         let app=launch(["--synthetic-bearing"],details: false)
         app.buttons["liveCaptureButton"].tap()

@@ -95,7 +95,8 @@ struct CaptureView: View {
                         } else {
                             Task {
                                 if await camera.start(front: model.source == "front") {
-                                    model.start(cameraPreviewActive: !camera.isSynthetic)
+                                    model.start(cameraPreviewActive: camera.phase == .running && !camera.isSynthetic,
+                                                startControl: "cameraAndAudio")
                                 }
                             }
                         }
@@ -104,7 +105,7 @@ struct CaptureView: View {
                             .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 12)
                     }.buttonStyle(.borderedProminent).tint(green).foregroundStyle(.black)
                         .accessibilityIdentifier("liveCaptureButton")
-                    Text("영상·원음 저장 없음 · 빌드 2").font(.caption2).foregroundStyle(.secondary)
+                    Text("영상·원음 저장 없음 · 빌드 3").font(.caption2).foregroundStyle(.secondary)
                 }
                 .padding(18)
                 .background(.black.opacity(0.78), in: RoundedRectangle(cornerRadius: 22))

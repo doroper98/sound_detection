@@ -121,6 +121,32 @@ final class CaptureUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts["trackedLagValue"].label, "—")
     }
 
+    func testStartupOutputOverrideKeepsCameraAndAcceptsFirstPCM() {
+        let app = launch(["--synthetic-startup-override"], details: false)
+        app.buttons["liveCaptureButton"].tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["liveLagValue"])
+        waitForExpectations(timeout: 10)
+        XCTAssertEqual(app.buttons["liveCaptureButton"].label, "계측 중지")
+        XCTAssertTrue(app.staticTexts["cameraStatus"].label.contains("실제 카메라 영상 없음"))
+        app.buttons["detailsButton"].tap()
+        XCTAssertTrue(app.staticTexts["lastAudioEvent"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["lastAudioEvent"].label, "마지막 알림 4 · 입력 확인 정상 · 당시 분석 0")
+        XCTAssertEqual(app.staticTexts["audioEventCount"].label, "오디오 알림 1 · 초기 재설정 0")
+    }
+
+    func testOutputOverrideWithChangedInputStillStopsCameraAndAudio() {
+        let app = launch(["--synthetic-startup-override", "--synthetic-override-route-mismatch"], details: false)
+        app.buttons["liveCaptureButton"].tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "routeOutputOverridden(4)"), evaluatedWith: app.staticTexts["liveCaptureStatus"])
+        waitForExpectations(timeout: 10)
+        XCTAssertEqual(app.buttons["liveCaptureButton"].label, "카메라·수음 시작")
+        XCTAssertEqual(app.staticTexts["liveLagValue"].label, "—")
+        XCTAssertTrue(app.staticTexts["cameraStatus"].label.contains("카메라를 중지"))
+        app.buttons["detailsButton"].tap()
+        XCTAssertTrue(app.staticTexts["lastAudioEvent"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["lastAudioEvent"].label, "마지막 알림 4 · 입력 확인 불일치 · 당시 분석 0")
+    }
+
     func testFullscreenCameraControlsAndBackgroundRelease() {
         let app = launch(details: false)
         let button = app.buttons["liveCaptureButton"]

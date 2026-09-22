@@ -1,7 +1,7 @@
 import Foundation
 
 public enum CaptureEvent: String, Codable, Sendable {
-    case routeSetupChanged, routeDeviceChanged, routeUnavailable, routeUnknown
+    case routeSetupChanged, routeOutputOverridden, routeDeviceChanged, routeUnavailable, routeUnknown
     case engineConfigurationChanged, interruptionBegan, interruptionEnded, interruptionUnknown
     case mediaServicesLost, mediaServicesReset
 }
@@ -18,7 +18,7 @@ public enum CaptureEventPolicy {
         switch event {
         case .interruptionEnded:
             return .continueCapture // No automatic resumption after a real interruption.
-        case .routeSetupChanged, .engineConfigurationChanged:
+        case .routeSetupChanged, .routeOutputOverridden, .engineConfigurationChanged:
             guard routeMatches else { return .stop }
             if engineRunning { return .continueCapture }
             if !receivedPCM, elapsed.isFinite, (0...2).contains(elapsed), restartCount < 2 {

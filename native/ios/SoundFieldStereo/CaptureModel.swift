@@ -35,11 +35,31 @@ struct AudioEventReading: Encodable {
     let inputPort: String?
     let sessionChannels: Int
     let sampleRate: Double
+    let analyzedFramesBeforeEvent: Int
+    let routeInspection: AudioRouteInspection
+}
+
+/// Values read at the notification, before teardown; no device identifiers.
+struct AudioRouteInspection: Encodable {
+    let inputPort: String?
+    let category: String
+    let mode: String
+    let sourceOrientation: String?
+    let polarPattern: String?
+    let inputOrientation: Int
+    let sessionChannels: Int
+    let sampleRate: Double
+    let hardwareChannels: UInt32?
+    let tapChannels: UInt32?
+    let hardwareSampleRate: Double?
+    let tapSampleRate: Double?
+    let checks: [String: Bool]
+    var matches: Bool { !checks.isEmpty && checks.values.allSatisfy { $0 } }
 }
 
 struct NativeReport: Encodable {
-    var schemaVersion = 3
-    var appVersion = "0.4.0-native-camera-routefix-build2"
+    var schemaVersion = 4
+    var appVersion = "0.4.0-native-override-fix-build3"
     var inputOrigin = "AVAudioEngine.inputNode"
     var operatingSystem = UIDevice.current.systemVersion
     var startedAt: Date?
@@ -71,6 +91,7 @@ struct NativeReport: Encodable {
     var audioEvents: [AudioEventReading] = []
     var startupEngineRestarts = 0
     var cameraSessionRunningAtAudioStart = false
+    var startControl = "audioDetails"
     let attitudeReferenceFrame = "CoreMotion.xArbitraryZVertical; quaternion x,y,z,w"
     let positionTrackingEnabled = false
     let acousticCalibrationVerified = false
@@ -234,6 +255,9 @@ final class CaptureModel: ObservableObject {
     private var exportURL: URL?
     private var captureStartedUptime = 0.0
     private var configuredSampleRate: Double?
+    #if DEBUG
+    private var syntheticPCMEnabled = true
+    #endif
 
     var isBusy: Bool { phase != .idle }
     var isSynthetic: Bool {
@@ -272,12 +296,13 @@ final class CaptureModel: ObservableObject {
         trackingTimer?.invalidate()
     }
 
-    func start(cameraPreviewActive: Bool = false) {
+    func start(cameraPreviewActive: Bool = false, startControl: String = "audioDetails") {
         guard !isBusy else { return }
         generation += 1
         let token = generation
         report = NativeReport()
         report.cameraSessionRunningAtAudioStart = cameraPreviewActive
+        report.startControl = startControl
         configuredSampleRate = nil
         tracker = ContinuousLagTracker()
         timeOrigin = nil
@@ -405,19 +430,51 @@ final class CaptureModel: ObservableObject {
         try audioEngine.start()
     }
 
-    private func routeStillMatches() -> Bool {
-        if isSynthetic { return true }
+    private func inspectRoute() -> AudioRouteInspection {
         let session = AVAudioSession.sharedInstance()
-        guard let engine, let configuredSampleRate, let port = session.currentRoute.inputs.first,
-              session.category == .record, session.mode == .default,
-              port.portType == .builtInMic, port.selectedDataSource?.selectedPolarPattern == .stereo,
-              port.selectedDataSource?.orientation == (source == "back" ? .back : .front),
-              session.inputOrientation == .portrait, session.inputNumberOfChannels == 2 else { return false }
-        let input = engine.inputNode
-        let hardware = input.inputFormat(forBus: 0), actual = input.outputFormat(forBus: 0)
-        return hardware.channelCount == 2 && actual.channelCount == 2
-            && actual.commonFormat == .pcmFormatFloat32
-            && hardware.sampleRate == configuredSampleRate && actual.sampleRate == configuredSampleRate
+        let port = session.currentRoute.inputs.first
+        let input = engine?.inputNode
+        let hardware = input?.inputFormat(forBus: 0), tap = input?.outputFormat(forBus: 0)
+        let desired: AVAudioSession.Orientation = source == "back" ? .back : .front
+        let inputPort = isSynthetic ? AVAudioSession.Port.builtInMic.rawValue : port?.portType.rawValue
+        let category = isSynthetic ? AVAudioSession.Category.record.rawValue : session.category.rawValue
+        let mode = isSynthetic ? AVAudioSession.Mode.default.rawValue : session.mode.rawValue
+        let orientation = isSynthetic ? desired.rawValue : port?.selectedDataSource?.orientation?.rawValue
+        let pattern = isSynthetic ? AVAudioSession.PolarPattern.stereo.rawValue : port?.selectedDataSource?.selectedPolarPattern?.rawValue
+        let inputOrientation = isSynthetic ? AVAudioSession.StereoOrientation.portrait.rawValue : session.inputOrientation.rawValue
+        var sessionChannels = isSynthetic ? 2 : session.inputNumberOfChannels
+        let rate = isSynthetic ? 48_000 : session.sampleRate
+        let hardwareChannels: UInt32? = isSynthetic ? 2 : hardware?.channelCount
+        let tapChannels: UInt32? = isSynthetic ? 2 : tap?.channelCount
+        let hardwareRate: Double? = isSynthetic ? 48_000 : hardware?.sampleRate
+        let tapRate: Double? = isSynthetic ? 48_000 : tap?.sampleRate
+        let expectedRate: Double? = isSynthetic ? 48_000 : configuredSampleRate
+        #if DEBUG
+        if isSynthetic && ProcessInfo.processInfo.arguments.contains("--synthetic-override-route-mismatch") {
+            sessionChannels = 1
+        }
+        #endif
+        let checks: [String: Bool] = [
+            "engineAvailable": isSynthetic || engine != nil,
+            "categoryRecord": category == AVAudioSession.Category.record.rawValue,
+            "modeDefault": mode == AVAudioSession.Mode.default.rawValue,
+            "builtInMic": inputPort == AVAudioSession.Port.builtInMic.rawValue,
+            "stereoPattern": pattern == AVAudioSession.PolarPattern.stereo.rawValue,
+            "requestedSource": orientation == desired.rawValue,
+            "portraitOrientation": inputOrientation == AVAudioSession.StereoOrientation.portrait.rawValue,
+            "sessionStereo": sessionChannels == 2,
+            "hardwareStereo": hardwareChannels == 2,
+            "tapStereo": tapChannels == 2,
+            "tapFloat32": isSynthetic || tap?.commonFormat == .pcmFormatFloat32,
+            "sampleRateConfigured": (expectedRate ?? 0) > 0,
+            "sessionSampleRateUnchanged": expectedRate != nil && rate == expectedRate,
+            "hardwareSampleRateUnchanged": expectedRate != nil && hardwareRate == expectedRate,
+            "tapSampleRateUnchanged": expectedRate != nil && tapRate == expectedRate
+        ]
+        return AudioRouteInspection(inputPort: inputPort, category: category, mode: mode,
+            sourceOrientation: orientation, polarPattern: pattern, inputOrientation: inputOrientation,
+            sessionChannels: sessionChannels, sampleRate: rate, hardwareChannels: hardwareChannels,
+            tapChannels: tapChannels, hardwareSampleRate: hardwareRate, tapSampleRate: tapRate, checks: checks)
     }
 
     private func handleAudioEvent(name: Notification.Name, reason: UInt?, interruption: UInt?) {
@@ -426,6 +483,7 @@ final class CaptureModel: ObservableObject {
         case AVAudioSession.routeChangeNotification:
             switch reason.flatMap(AVAudioSession.RouteChangeReason.init(rawValue:)) {
             case .categoryChange, .routeConfigurationChange: event = .routeSetupChanged
+            case .override: event = .routeOutputOverridden
             case .newDeviceAvailable, .oldDeviceUnavailable: event = .routeDeviceChanged
             case .noSuitableRouteForCategory: event = .routeUnavailable
             default: event = .routeUnknown
@@ -440,18 +498,23 @@ final class CaptureModel: ObservableObject {
         case AVAudioSession.mediaServicesWereResetNotification: event = .mediaServicesReset
         default: event = .engineConfigurationChanged
         }
-        let matches = (event == .routeSetupChanged || event == .engineConfigurationChanged) && routeStillMatches()
+        // Always inspect, including unknown/fatal notifications. Build 2's
+        // short-circuit wrote false for reason 4 without examining the input.
+        let inspection = inspectRoute()
+        let matches = inspection.matches
         let running = isSynthetic || engine?.isRunning == true
         let decision = CaptureEventPolicy.decide(event, routeMatches: matches, engineRunning: running,
             receivedPCM: report.analyzedFrames > 0, elapsed: ProcessInfo.processInfo.systemUptime - captureStartedUptime,
             restartCount: report.startupEngineRestarts)
-        let session = AVAudioSession.sharedInstance()
         report.audioEvents.append(AudioEventReading(time: Date(), event: event, reasonCode: reason ?? interruption,
             decision: decision, routeMatches: matches, engineRunning: running,
-            inputPort: isSynthetic ? "synthetic" : session.currentRoute.inputs.first?.portType.rawValue,
-            sessionChannels: isSynthetic ? 2 : session.inputNumberOfChannels,
-            sampleRate: isSynthetic ? 48_000 : session.sampleRate))
+            inputPort: inspection.inputPort, sessionChannels: inspection.sessionChannels,
+            sampleRate: inspection.sampleRate, analyzedFramesBeforeEvent: report.analyzedFrames,
+            routeInspection: inspection))
         if report.audioEvents.count > 32 { report.audioEvents.removeFirst() }
+        #if DEBUG
+        if isSynthetic && event == .routeOutputOverridden { syntheticPCMEnabled = true }
+        #endif
         switch decision {
         case .continueCapture: break
         case .restartStartupEngine:
@@ -470,7 +533,7 @@ final class CaptureModel: ObservableObject {
     }
 
     private func restartStartupEngine() throws {
-        guard let engine, let pipeline, routeStillMatches() else {
+        guard let engine, let pipeline, inspectRoute().matches else {
             throw CaptureFailure.message("요청한 내장 스테레오 입력을 확인할 수 없습니다.")
         }
         report.startupEngineRestarts += 1
@@ -594,6 +657,11 @@ final class CaptureModel: ObservableObject {
     private func scheduleSyntheticNotifications(token: Int) {
         guard isSynthetic else { return }
         let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--synthetic-startup-override") {
+            NotificationCenter.default.post(name: AVAudioSession.routeChangeNotification, object: AVAudioSession.sharedInstance(),
+                userInfo: [AVAudioSessionRouteChangeReasonKey: NSNumber(value: AVAudioSession.RouteChangeReason.override.rawValue)])
+            return
+        }
         guard arguments.contains("--synthetic-route-events") || arguments.contains("--synthetic-interruption") else { return }
         Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 600_000_000)
@@ -622,6 +690,7 @@ final class CaptureModel: ObservableObject {
         report.tapFormatChannels = 2
         report.actualSampleRate = 48_000
         report.selectedSource = "합성 테스트"
+        syntheticPCMEnabled = !ProcessInfo.processInfo.arguments.contains("--synthetic-startup-override")
         var state: UInt64 = 7
         let left: [Float] = (0..<2048).map { _ in
             state = state &* 6364136223846793005 &+ 1
@@ -629,9 +698,12 @@ final class CaptureModel: ObservableObject {
         }
         let right: [Float] = (0..<2048).map { $0 >= 7 ? left[$0 - 7] : 0 }
         var position: Int64 = 0
-        syntheticTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-            processor.submitSynthetic(left: left, right: right, sampleTime: position)
-            position += 2048
+        syntheticTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.syntheticPCMEnabled, self.phase == .running else { return }
+                processor.submitSynthetic(left: left, right: right, sampleTime: position)
+                position += 2048
+            }
         }
     }
     #endif

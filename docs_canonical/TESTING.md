@@ -1,5 +1,11 @@
 # 검증
 
+## 빌드 2 실기기 알림·빌드 3 회귀 (EXP-012)
+
+[사용자 원본](../docs/reports/2026-09-22-iphone17pro-native-build2-override.json)은 reasonCode 4에서 분석 전 중지를 기록한다. 선택된 후면 Stereo·3종 채널 수 2·48kHz·엔진 실행까지 확인했으며 실제 PCM 분석은 0이다. 코드 4는 override인데 빌드 2가 unknown으로 처리했다. routeMatches=false는 해당 이벤트에서 실제 검사하지 않은 결과이므로 입력 경로 불일치의 증거로 해석하지 않는다. 사용자는 카메라가 시작되자마자 중지했다고 설명했으며 cameraSessionRunningAtAudioStart=false와의 차이는 미확정으로 보존한다.
+
+빌드 3은 정책 27개·UI 13개와 Release 기기 빌드를 검증한다. 알림 원인과 무관하게 입력 검사 항목을 기록하며, 첫 PCM 전 override에서 동일한 스테레오 입력을 유지하고 실제 불일치는 거부하는 회귀를 포함한다. Mac CI 및 실기기 후속 결과는 별도로 기록한다.
+
 ## 카메라 화면·실기기 시작 알림 수정 (EXP-011)
 
 - 사용자 확인: Sideloadly 설치 완료와 실제 앱 실행. 외부 오디오 장치 없이 수음 시작 직후 일반적인 경로/인터럽트 중지 문구 표시. 알림 원본 JSON이 없어 실제 발생 종류는 미확정.

@@ -54,6 +54,10 @@ struct CaptureDetailsView: View {
                         .accessibilityIdentifier("captureStatus")
                     Text("오디오 알림 \(model.report.audioEvents.count) · 초기 재설정 \(model.report.startupEngineRestarts)")
                         .font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("audioEventCount")
+                    if let event = model.report.audioEvents.last {
+                        Text("마지막 알림 \(event.reasonCode.map(String.init) ?? "—") · 입력 확인 \(event.routeMatches ? "정상" : "불일치") · 당시 분석 \(event.analyzedFramesBeforeEvent)")
+                            .font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("lastAudioEvent")
+                    }
                     HStack {
                         Label("요청 2채널", systemImage: "waveform")
                         Spacer()

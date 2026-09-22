@@ -3,14 +3,14 @@ import XCTest
 
 final class CaptureEventPolicyTests: XCTestCase {
     func testDelayedOwnSetupNotificationDoesNotStopValidCapture() {
-        for event in [CaptureEvent.routeSetupChanged, .engineConfigurationChanged] {
+        for event in [CaptureEvent.routeSetupChanged, .routeOutputOverridden, .engineConfigurationChanged] {
             XCTAssertEqual(CaptureEventPolicy.decide(event, routeMatches: true, engineRunning: true,
                 receivedPCM: true, elapsed: 10, restartCount: 0), .continueCapture)
         }
     }
 
     func testInvalidRouteIsNeverHiddenByStartupGrace() {
-        for event in [CaptureEvent.routeSetupChanged, .engineConfigurationChanged] {
+        for event in [CaptureEvent.routeSetupChanged, .routeOutputOverridden, .engineConfigurationChanged] {
             XCTAssertEqual(CaptureEventPolicy.decide(event, routeMatches: false, engineRunning: true,
                 receivedPCM: false, elapsed: 0.01, restartCount: 0), .stop)
         }
@@ -38,5 +38,19 @@ final class CaptureEventPolicyTests: XCTestCase {
     func testInterruptionEndDoesNotRequestRestart() {
         XCTAssertEqual(CaptureEventPolicy.decide(.interruptionEnded, routeMatches: true, engineRunning: false,
             receivedPCM: false, elapsed: 0.1, restartCount: 0), .continueCapture)
+    }
+
+    func testOutputOverrideBeforeFirstPCMCanKeepVerifiedStereoInput() {
+        XCTAssertEqual(CaptureEventPolicy.decide(.routeOutputOverridden, routeMatches: true,
+            engineRunning: true, receivedPCM: false, elapsed: 0, restartCount: 0), .continueCapture)
+    }
+
+    func testOutputOverrideCannotRestartAfterPCMOrChangeTheInputContract() {
+        XCTAssertEqual(CaptureEventPolicy.decide(.routeOutputOverridden, routeMatches: true,
+            engineRunning: false, receivedPCM: true, elapsed: 0.1, restartCount: 0), .stop)
+        XCTAssertEqual(CaptureEventPolicy.decide(.routeOutputOverridden, routeMatches: false,
+            engineRunning: false, receivedPCM: false, elapsed: 0.1, restartCount: 0), .stop)
+        XCTAssertEqual(CaptureEventPolicy.decide(.routeOutputOverridden, routeMatches: true,
+            engineRunning: false, receivedPCM: false, elapsed: 0.1, restartCount: 0), .restartStartupEngine)
     }
 }

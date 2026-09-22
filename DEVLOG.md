@@ -52,6 +52,16 @@
 
 <!-- improvements -->
 
+### 빌드 2 실기기 override 중지 재현·빌드 3 수정 — 2026-09-22
+
+EXP-012 · REQ-NATIVE-007/008 · SC-28/29.
+
+- 사용자 원본: `docs/reports/2026-09-22-iphone17pro-native-build2-override.json`. iOS 27.0, 후면 Stereo 선택·세션/하드웨어/tap 2채널·48kHz·엔진 실행 상태였으나 첫 분석 전 reasonCode 4에서 중지했다. 분석 0은 무음 판정이나 스테레오 불가능 판정이 아니다.
+- 결함: AVAudioSession.RouteChangeReason.override를 누락해 routeUnknown으로 분류했다. routeMatches도 검사 대상 이벤트를 short-circuit하여 false로 기록했기 때문에 실제 경로 불일치의 증거가 아니었다.
+- 수정: override를 독립 이벤트로 분류하고 동일한 입력 경로·세션·PCM 형식을 직접 확인한다. 유지된 입력은 계속 수음하며 실제 불일치/외부 장치/인터럽트 중지와 초기 재시도 상한은 유지한다. 모든 이벤트에서 검사 항목과 당시 소스/방향/포맷·분석 프레임 수를 schemaVersion 4에 기록한다.
+- 사용자 추가 설명은 카메라 시작 직후 함께 중지. 원본 cameraSessionRunningAtAudioStart=false와 차이가 있어 원본을 수정하거나 카메라 미실행으로 단정하지 않는다. 오디오 중지 콜백은 카메라도 해제한다. 시작 버튼 경로를 startControl로 추가 기록해 통합/상세 시작을 구분한다.
+- 검증 준비: 정책 테스트 2개 추가(총 27개), 실제 NotificationCenter reason 4를 첫 PCM 전에 게시해 통합 카메라/수음이 유지되는 UI 회귀와 변경된 입력을 거부하는 회귀 추가(총 13개). 실제 iPhone 성공 여부는 빌드 3 재설치 후 확인한다.
+
 ### 실기기 시작 중지 수정·전체 화면 카메라 — 2026-09-22
 
 EXP-011 · REQ-NATIVE-007/008 · SC-28/29.

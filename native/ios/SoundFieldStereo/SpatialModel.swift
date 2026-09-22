@@ -140,6 +140,11 @@ final class SpatialModel: ObservableObject {
                 report.latestPose=pose
             }
             report.solution=fixtureAccumulator.solve(at: now)
+            if let pose=report.latestPose {
+                let angle=pose.bearing(of: source-pose.origin)
+                report.bearing=fixtureProfile?.estimate(AcousticFeatures(sampleRate: 48000,levelDbfs: -20,
+                    differenceDb: angle*0.2,lagSamples: angle*0.4,shape: [0.1,0.2,0.7]),at: now)
+            }
             report.state=report.solution?.estimate == nil ? "bearing" : "positionCandidate"
         }
     }

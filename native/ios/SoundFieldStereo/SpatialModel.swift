@@ -38,6 +38,11 @@ final class SpatialModel: ObservableObject {
         report.lastBearing=nil; report.lastCandidate=nil
         report.bearing=nil; report.solution=nil; report.calibration=calibrator.snapshot(); report.state="calibrating"
     }
+    func prepareAlignment() {
+        guard running else { return }
+        cancelCalibration()
+        report.state="alignSource"
+    }
     func cancelCalibration() {
         calibrator.cancel("보정을 취소했습니다. 소리를 중앙에 맞추고 다시 시작하세요.")
         tracker=BearingTracker(); accumulator.reset()
@@ -64,6 +69,7 @@ final class SpatialModel: ObservableObject {
             return
         }
         next.latestPose=pose; next.trackingAvailable=true
+        if next.state=="alignSource" { return }
         if calibrator.active {
             calibrator.append(features: features,pose: pose)
             next.calibration=calibrator.snapshot(); next.state=calibrator.profile == nil ? "calibrating" : "listening"

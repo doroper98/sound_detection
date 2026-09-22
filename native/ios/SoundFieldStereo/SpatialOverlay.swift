@@ -12,6 +12,12 @@ struct SpatialOverlay: View {
         GeometryReader { geometry in
             let size=geometry.size
             ZStack {
+                if data.bearing == nil {
+                    Image(systemName: "plus").font(.system(size: 28,weight: .light))
+                        .foregroundStyle(.white).shadow(color: .black,radius: 2)
+                        .position(x: size.width/2,y: size.height/2)
+                        .accessibilityLabel("소리 정렬용 카메라 중앙 기준점")
+                }
                 if let bearing=data.bearing {
                     let range=band(bearing,size: size)
                     if let range {
@@ -46,9 +52,21 @@ struct SpatialOverlay: View {
                 if data.calibration.phase=="collecting" {
                     calibrationCard.frame(maxWidth: min(size.width-32,430))
                         .position(x: size.width/2,y: size.height*0.38)
+                } else if data.state=="alignSource" {
+                    VStack(spacing: 10) {
+                        Text("소리 나는 스피커를 화면 중앙 +에 맞추세요.").font(.subheadline.bold()).multilineTextAlignment(.center)
+                        Text("1m 이상 거리 · 같은 높이 · 소리는 고정").font(.caption)
+                        Button("정렬 완료 · 보정 시작") {
+                            if let pose=camera.spatialCamera.latestPose { spatial.beginCalibration(pose: pose) }
+                        }.buttonStyle(.borderedProminent).tint(tint).foregroundStyle(.black)
+                            .disabled(camera.spatialCamera.latestPose == nil)
+                            .accessibilityIdentifier("rotationAlignmentDone")
+                        Button("취소") { spatial.cancelCalibration() }.font(.caption)
+                    }.padding(16).background(.black.opacity(0.8),in: RoundedRectangle(cornerRadius: 16))
+                        .frame(maxWidth: size.width-40).position(x: size.width/2,y: size.height*0.29)
                 } else {
                     VStack(spacing: 7) {
-                        Image(systemName: data.bearing == nil ? "viewfinder" : "waveform")
+                        Image(systemName: data.bearing == nil ? "ear" : "waveform")
                             .font(.system(size: 30,weight: .light))
                         Text(headline).font(.subheadline.bold()).multilineTextAlignment(.center)
                             .accessibilityIdentifier("spatialStatus")
@@ -56,11 +74,11 @@ struct SpatialOverlay: View {
                     }
                     .padding(14).background(.black.opacity(0.58),in: RoundedRectangle(cornerRadius: 14))
                     .frame(maxWidth: size.width-48)
-                    .position(x: size.width/2,y: size.height*0.33)
+                    .position(x: size.width/2,y: size.height*(data.solution?.estimate == nil ? 0.30 : 0.24))
                 }
             }.frame(width: size.width,height: size.height)
         }
-        .allowsHitTesting(data.calibration.phase=="collecting")
+        .allowsHitTesting(data.calibration.phase=="collecting" || data.state=="alignSource")
     }
     private var calibrationCard: some View {
         VStack(spacing: 10) {
@@ -145,8 +163,8 @@ struct SpatialGuide: View {
                     Text("띠는 높이를 정하지 않습니다. 위치 원과 거리는 실험적 후보이며 정확도는 아직 실기기에서 검증되지 않았습니다. 반사·여러 소리·움직이는 소리에서는 보류될 수 있습니다.").font(.footnote).foregroundStyle(.secondary)
                 }
                 Text(camera.trackingStatus).font(.caption).accessibilityIdentifier("spatialTrackingStatus")
-                Button("중앙 정렬 완료 · 방향 보정 시작") {
-                    if let pose=camera.spatialCamera.latestPose { model.spatial.beginCalibration(pose: pose); dismiss() }
+                Button("카메라로 중앙 정렬") {
+                    model.cancelCalibrationTrial(); model.spatial.prepareAlignment(); dismiss()
                 }
                 .buttonStyle(.borderedProminent).frame(maxWidth: .infinity)
                 .disabled(model.phase != .running || model.source != "back" || camera.spatialCamera.latestPose == nil)

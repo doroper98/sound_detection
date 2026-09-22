@@ -764,6 +764,7 @@ final class CaptureModel: ObservableObject {
 
     func beginCalibrationTrial() {
         guard phase == .running, report.requestedSource == "back" else { return }
+        spatial.cancelCalibration()
         _ = calibration.begin(at: ProcessInfo.processInfo.systemUptime)
         report.calibration = calibration.snapshot(at: ProcessInfo.processInfo.systemUptime)
     }

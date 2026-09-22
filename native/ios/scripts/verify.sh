@@ -31,4 +31,8 @@ xcrun simctl launch "$device_id" dev.soundfield.stereo --synthetic-stereo
 xcrun simctl io "$device_id" screenshot DerivedData/evidence/native-start.png
 xcrun xcresulttool export attachments --path DerivedData/evidence/NativeUI.xcresult \
   --output-path DerivedData/evidence/attachments || true
+
+# The user can re-sign this device build on Windows. It is not installable by
+# opening a Safari link, and contains no certificate or provisioning profile.
+python3 scripts/package-unsigned-ipa.py
 echo 'Native verification passed. Physical microphone behavior still needs an iPhone test.'

@@ -1,5 +1,12 @@
 # 검증
 
+## 연속 네이티브 관측 추가 (EXP-010)
+
+- Swift: 단발 이상치의 중앙값 안정성, 0.5초 내 계단 변화 반영, 최신 무음 즉시 보류, stale/stop/restart, 큰 산포 표시, 유효 비율, 버퍼 상한/역행 시각, 자세의 근접 시각·90° 회전·오래된 값 거부·quaternion 부호/배율 동치·잘못된 quaternion 검증을 추가한다.
+- UI: 연속 중앙값과 기기 회전 표시·변화 그래프, 중지 후 누적값 보류를 기존 시작/공유/백그라운드 흐름에 추가한다. 합성 PCM과 합성 quaternion은 표시·보고서에 명시한다.
+- 포장: 검증한 Release/iphoneos 실행 파일을 Payload 구조의 unsigned IPA로 만든다. Info.plist 플랫폼·CRC·SHA-256을 확인하며 개인 프로비저닝 프로필이 있으면 포장을 거부한다.
+- 실제 Core Motion과 오디오 시각 대응, Windows 개인 서명 설치, 실제 iPhone 17 Pro 수음·추정 정확도는 자동 합성 테스트에 포함되지 않는다.
+
 ## iPhone 네이티브 스테레오 진단 (EXP-009)
 
 **자동 검증 PASS (2026-09-22):** 코드 `b447dc1`, [Native iOS CI](https://github.com/doroper98/sound_detection/actions/runs/35718003457). Xcode 16.4/iphoneos Release 빌드, 순수 Swift 10/10, iPhone 16 Pro/iOS 18.5 시뮬레이터 UI 5/5. [영구 결과 요약](../docs/reports/2026-09-22-native-stereo-verification.json) · [합성 입력 화면](../docs/assets/native-stereo-synthetic.png). 실제 아이폰 17 Pro 결과는 아직 없다.

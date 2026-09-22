@@ -30,6 +30,10 @@ flowchart LR
 
 ## 설계 결정
 
+- 연속 네이티브 진단은 `ContinuousLagTracker`로 2초/240개 통계만 보관하고 최근 0.5초 중앙값·산포를 갱신한다. 프레임별 PCM 처리는 유지하며, 위치 엔진의 관측 개수나 정확도를 임의로 늘리지 않는다. 현재 숫자와 마지막 구간 숫자를 별도로 표시한다.
+- `OrientationHistory`는 Core Motion quaternion을 4초/256개만 보관한다. AVAudioTime의 host 시각을 초로 변환한 PCM 중간 시점에 ±60ms 안에서 대응하고 실제 편차를 출력한다. IMU 적분으로 이동거리를 만들거나 마이크 축을 추정하지 않는다. 센서 미지원/시각 누락은 null 대응으로 남기고 수음은 지속한다.
+- CI의 unsigned IPA는 개인 서명 전 실행할 수 없는 배포 준비물이다. 플랫폼·CRC·실행 파일과 SHA-256을 검증하지만 아이폰 설치나 Enterprise/TestFlight 배포를 검증한 것은 아니다.
+
 - iPhone 네이티브 입력은 `native/ios/`의 별도 SwiftUI 앱이다. `.record`/`.default` 세션 → 내장 front/back + stereo polar pattern + portrait 입력 방향 → 실제 2채널 검사 → AVAudioEngine tap → StereoCore 신호 진단으로 이어진다. 웹 브리지나 모노 복제는 사용하지 않는다.
 - Apple 내장 스테레오의 처리 특성을 고려해 채널 지연 진단과 물리 위치 추론 사이에 교정 경계를 둔다. 기존 TypeScript 위치 엔진에 임의 센서 좌표·동기화 true를 전달하지 않는다. 앱은 좌표·카메라를 입력받지 않는다.
 - 네이티브 PCM은 버퍼 한 개만 처리하고, 처리/메인 스레드 전달 중 추가 입력은 개수만 기록하여 건너뛴다. 원음 이력·녹음 파일·네트워크 호출이 없다. 통계 공유 전에도 수음을 중지한다. sampleTime 불연속은 분석 건너뛰기를 포함하며 하드웨어 동기화 측정값이 아니다.

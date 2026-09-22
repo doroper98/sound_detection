@@ -1,4 +1,5 @@
 import AVFoundation
+import CoreMotion
 import SwiftUI
 import StereoCore
 
@@ -24,9 +25,9 @@ struct MarkedReading: Codable, Identifiable {
     let reading: FrameReading
 }
 
-struct NativeReport: Codable {
-    var schemaVersion = 1
-    var appVersion = "0.4.0-native-prototype"
+struct NativeReport: Encodable {
+    var schemaVersion = 2
+    var appVersion = "0.4.0-native-continuous-prototype"
     var inputOrigin = "AVAudioEngine.inputNode"
     var operatingSystem = UIDevice.current.systemVersion
     var startedAt: Date?
@@ -52,11 +53,57 @@ struct NativeReport: Codable {
     var activeRightFrames = 0
     var duplicateFrames = 0
     var candidateLagFrames = 0
+    var trend: LagTrend?
+    var motionStatus = "회전 측정 대기"
+    var latestOrientation: AlignedOrientation?
+    let attitudeReferenceFrame = "CoreMotion.xArbitraryZVertical; quaternion x,y,z,w"
+    let positionTrackingEnabled = false
+    let acousticCalibrationVerified = false
     let physicalMicrophonesVerified = false
     let hardwareSynchronizationVerified = false
     let localizationEnabled = false
     let lagConvention = "right-minus-left; positive means right arrives later"
     let note = "Processed stereo signal lag only. No microphone geometry or physical TDOA calibration. No PCM, audio files, camera frames, device IDs, or source coordinates are exported."
+}
+
+@MainActor
+private final class MotionRecorder {
+    private let manager = CMMotionManager()
+    private var timer: Timer?
+    private var history = OrientationHistory()
+
+    func start() -> Bool {
+        stop()
+        history = OrientationHistory()
+        guard manager.isDeviceMotionAvailable,
+              CMMotionManager.availableAttitudeReferenceFrames().contains(.xArbitraryZVertical) else { return false }
+        manager.deviceMotionUpdateInterval = 1 / 50
+        manager.startDeviceMotionUpdates(using: .xArbitraryZVertical)
+        let poller = Timer(timeInterval: 1 / 50, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.poll() }
+        }
+        timer = poller
+        RunLoop.main.add(poller, forMode: .common)
+        return true
+    }
+
+    private func poll() {
+        guard let motion = manager.deviceMotion else { return }
+        let q = motion.attitude.quaternion
+        if let sample = OrientationSample(timestampSeconds: motion.timestamp, quaternion: [q.x, q.y, q.z, q.w]) {
+            history.append(sample)
+        }
+    }
+
+    func aligned(at hostSeconds: Double) -> AlignedOrientation? {
+        poll()
+        return history.aligned(at: hostSeconds)
+    }
+
+    func stop() {
+        timer?.invalidate(); timer = nil
+        manager.stopDeviceMotionUpdates()
+    }
 }
 
 enum CaptureFailure: LocalizedError {
@@ -118,7 +165,9 @@ private final class TapPipeline: @unchecked Sendable {
     #if DEBUG
     func submitSynthetic(left: [Float], right: [Float], sampleTime: Int64) {
         guard gate.wait(timeout: .now()) == .success else { return }
-        analyze(left: left, right: right, sampleRate: 48_000, sampleTime: sampleTime, hostTime: nil)
+        let bufferStart = ProcessInfo.processInfo.systemUptime - Double(left.count) / 48_000
+        analyze(left: left, right: right, sampleRate: 48_000, sampleTime: sampleTime,
+                hostTime: AVAudioTime.hostTime(forSeconds: bufferStart))
     }
     #endif
 
@@ -160,6 +209,11 @@ final class CaptureModel: ObservableObject {
     private let notificationGate = NotificationGate()
     private var watchdog: Timer?
     private var syntheticTimer: Timer?
+    private var trackingTimer: Timer?
+    private var tracker = ContinuousLagTracker()
+    private var timeOrigin: Double?
+    private let motion = MotionRecorder()
+    private var syntheticOrientation = OrientationHistory()
     private var lastFrameAt = Date()
     private var exportURL: URL?
 
@@ -194,6 +248,7 @@ final class CaptureModel: ObservableObject {
         observers.forEach(NotificationCenter.default.removeObserver)
         watchdog?.invalidate()
         syntheticTimer?.invalidate()
+        trackingTimer?.invalidate()
     }
 
     func start() {
@@ -201,6 +256,9 @@ final class CaptureModel: ObservableObject {
         generation += 1
         let token = generation
         report = NativeReport()
+        tracker = ContinuousLagTracker()
+        timeOrigin = nil
+        syntheticOrientation = OrientationHistory()
         report.requestedSource = source
         report.status = "마이크 권한을 확인하고 있습니다."
         phase = .requestingPermission
@@ -229,6 +287,7 @@ final class CaptureModel: ObservableObject {
                     }
                 }
                 pipeline = processor
+                report.motionStatus = isSynthetic ? "합성 회전 데이터" : (motion.start() ? "회전 센서 대기" : "회전 센서 미지원 · 수음은 계속")
                 if isSynthetic {
                     #if DEBUG
                     try startSynthetic(processor)
@@ -241,6 +300,11 @@ final class CaptureModel: ObservableObject {
                 report.startedAt = Date()
                 report.status = isSynthetic ? "합성 테스트 입력 · 실기기 결과 아님" : "스테레오 수음 중 · 세로 방향을 유지하세요."
                 lastFrameAt = Date()
+                let trendTimer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
+                    Task { @MainActor [weak self] in self?.refreshTrend() }
+                }
+                trackingTimer = trendTimer
+                RunLoop.main.add(trendTimer, forMode: .common)
                 watchdog = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
                     Task { @MainActor [weak self] in
                         guard let self, self.phase == .running, Date().timeIntervalSince(self.lastFrameAt) > 5 else { return }
@@ -299,6 +363,7 @@ final class CaptureModel: ObservableObject {
               actual.sampleRate > 0, hardware.sampleRate > 0,
               session.currentRoute.inputs.first?.portType == .builtInMic,
               session.currentRoute.inputs.first?.selectedDataSource?.selectedPolarPattern == .stereo,
+              session.currentRoute.inputs.first?.selectedDataSource?.orientation == desired,
               session.inputOrientation == .portrait else {
             throw CaptureFailure.message("요청한 스테레오 경로가 실제 입력에 적용되지 않았습니다. 보고서의 실제 채널 수와 선택 패턴을 확인하세요.")
         }
@@ -332,6 +397,35 @@ final class CaptureModel: ObservableObject {
         if reading.analysis.channels[1].active { report.activeRightFrames += 1 }
         if reading.analysis.duplicateSuspected { report.duplicateFrames += 1 }
         if reading.analysis.status == .candidate { report.candidateLagFrames += 1 }
+        guard let hostTime = reading.hostTime else {
+            report.motionStatus = "오디오 시각이 없어 회전 대응 보류"
+            return
+        }
+        let midpoint = AVAudioTime.seconds(forHostTime: hostTime)
+            + Double(reading.analysis.sampleCount) / (2 * reading.analysis.sampleRate)
+        if timeOrigin == nil { timeOrigin = midpoint }
+        let orientation: AlignedOrientation?
+        if isSynthetic {
+            // Synthetic pose is explicitly labelled; no device sensors are read.
+            if let sample = OrientationSample(timestampSeconds: midpoint, quaternion: [0, 0, 0, 1]) {
+                syntheticOrientation.append(sample)
+            }
+            orientation = syntheticOrientation.aligned(at: midpoint)
+        } else {
+            orientation = motion.aligned(at: midpoint)
+            report.motionStatus = orientation == nil ? "동일 시각의 회전 데이터 대기" : "기기 회전 기록 중 · 이동거리 미측정"
+        }
+        report.latestOrientation = orientation
+        guard let origin = timeOrigin else { return }
+        let elapsed = midpoint - origin
+        tracker.append(TimedLag(timeSeconds: elapsed, analysis: reading.analysis, orientation: orientation))
+        report.trend = tracker.snapshot(at: elapsed)
+    }
+
+    private func refreshTrend() {
+        guard phase == .running, let origin = timeOrigin else { return }
+        report.trend = tracker.snapshot(at: ProcessInfo.processInfo.systemUptime - origin)
+        if report.trend?.state == .stale { report.latestOrientation = nil }
     }
 
     func stop(reason: String = "수음을 중지하고 마이크를 해제했습니다.") {
@@ -339,6 +433,12 @@ final class CaptureModel: ObservableObject {
         generation += 1 // Invalidates permission results and queued old frames.
         watchdog?.invalidate(); watchdog = nil
         syntheticTimer?.invalidate(); syntheticTimer = nil
+        trackingTimer?.invalidate(); trackingTimer = nil
+        motion.stop()
+        if let origin = timeOrigin {
+            report.trend = tracker.snapshot(at: ProcessInfo.processInfo.systemUptime - origin, stopped: true)
+        }
+        if report.motionStatus != "회전 측정 대기" { report.motionStatus = "회전 측정 중지" }
         if let engine {
             engine.stop()
             if tapInstalled { engine.inputNode.removeTap(onBus: 0) }

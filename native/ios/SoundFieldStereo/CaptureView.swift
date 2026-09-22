@@ -25,7 +25,7 @@ struct CaptureView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("SOUNDFIELD / iPHONE").font(.caption.monospaced()).foregroundStyle(green)
                     Text("스테레오 입력").font(.largeTitle.bold())
-                    Text("좌우 신호부터 확인합니다.").foregroundStyle(.secondary)
+                    Text("계속 듣고, 최근 변화를 계산합니다.").foregroundStyle(.secondary)
                 }
                 if model.isSynthetic {
                     Text("합성 테스트 · 아이폰 실측 아님")
@@ -66,7 +66,7 @@ struct CaptureView: View {
                     channelCard("R · 오른쪽", level: analysis?.channels[1])
                 }
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("채널 간 신호 시간차").font(.headline)
+                    Text("마지막 구간 시간차").font(.headline)
                     Text(analysis?.rightMinusLeftLagSeconds.map { String(format: "%+.1f µs", $0 * 1_000_000) } ?? "—")
                         .font(.system(size: 34, weight: .semibold, design: .monospaced))
                         .foregroundStyle(green).accessibilityIdentifier("lagValue")
@@ -78,6 +78,29 @@ struct CaptureView: View {
                         Text("\(Int(reading.analysis.sampleRate)) Hz · \(reading.analysis.sampleCount) samples · 건너뛴 버퍼 \(reading.skippedBuffers)")
                             .font(.caption.monospaced()).foregroundStyle(.secondary)
                     }
+                }.card()
+
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("연속 관측").font(.headline)
+                        Spacer()
+                        Text("최근 2초").font(.caption).foregroundStyle(.secondary)
+                    }
+                    Text(model.report.trend?.estimateSeconds.map { String(format: "%+.1f µs", $0 * 1_000_000) } ?? "—")
+                        .font(.title.monospacedDigit().bold()).foregroundStyle(green)
+                        .accessibilityIdentifier("trackedLagValue")
+                    Text(trendDescription(model.report.trend?.state))
+                        .font(.subheadline).accessibilityIdentifier("trendStatus")
+                    LagHistoryPlot(history: model.report.trend?.history ?? [], color: green)
+                        .frame(height: 96).accessibilityLabel("최근 2초의 채널 시간차 변화 그래프")
+                    if let trend = model.report.trend {
+                        Text("최근 0.5초 유효 \(trend.recentAccepted)/\(trend.recentTotal) · 산포 \(trend.spreadSeconds.map { String(format: "%.1f µs", $0 * 1_000_000) } ?? "—")")
+                            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                    }
+                    Text(model.report.latestOrientation.map { String(format: "시작 대비 기기 회전 %.1f°", $0.rotationFromStartDegrees) } ?? model.report.motionStatus)
+                        .font(.footnote).accessibilityIdentifier("motionStatus")
+                    Text("회전은 기기 자세입니다. 음원 방향·이동거리 추정은 아직 교정 전입니다.")
+                        .font(.caption).foregroundStyle(.secondary)
                 }.card()
 
                 VStack(alignment: .leading, spacing: 12) {
@@ -134,6 +157,45 @@ struct CaptureView: View {
         case .searchBoundary: return "검색 범위 경계에 있어 시간차를 보류합니다."
         case .candidate: return "신호 시간차 후보 · 방향 교정 전"
         }
+    }
+
+    private func trendDescription(_ state: TrendState?) -> String {
+        switch state {
+        case .collecting: return "연속 관측 수집 중"
+        case .tracking: return "최근 중앙값 · 위치 정확도를 뜻하지 않습니다."
+        case .changing: return "시간차 변화 또는 흔들림이 큽니다."
+        case .noReliableSignal: return "신뢰할 신호가 부족해 누적값을 보류합니다."
+        case .stale: return "새 관측을 기다립니다. 이전 추정값은 숨깁니다."
+        case .stopped: return "계측 중지 · 마지막 변화 기록"
+        case nil: return "수음을 시작하면 자동으로 누적합니다."
+        }
+    }
+}
+
+private struct LagHistoryPlot: View {
+    let history: [TimedLag]
+    let color: Color
+
+    var body: some View {
+        Canvas { context, size in
+            var axis = Path()
+            axis.move(to: CGPoint(x: 0, y: size.height / 2))
+            axis.addLine(to: CGPoint(x: size.width, y: size.height / 2))
+            context.stroke(axis, with: .color(.secondary.opacity(0.4)), style: StrokeStyle(lineWidth: 1, dash: [3, 4]))
+            let end = history.last?.timeSeconds ?? 0
+            var path = Path(), connected = false
+            for item in history {
+                guard let lag = item.lagSeconds else { connected = false; continue }
+                let x = (item.timeSeconds - (end - 2)) / 2 * size.width
+                let y = (1 - min(1, max(-1, lag / 0.001))) / 2 * size.height
+                let point = CGPoint(x: x, y: y)
+                if connected { path.addLine(to: point) } else { path.move(to: point) }
+                connected = true
+            }
+            context.stroke(path, with: .color(color), lineWidth: 2)
+        }
+        .overlay(alignment: .topLeading) { Text("+1 ms").font(.caption2).foregroundStyle(.secondary) }
+        .overlay(alignment: .bottomLeading) { Text("−1 ms").font(.caption2).foregroundStyle(.secondary) }
     }
 }
 

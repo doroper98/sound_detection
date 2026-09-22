@@ -9,6 +9,14 @@ final class CaptureUITests: XCTestCase {
         return app
     }
 
+    private func reveal(_ element: XCUIElement, in app: XCUIApplication, downward: Bool = false) {
+        for _ in 0..<6 {
+            if element.isHittable { return }
+            if downward { app.swipeDown() } else { app.swipeUp() }
+        }
+        XCTAssertTrue(element.isHittable)
+    }
+
     func testStartMarkStopAndScreenshot() {
         let app = launch()
         let button = app.buttons["captureButton"]
@@ -23,13 +31,23 @@ final class CaptureUITests: XCTestCase {
         screenshot.name = "native-stereo-synthetic"
         screenshot.lifetime = .keepAlways
         add(screenshot)
-        app.swipeUp()
+        let tracked = app.staticTexts["trackedLagValue"]
+        reveal(tracked, in: app)
+        expectation(for: value, evaluatedWith: tracked)
+        waitForExpectations(timeout: 10)
+        XCTAssertTrue(app.staticTexts["motionStatus"].label.contains("회전"))
+        let continuous = XCTAttachment(screenshot: app.screenshot())
+        continuous.name = "native-continuous-synthetic"
+        continuous.lifetime = .keepAlways
+        add(continuous)
+        reveal(app.buttons["왼쪽"], in: app)
         app.buttons["왼쪽"].tap()
         XCTAssertTrue(app.staticTexts["markCount"].label.contains("1/12"))
-        app.swipeDown()
+        reveal(button, in: app, downward: true)
         button.tap()
         XCTAssertEqual(button.label, "스테레오 수음 시작")
         XCTAssertTrue(app.staticTexts["captureStatus"].label.contains("해제"))
+        XCTAssertEqual(tracked.label, "—")
     }
 
     func testCancelPendingPermissionDoesNotStartLater() {
@@ -69,13 +87,13 @@ final class CaptureUITests: XCTestCase {
         app.buttons["captureButton"].tap()
         expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["lagValue"])
         waitForExpectations(timeout: 10)
-        app.swipeUp()
+        reveal(app.buttons["exportButton"], in: app)
         app.buttons["exportButton"].tap()
         // The share sheet is native. Dismiss it by dragging, then verify stop.
         let sheet = app.otherElements["ActivityListView"]
         if sheet.waitForExistence(timeout: 5) { sheet.swipeDown() }
         else { app.swipeDown() }
-        app.swipeDown()
+        reveal(app.buttons["captureButton"], in: app, downward: true)
         XCTAssertEqual(app.buttons["captureButton"].label, "스테레오 수음 시작")
     }
 }

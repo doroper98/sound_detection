@@ -4,7 +4,7 @@
 
 [사용자 원본](../docs/reports/2026-09-22-iphone17pro-native-build2-override.json)은 reasonCode 4에서 분석 전 중지를 기록한다. 선택된 후면 Stereo·3종 채널 수 2·48kHz·엔진 실행까지 확인했으며 실제 PCM 분석은 0이다. 코드 4는 override인데 빌드 2가 unknown으로 처리했다. routeMatches=false는 해당 이벤트에서 실제 검사하지 않은 결과이므로 입력 경로 불일치의 증거로 해석하지 않는다. 사용자는 카메라가 시작되자마자 중지했다고 설명했으며 cameraSessionRunningAtAudioStart=false와의 차이는 미확정으로 보존한다.
 
-빌드 3은 정책 27개·UI 13개와 Release 기기 빌드를 검증한다. 알림 원인과 무관하게 입력 검사 항목을 기록하며, 첫 PCM 전 override에서 동일한 스테레오 입력을 유지하고 실제 불일치는 거부하는 회귀를 포함한다. Mac CI 및 실기기 후속 결과는 별도로 기록한다.
+**빌드 3 자동 검증 PASS:** 코드 `ac5562d`, [Native iOS CI](https://github.com/doroper98/sound_detection/actions/runs/35730115675)에서 Swift 27/27·시뮬레이터 UI 13/13·Xcode 16.4 Release 기기 빌드·IPA 포장 통과. 첫 PCM 전 override에서 동일한 스테레오 입력을 유지하고 실제 불일치는 거부하는 두 회귀를 포함한다. [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35730115684)의 단위 40/40·Chromium E2E 16/16도 PASS. [영구 결과·해시](../docs/reports/2026-09-22-native-override-verification.json) · [검토한 합성 UI 화면](../docs/assets/native-camera-build3-synthetic.png). Windows에서 전달 IPA의 해시·CRC·실제 iOS 실행 파일·빌드 번호·권한·DEBUG 인자 제외를 재검사했다. 실제 카메라/수음 동시 사용과 빌드 3 기기 오류 해결 여부는 후속 확인 대상이다.
 
 ## 카메라 화면·실기기 시작 알림 수정 (EXP-011)
 

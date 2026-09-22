@@ -60,7 +60,8 @@ EXP-012 · REQ-NATIVE-007/008 · SC-28/29.
 - 결함: AVAudioSession.RouteChangeReason.override를 누락해 routeUnknown으로 분류했다. routeMatches도 검사 대상 이벤트를 short-circuit하여 false로 기록했기 때문에 실제 경로 불일치의 증거가 아니었다.
 - 수정: override를 독립 이벤트로 분류하고 동일한 입력 경로·세션·PCM 형식을 직접 확인한다. 유지된 입력은 계속 수음하며 실제 불일치/외부 장치/인터럽트 중지와 초기 재시도 상한은 유지한다. 모든 이벤트에서 검사 항목과 당시 소스/방향/포맷·분석 프레임 수를 schemaVersion 4에 기록한다.
 - 사용자 추가 설명은 카메라 시작 직후 함께 중지. 원본 cameraSessionRunningAtAudioStart=false와 차이가 있어 원본을 수정하거나 카메라 미실행으로 단정하지 않는다. 오디오 중지 콜백은 카메라도 해제한다. 시작 버튼 경로를 startControl로 추가 기록해 통합/상세 시작을 구분한다.
-- 검증 준비: 정책 테스트 2개 추가(총 27개), 실제 NotificationCenter reason 4를 첫 PCM 전에 게시해 통합 카메라/수음이 유지되는 UI 회귀와 변경된 입력을 거부하는 회귀 추가(총 13개). 실제 iPhone 성공 여부는 빌드 3 재설치 후 확인한다.
+- 검증 PASS: 코드 `ac5562d`, [Native iOS 35730115675](https://github.com/doroper98/sound_detection/actions/runs/35730115675)에서 Swift 27/27·iPhone 16 Pro/iOS 18.5 합성 UI 13/13·Xcode 16.4 Release 기기 빌드·IPA 포장 통과. NotificationCenter reason 4를 첫 PCM 전에 게시해 카메라/수음 유지, 변경된 입력은 해제하는 두 회귀도 PASS. [Verify 35730115684](https://github.com/doroper98/sound_detection/actions/runs/35730115684) 단위 40/40·Chromium E2E 16/16 PASS.
+- 전달 검사: 빌드 3 IPA 260,418바이트, SHA-256 `c4cf9e5e592f3c88dc68bf49ffd5a090ecbafdb1b371fe4b7fdb3f3cf81767a8`. Windows에서 해시·CRC·arm64 iOS 실행 파일·빌드 번호·카메라 권한·DEBUG 인자 제외를 검증하고 합성 화면을 직접 검토했다. `docs/reports/2026-09-22-native-override-verification.json`에 보존했다. 실제 iPhone의 빌드 3 수음 성공은 재설치 후 확인하며 자동 회귀 성공으로 대체하지 않는다.
 
 ### 실기기 시작 중지 수정·전체 화면 카메라 — 2026-09-22
 

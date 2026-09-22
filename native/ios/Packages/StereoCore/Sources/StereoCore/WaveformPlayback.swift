@@ -34,6 +34,7 @@ public struct WaveformDisplayStatistics: Codable, Sendable {
     /// Unique PCM snapshots presented in the trailing second; not screen refresh rate.
     public let recentFreshFPS: Int
     public let presentationDelaySeconds: Double
+    public let measuredAtUptimeSeconds: Double
 }
 
 /// At most 24 reduced snapshots, no PCM. A short display delay absorbs batched
@@ -81,7 +82,7 @@ public struct WaveformPlayback {
     public func statistics(at now: Double) -> WaveformDisplayStatistics {
         WaveformDisplayStatistics(targetFPS: 60, presentedFrames: presented, discardedFrames: discarded,
             pendingFrames: queue.count, recentFreshFPS: presentationTimes.filter { now - $0 < 1 && now >= $0 }.count,
-            presentationDelaySeconds: delay)
+            presentationDelaySeconds: delay, measuredAtUptimeSeconds: now)
     }
 
     public mutating func clear() {

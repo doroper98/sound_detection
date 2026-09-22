@@ -253,9 +253,17 @@ final class WaveformDisplayModel: NSObject, ObservableObject {
     private var playback = WaveformPlayback()
     private var displayLink: CADisplayLink?
     private var displayedTime: Double?
+    private var active = false
+    private var visible = true
+    private var lastVisibleStatistics: WaveformDisplayStatistics?
 
     func start() {
         stop(); playback = WaveformPlayback()
+        active = true; lastVisibleStatistics = nil
+        if visible { startDisplayLink() }
+    }
+
+    private func startDisplayLink() {
         let link = CADisplayLink(target: self, selector: #selector(tick))
         link.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 60, preferred: 60)
         link.add(to: .main, forMode: .common)
@@ -263,6 +271,7 @@ final class WaveformDisplayModel: NSObject, ObservableObject {
     }
 
     func receive(_ frames: [TimedWaveform], duration: Double) {
+        guard visible else { return }
         playback.append(frames, bufferDuration: duration)
     }
 
@@ -274,9 +283,22 @@ final class WaveformDisplayModel: NSObject, ObservableObject {
         }
     }
 
-    var statistics: WaveformDisplayStatistics { playback.statistics(at: ProcessInfo.processInfo.systemUptime) }
+    var statistics: WaveformDisplayStatistics {
+        if !visible, let lastVisibleStatistics { return lastVisibleStatistics }
+        return playback.statistics(at: ProcessInfo.processInfo.systemUptime)
+    }
+
+    func setVisible(_ value: Bool) {
+        guard value != visible else { return }
+        if !value { lastVisibleStatistics = statistics }
+        visible = value
+        displayLink?.invalidate(); displayLink = nil
+        playback.clear(); displayedTime = nil; preview = nil
+        if visible && active { startDisplayLink() }
+    }
 
     func stop() {
+        active = false
         displayLink?.invalidate(); displayLink = nil
         playback.clear(); displayedTime = nil; preview = nil
     }

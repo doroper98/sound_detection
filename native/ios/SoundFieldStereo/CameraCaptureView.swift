@@ -60,6 +60,7 @@ private struct InputWaveform: View {
 private struct StereoWaveformPanel: View {
     @ObservedObject var display: WaveformDisplayModel
     let green: Color
+    let freshFPS: Int
     var body: some View {
         VStack(spacing: 4) {
             HStack(spacing: 12) {
@@ -68,8 +69,9 @@ private struct StereoWaveformPanel: View {
                 InputWaveform(label: "R", columns: display.preview?.right ?? [],
                     amplitudeRange: display.preview?.amplitudeRange ?? 1, tint: .cyan, identifier: "rightWaveform")
             }
-            Text("10ms 파형 · 공통 자동 배율 · 최대 60fps")
+            Text("최근 \(freshFPS) fps · 10ms 파형 · 공통 자동 배율 · 최대 60fps")
                 .font(.system(size: 10)).foregroundStyle(.secondary)
+                .accessibilityIdentifier("liveWaveformPerformance")
         }
     }
 }
@@ -163,7 +165,8 @@ struct CaptureView: View {
                             Text("연속 시간차 · 방향 교정 전").font(.caption2)
                         }
                     }
-                    StereoWaveformPanel(display: model.waveformDisplay, green: green)
+                    StereoWaveformPanel(display: model.waveformDisplay, green: green,
+                        freshFPS: model.report.waveformDisplay?.recentFreshFPS ?? 0)
                     Text(model.report.status).font(.caption).frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityIdentifier("liveCaptureStatus")
                     Picker("카메라와 마이크 방향", selection: $model.source) {
@@ -212,6 +215,8 @@ struct CaptureView: View {
                 model.enteredBackground()
             }
         }
+        .onChange(of: showDetails) { _, _ in model.waveformDisplay.setVisible(!showDetails && !showCalibration) }
+        .onChange(of: showCalibration) { _, _ in model.waveformDisplay.setVisible(!showDetails && !showCalibration) }
         .onAppear {
             // Cleanup must not depend on SwiftUI rendering an intermediate
             // phase; permission or route failure can return to idle immediately.

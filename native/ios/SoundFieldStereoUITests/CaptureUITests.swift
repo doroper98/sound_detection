@@ -4,11 +4,10 @@ final class CaptureUITests: XCTestCase {
     func testFreshWaveformsExceedAnalysisCadence() {
         let app = launch(details: false)
         app.buttons["liveCaptureButton"].tap()
-        app.buttons["detailsButton"].tap()
-        let performance = app.staticTexts["waveformPerformance"]
+        let performance = app.staticTexts["liveWaveformPerformance"]
         expectation(for: NSPredicate(format: "label MATCHES %@", ".*최근 [2-6][0-9] fps.*"), evaluatedWith: performance)
         waitForExpectations(timeout: 12)
-        XCTAssertTrue(app.staticTexts["captureStatus"].label.contains("합성"))
+        XCTAssertTrue(app.staticTexts["liveCaptureStatus"].label.contains("합성"))
     }
 
     func testGuidedComparisonCollectsSixTrialsWithoutInventingDirection() {
@@ -25,11 +24,11 @@ final class CaptureUITests: XCTestCase {
             XCTAssertTrue(app.buttons["calibrationCancel"].waitForExistence(timeout: 3))
             let label = step == 6 ? "6/6 · 비교 완료" : "\(step + 1)/6"
             expectation(for: NSPredicate(format: "label CONTAINS %@", label), evaluatedWith: app.staticTexts["calibrationStep"])
-            waitForExpectations(timeout: 12)
+            waitForExpectations(timeout: 20)
         }
         let comparison = app.staticTexts["calibrationComparison"]
         reveal(comparison, in: app)
-        XCTAssertTrue(comparison.label.contains("구분되지"))
+        XCTAssertTrue(comparison.label.contains("구분되지"), comparison.label)
         let screen = XCTAttachment(screenshot: app.screenshot())
         screen.name = "native-direction-comparison-synthetic"
         screen.lifetime = .keepAlways

@@ -55,7 +55,7 @@ struct CaptureDetailsView: View {
                     Text("오디오 알림 \(model.report.audioEvents.count) · 초기 재설정 \(model.report.startupEngineRestarts)")
                         .font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("audioEventCount")
                     if let display = model.report.waveformDisplay {
-                        Text("파형 최근 \(display.recentFreshFPS) fps · 누적 \(display.presentedFrames) · 표시 지연 \(Int(display.presentationDelaySeconds * 1000))ms")
+                        Text("파형 마지막 표시 \(display.recentFreshFPS) fps · 누적 \(display.presentedFrames) · 표시 지연 \(Int(display.presentationDelaySeconds * 1000))ms")
                             .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                             .accessibilityIdentifier("waveformPerformance")
                     }

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "kind": "native-prototype-software-verification",
+  "date": "2026-09-22",
+  "sourceCommit": "b447dc1fca4e44017fd08495197e2b84641f789c",
+  "nativeWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35718003457",
+  "webWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35718003413",
+  "xcodeVersion": "16.4",
+  "unsignedIPhoneOSReleaseBuild": "passed",
+  "swiftUnitTests": { "passed": 10, "failed": 0 },
+  "simulator": {
+    "device": "iPhone 16 Pro",
+    "runtime": "iOS 18.5",
+    "input": "explicitly-labelled DEBUG synthetic PCM",
+    "uiTests": { "passed": 5, "failed": 0 },
+    "checks": ["start-mark-stop", "pending-permission-cancel", "mono-rejected", "background-stop", "share-stops-capture"],
+    "fixtureLagSamples": 7,
+    "fixtureSampleRate": 48000,
+    "displayedLagMicroseconds": 145.8
+  },
+  "webRegression": { "unitTestsPassed": 40, "browserTestsPassed": 16 },
+  "physicalDeviceTestPerformed": false,
+  "physicalMicrophonesVerified": false,
+  "hardwareSynchronizationVerified": false,
+  "localizationEnabled": false,
+  "note": "This is software verification, not a microphone capture report from an iPhone 17 Pro. No signed IPA or TestFlight deployment was created."
+}

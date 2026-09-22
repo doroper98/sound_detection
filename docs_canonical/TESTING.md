@@ -1,5 +1,22 @@
 # 검증
 
+## iPhone 네이티브 스테레오 진단 (EXP-009)
+
+**자동 검증 PASS (2026-09-22):** 코드 `b447dc1`, [Native iOS CI](https://github.com/doroper98/sound_detection/actions/runs/35718003457). Xcode 16.4/iphoneos Release 빌드, 순수 Swift 10/10, iPhone 16 Pro/iOS 18.5 시뮬레이터 UI 5/5. [영구 결과 요약](../docs/reports/2026-09-22-native-stereo-verification.json) · [합성 입력 화면](../docs/assets/native-stereo-synthetic.png). 실제 아이폰 17 Pro 결과는 아직 없다.
+
+실행: Mac에서 `bash native/ios/scripts/verify.sh`. GitHub의 Native iOS workflow도 같은 스크립트를 실행한다. Windows의 Swift/Xcode 미설치를 통과로 처리하지 않는다.
+
+| 검증 계층 | 검사 | 실기기 성공 여부 |
+|---|---|---|
+| StereoCore Swift 테스트 10개 | 양·음 지연과 44.1/48/96kHz, 0지연+독립 잡음, 무음/DC, 복제/배율/극성, 순음 다중 피크, 포화·독립 잡음, 검색 경계, 20dB 변화, 비정상 PCM, JSON | 합성 신호 검증 |
+| iphoneos Release 빌드 | AVAudioSession/AVAudioEngine/SwiftUI·로컬 패키지, 마이크 권한 plist, 서명 없이 컴파일/링크 | 설치·수음 검증 아님 |
+| iPhone 시뮬레이터 UI 5개 | 시작/위치 표시/중지, 지연된 권한 결과 취소, 모노 거부, 백그라운드 해제, 공유 시 중지 | DEBUG 합성 입력, 화면·JSON에 명시 |
+| iPhone 17 Pro 실제 입력 | 실제 PCM2, 양쪽 활성, 복제 여부, 전면/후면·좌/정면/우, 인터럽트·잠금·재시작 | 아직 미검증 |
+
+기기 빌드는 iOS SDK에서 타입과 링크를 검증하고, 시뮬레이터는 앱 동작을 검증한다. 내장 마이크 stereo polar pattern 적용과 실제 PCM은 물리 아이폰에서 별도로 검사해야 한다. 초기 CI의 아키텍처 불일치와 후속 결과는 DEVLOG.md의 EXP-009/BUG-015에 기록한다.
+
+보고서의 지연은 right-minus-left, 기존 TS SDK는 microphone0-minus1이다. 두 경로를 바로 연결하지 않는다. 내장 스테레오 처리의 편향·좌우 축과 유효 센서 모델을 검증하기 전에는 물리 TDOA/각도/거리로 표시하지 않는다. JSON의 세 가지 검증·활성 플래그는 false로 유지한다. 실제 검사 순서: [네이티브 앱 안내](../native/ios/README.md).
+
 ## v0.4.0 연속 주파수 분석
 
 로컬 Gate PASS, Chromium E2E 16/16 PASS. 화면 조정 후 연속 분석 1/1 추가 PASS. 390×844/1366×768에서 페이지 양축 넘침 없음, 카메라·그래프·전체/대역/peak 수치가 함께 보이는지 확인했다. 합성 입력 스크린샷은 `docs/assets/live-spectrum-mobile.png`, `live-spectrum-desktop.png`다.

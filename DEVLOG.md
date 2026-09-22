@@ -63,6 +63,9 @@ EXP-009 · REQ-NATIVE-001/002/003 · SC-22/23/24.
 - 선택 근거: Apple 문서상 measurement는 primary microphone을 사용하므로 raw stereo 경로로 가정하지 않음. record/default/stereo/portrait로 고정. 카메라 병행과 가로 방향은 이 첫 입력 검증 범위에 포함하지 않음.
 - 검증 상태: Windows 로컬 웹 Gate 및 Mac CI 검증 진행 중. Swift 합성 지연 테스트·iOS 빌드·시뮬레이터 UI와 실제 아이폰 검사를 구분해 최종 결과를 아래에 기록한다. 웹 버전 0.4.0 유지, 네이티브는 개발용 프로젝트이며 배포 릴리즈가 아님.
 - BUG-015 (CI): 첫 Mac 실행에서 Swift 진단 테스트와 Release/iphoneos 빌드는 통과했으나, Debug 시뮬레이터 앱이 arm64+x86_64를 요청하고 로컬 Swift 패키지는 활성 arm64만 빌드하여 모듈 아키텍처 불일치로 UI 실행 전에 실패. Debug의 ONLY_ACTIVE_ARCH를 YES로 맞추어 시뮬레이터와 패키지를 동일 아키텍처로 빌드하도록 수정.
+- 최종 검증: `b447dc1`의 Mac CI [35718003457](https://github.com/doroper98/sound_detection/actions/runs/35718003457) PASS. Xcode 16.4, Swift 진단 10/10, 서명 없는 Release/iphoneos 빌드, iPhone 16 Pro/iOS 18.5 시뮬레이터 UI 5/5. 합성 +7 sample 입력이 +145.8µs로 표시되는 스크린샷 직접 검토, docs/assets/native-stereo-synthetic.png에 보존. 소리 위치 기록·공유/중지·권한 대기 취소·모노 거부·백그라운드 동작 검증.
+- 웹 회귀: 로컬 Gate 40/40·릴리즈 메타데이터, Chromium E2E 16/16 PASS. GitHub Verify [35718003413](https://github.com/doroper98/sound_detection/actions/runs/35718003413) PASS. 네이티브 추가로 웹 런타임/배포는 변경하지 않음.
+- 미검증: iPhone 17 Pro 실제 내장 스테레오, 실제 권한 다이얼로그/오디오 인터럽트·경로 교체, 장시간 수음과 발열, 신호 처리 편향·물리 TDOA·위치 정확도. 시뮬레이터 결과를 실기기 결과로 해석하지 않음. 설치에는 Mac/Xcode와 사용자 Apple 계정의 기기 서명이 필요하며 서명 IPA/TestFlight는 생성하지 않음.
 
 ### v0.4.0 — 2026-09-22
 

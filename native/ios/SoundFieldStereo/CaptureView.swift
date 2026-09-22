@@ -232,6 +232,8 @@ struct DirectionCalibrationView: View {
                     VStack(alignment: .leading, spacing: 7) {
                         Text("\(trial.repetition)회차 · \(sideName(trial.declaredSide)) · \(trial.completed ? "수집 완료" : "중단")").font(.headline)
                         Text("시간차 \(trial.medianLagSeconds.map { String(format: "%+.1f µs", $0 * 1e6) } ?? "—") · 후보 \(Int((trial.candidateFraction * 100).rounded()))%")
+                        Text("관측 \(trial.observations.count)구간 · \(String(format: "%.1f", trial.coveredSeconds))초 / 5초")
+                            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                         Text("R−L 레벨 \(trial.medianRightMinusLeftDb.map { String(format: "%+.1f dB", $0) } ?? "—") · 폰 회전 \(trial.maxRotationDegrees.map { String(format: "%.1f°", $0) } ?? "—")")
                             .font(.caption.monospacedDigit())
                         Text(trial.usable ? "비교에 사용할 통계 확보" : trial.qualityIssues.map(issueName).joined(separator: " · "))

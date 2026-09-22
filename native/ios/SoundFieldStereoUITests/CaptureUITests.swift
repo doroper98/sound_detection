@@ -28,7 +28,12 @@ final class CaptureUITests: XCTestCase {
         }
         let comparison = app.staticTexts["calibrationComparison"]
         reveal(comparison, in: app)
-        XCTAssertTrue(comparison.label.contains("구분되지"), comparison.label)
+        // Instrumented simulator delivery can lose PCM coverage. Both outcomes
+        // must remain inconclusive; deterministic core tests separately require
+        // noClearSeparation when all six trials have sufficient coverage.
+        let conclusion = comparison.label
+        XCTAssertTrue(conclusion.contains("구분되지") || conclusion.contains("품질이 부족"), conclusion)
+        XCTAssertFalse(conclusion.contains("자료가 확보"), conclusion)
         let screen = XCTAttachment(screenshot: app.screenshot())
         screen.name = "native-direction-comparison-synthetic"
         screen.lifetime = .keepAlways

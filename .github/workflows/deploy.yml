@@ -27,4 +27,4 @@ jobs:
         run: |
           test -n "$CLOUDFLARE_API_TOKEN" || { echo 'Configure CLOUDFLARE_API_TOKEN'; exit 1; }
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo 'Configure CLOUDFLARE_ACCOUNT_ID'; exit 1; }
-          npx wrangler deploy
+          npx wrangler pages deploy dist --project-name soundfield-lab --branch main --config wrangler.pages.jsonc

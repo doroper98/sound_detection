@@ -21,10 +21,12 @@ jobs:
       - run: npm run test:e2e
       - name: Package website
         run: zip -r soundfield-site.zip dist
+      - name: Package standalone localization engine
+        run: npm pack ./packages/localization
       - name: Publish versioned notes and build
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           flags=()
           if [[ "$GITHUB_REF_NAME" == v0.* ]]; then flags+=(--prerelease); fi
-          gh release create "$GITHUB_REF_NAME" soundfield-site.zip --verify-tag --title "SoundField $GITHUB_REF_NAME" --notes-file "docs/releases/$GITHUB_REF_NAME.md" "${flags[@]}"
+          gh release create "$GITHUB_REF_NAME" soundfield-site.zip soundfield-localization-*.tgz --verify-tag --title "SoundField $GITHUB_REF_NAME" --notes-file "docs/releases/$GITHUB_REF_NAME.md" "${flags[@]}"

@@ -8,6 +8,18 @@ final class CaptureUITests: XCTestCase {
         expectation(for: NSPredicate(format: "label MATCHES %@", ".*최근 [2-6][0-9] fps.*"), evaluatedWith: performance)
         waitForExpectations(timeout: 12)
         XCTAssertTrue(app.staticTexts["liveCaptureStatus"].label.contains("합성"))
+        let screen = XCTAttachment(screenshot: app.screenshot())
+        screen.name = "native-waveform-cadence-synthetic"
+        screen.lifetime = .keepAlways
+        add(screen)
+        app.buttons["detailsButton"].tap()
+        XCTAssertTrue(app.staticTexts["waveformPerformance"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons["captureButton"].label, "수음 중지")
+        app.buttons["닫기"].tap()
+        let left = app.descendants(matching: .any).matching(identifier: "leftWaveform").firstMatch
+        expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: left)
+        expectation(for: NSPredicate(format: "label MATCHES %@", ".*최근 [2-6][0-9] fps.*"), evaluatedWith: performance)
+        waitForExpectations(timeout: 12)
     }
 
     func testGuidedComparisonCollectsSixTrialsWithoutInventingDirection() {

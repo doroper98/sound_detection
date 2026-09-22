@@ -65,6 +65,7 @@ node packages/localization/examples/replay.mjs experiment.json
 ## 배포와 문서
 
 - [Cloudflare 배포 절차 및 상태](docs_canonical/DEPLOYMENT.md)
+- [v0.2.1 배포 결과와 카메라 웹앱 안내문](docs/updates/2026-09-22-v0.2.1.md)
 - [변경 이력](CHANGELOG.md) · [릴리즈](https://github.com/doroper98/sound_detection/releases)
 - [요구사항과 성공 기준](GOAL.md) · [개발 로그](DEVLOG.md) · [작업 절차](WORKFLOWS.md)
 - [아키텍처](docs_canonical/ARCHITECTURE.md) · [코드 규칙](docs_canonical/STYLEGUIDE.md) · [검증](docs_canonical/TESTING.md) · [파일 지도](docs_canonical/REPO_MAP.md)

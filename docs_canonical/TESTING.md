@@ -2,7 +2,11 @@
 
 ## 빌드 5 방향 비교·파형 표시 주기 (EXP-015)
 
-자동 검증 진행 중. 추가 검사는 100ms PCM의 서로 다른 여섯 10ms 창, 10Hz 입력의 60Hz 표시 스케줄, 상한·지연/중지 제거·채널 차이, 6구간 반복 분리/동일값 거부/모호성 보존/기기 움직임·자세 누락/취소/수집 경계·희소 입력/샘플률 변경이다. UI는 6개 구간과 비교·공유, 취소/백그라운드, 초당 20개 이상의 새 파형 표시를 검사한다. 시뮬레이터 속도는 실제 iPhone 성능을 대신하지 않는다.
+**최종 자동 검증 PASS:** 코드 `37bce7f`에서 [Native iOS](https://github.com/doroper98/sound_detection/actions/runs/35744865905) Swift 42/42·합성 UI 18/18·Release 기기 빌드·IPA 포장 PASS. [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35744865907) 단위 40/40·E2E 16/16 PASS. 로컬 gate와 E2E 16/16도 통과했다.
+
+[검증·해시](../docs/reports/2026-09-23-native-build5-verification.json) · [파형 화면](../docs/assets/native-build5-waveform-synthetic.png) · [방향 비교](../docs/assets/native-build5-comparison-synthetic.png). 빌드 5 IPA 348,143바이트, SHA-256 `8d5d650b558f85f2dab7b74b17abc4ca8d60a0bb737ff227bd7de501592d048d`. Windows에서 ZIP CRC·iPhoneOS arm64·빌드 번호·DEBUG 인자 제외·해시를 확인하고 최종 파형/비교 화면을 직접 검토했다. 실기기 빌드 5 fps·방향 교정은 사용자 확인 대상이다.
+
+추가 검사는 100ms PCM의 서로 다른 여섯 10ms 창, 10Hz 입력의 60Hz 표시 스케줄, 상한·지연/중지 제거·채널 차이, 6구간 반복 분리/동일값 거부/모호성 보존/기기 움직임·자세 누락/취소/수집 경계·희소 입력/샘플률 변경이다. UI는 6개 구간과 비교·공유, 취소/백그라운드, 초당 20개 이상의 새 파형 표시와 상세 화면 뒤 복귀를 검사했다. CI 부하로 관측량이 부족하면 비교 보류를 허용하되 방향 성공으로 표시하지 못하게 검사한다. 시뮬레이터 속도는 실제 iPhone 성능을 대신하지 않는다.
 
 [빌드 4 실측](../docs/reports/2026-09-22-iphone17pro-native-build4-stereo.json)에서 259/259 양쪽 활성과 초기 경로 유지, 누락/복제 0을 확인했다. [해석](../docs/reports/2026-09-22-iphone17pro-native-build4-analysis.json). 후보 15/259, 마지막 이력 19개 ambiguous, 기기 자세 91.64°는 방향 정확도를 뜻하지 않는다. 파형 끊김은 사용자 보고이며 빌드 4 JSON에는 fps가 없다.
 

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, type ReactNode } from 'react';
-import { Activity, ArrowDownToLine, ArrowUpRight, AudioLines, BookOpen, Box, Check, ChevronDown, CircleHelp, Crosshair, Focus, GitFork, History, Layers3, Maximize, Mic, MousePointer2, Move3D, Pause, Play, Plus, Radio, RotateCcw, ScanLine, Settings2, Signal, Smartphone, Volume2, VolumeX, Waves, X } from 'lucide-react';
+import { Activity, ArrowDownToLine, ArrowUpRight, AudioLines, BookOpen, Box, Check, ChevronDown, CircleHelp, Crosshair, Focus, GitFork, History, Layers3, Maximize, Mic, MousePointer2, Move3D, Pause, Play, Plus, RotateCcw, ScanLine, Settings2, Signal, Smartphone, Volume2, VolumeX, Waves, X } from 'lucide-react';
 import SpatialView from './components/SpatialView';
 import PhoneView from './components/PhoneView';
 import { clamp, DEVICES, distance, estimate, INITIAL_RECEIVER, INITIAL_SOURCE, isDistinctObservation, pressureAt, SEARCH_VOLUME, wavelength, type Observation, type Receiver, type Source, type Vec3 } from './acoustics';
@@ -87,7 +87,7 @@ export default function App() {
       <div className="avatar">SF</div>
     </aside>
     <div className="main-shell">
-      <header className="topbar"><div className="wordmark">soundfield<span>LAB</span></div><div className="breadcrumb">워크스페이스 <span>/</span> <strong>음향 위치 실험실</strong></div><div className="header-right"><span className="version-tag">v{__APP_VERSION__}</span><button className="text-button" aria-label="사용 가이드" onClick={() => setModal('guide')}><CircleHelp size={16} /><span>사용 가이드</span><ArrowUpRight size={14} /></button></div></header>
+      <header className="topbar"><div className="wordmark">soundfield<span>LAB</span></div><div className="breadcrumb">워크스페이스 <span>/</span> <strong>음향 위치 실험실</strong></div><div className="header-right"><span className="version-tag">v{__APP_VERSION__}</span><a className="text-button" href="/diagnostics" aria-label="실제 카메라·마이크 진단" title="실제 카메라·마이크 진단"><Mic size={16} /><span>마이크 진단</span></a><button className="text-button" aria-label="사용 가이드" onClick={() => setModal('guide')}><CircleHelp size={16} /><span>사용 가이드</span><ArrowUpRight size={14} /></button></div></header>
       <main>
         <div className="page-heading"><div><div className="eyebrow"><span /> SPATIAL ACOUSTICS SIMULATOR</div><h1>소리가 나는 곳을, 눈으로.</h1><p>공간에 소리를 놓고, 가상 마이크로 소리의 방향을 탐색해 보세요.</p></div><div className="heading-actions"><button className="button secondary" onClick={reset}><RotateCcw size={16} />초기화</button><button className="button primary" onClick={exportExperiment}><ArrowDownToLine size={16} />실험 내보내기</button></div></div>
         <div className="mobile-view-tabs segmented"><button className={mobileView === 'space' ? 'selected' : ''} onClick={() => setMobileView('space')}><Box size={15} />3D 공간</button><button className={mobileView === 'scanner' ? 'selected' : ''} onClick={() => setMobileView('scanner')}><ScanLine size={15} />사운드 스캔</button></div>
@@ -133,24 +133,24 @@ export default function App() {
             <div className="panel-heading"><div><span className="panel-icon"><Settings2 size={17} /></span><h2>실험 설정</h2></div><span className="muted small">변경 사항이 바로 반영됩니다</span></div>
             <div className="settings-tabs segmented"><button className={settingsTab === 'source' ? 'selected' : ''} onClick={() => setSettingsTab('source')}>음원</button><button className={settingsTab === 'device' ? 'selected' : ''} onClick={() => setSettingsTab('device')}>마이크</button><button className={settingsTab === 'view' ? 'selected' : ''} onClick={() => setSettingsTab('view')}>공간·표시</button></div>
             <div className="parameter-columns">
-              <div className="parameter-group"><h3><span className="section-number">01</span>음원 설정 <button className={`icon-button audio-button ${audio.enabled ? 'enabled' : ''}`} aria-label={audio.enabled ? '소리 끄기' : '주파수 미리듣기'} title="주파수 미리듣기 · 정현파" onClick={() => void audio.toggle()}>{audio.enabled ? <Volume2 size={16} /> : <VolumeX size={16} />}</button></h3>
+              <div className="parameter-group">
                 <Control label="볼륨" value={source.db} min={40} max={100} unit="dB @1m" onChange={db => changeSource({ db })} />
                 <Control label="주파수" value={source.frequency} min={100} max={8000} step={10} unit="Hz" onChange={frequency => changeSource({ frequency })} />
                 <Control label="파장" value={wavelength(source.frequency) * 100} min={4.2875} max={343} step={0.1} digits={2} unit="cm" onChange={cm => changeSource({ frequency: 34300 / cm })} />
-                <div className="group-foot"><Waves size={13} />파장 = 음속 ÷ 주파수 · 음속 343 m/s</div>
+                <button className={`icon-button audio-button ${audio.enabled ? 'enabled' : ''}`} aria-label={audio.enabled ? '소리 끄기' : '주파수 미리듣기'} title="주파수 미리듣기 · 정현파" onClick={() => void audio.toggle()}>{audio.enabled ? <Volume2 size={16} /> : <VolumeX size={16} />}</button>
               </div>
-              <div className="parameter-group"><h3><span className="section-number">02</span>수음 장치</h3>
-                <label className="field-label" htmlFor="device">가상 장치 프리셋</label><div className="select-wrap"><Smartphone size={16} /><select id="device" value={device} onChange={event => { setDevice(event.target.value); changeArray({ spacing: DEVICES.find(item => item.id === event.target.value)!.spacing }); }}>{DEVICES.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><ChevronDown size={14} /></div>
+              <div className="parameter-group">
+                <div className="device-preset" title="기종별 간격은 가상 예시이며 실제 마이크 사양이 아닙니다"><label className="field-label" htmlFor="device">가상 장치 프리셋</label><div className="select-wrap"><Smartphone size={16} /><select id="device" value={device} onChange={event => { setDevice(event.target.value); changeArray({ spacing: DEVICES.find(item => item.id === event.target.value)!.spacing }); }}>{DEVICES.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><ChevronDown size={14} /></div></div>
+                <div className="microphone-options">
                 <div className="segmented mic-select"><button className={receiver.count === 1 ? 'selected' : ''} onClick={() => changeArray({ count: 1 })}><Mic size={14} />마이크 1개</button><button className={receiver.count === 2 ? 'selected' : ''} onClick={() => changeArray({ count: 2 })}><AudioLines size={14} />마이크 2개</button></div>
                 <div className="array-layout"><label htmlFor="array-layout">배열 방향</label><select id="array-layout" value={receiver.layout} onChange={event => changeArray({ layout: event.target.value as Receiver['layout'] })}><option value="horizontal">좌우 · 방위 구분</option><option value="vertical">세로 · 고도 구분</option></select></div>
+                </div>
                 <Control label="마이크 간격" value={receiver.spacing * 100} min={2} max={200} step={1} unit="cm" digits={0} onChange={cm => { setDevice('custom'); changeArray({ spacing: cm / 100 }); }} />
-                <div className="group-foot">기종 이름은 실험 프리셋입니다. 실제 마이크 사양이 아닙니다.</div>
               </div>
-              <div className="parameter-group"><h3><span className="section-number">03</span>공간 & 시각화</h3>
+              <div className="parameter-group">
                 <Control label="음원 높이" value={source.position[1]} min={0.1} max={3.1} step={0.05} digits={2} unit="m" onChange={value => setCoordinate('source', 1, value)} />
                 <Control label="휴대폰 높이" value={receiver.position[1]} min={0.2} max={3} step={0.05} digits={2} unit="m" onChange={value => setCoordinate('receiver', 1, value)} />
                 <Control label="열지도 불투명도" value={opacity * 100} min={0} max={100} unit="%" onChange={value => setOpacity(value / 100)} />
-                <div className="group-foot"><Radio size={13} />자유 음장 모델 · 벽 반사와 차폐 미포함</div>
               </div>
             </div>
           </section>

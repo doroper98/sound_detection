@@ -1,0 +1,88 @@
+.live-page { height: 100dvh; display: flex; flex-direction: column; padding: 0 28px 20px; max-width: 1500px; margin: auto; }
+.live-header { flex-shrink: 0; height: 60px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #dce5df; }
+.live-header a { display: flex; align-items: center; gap: 10px; color: #244639; font-weight: 750; font-size: 21px; letter-spacing: -.8px; }
+.live-version { color: #798b82; font-size: 11px; }
+.live-title { display: flex; justify-content: space-between; align-items: center; padding: 21px 0; flex-shrink: 0; }
+.live-title h1 { font-size: 25px; }
+.live-title p { color: #7c8a83; margin-top: 6px; font-size: 12px; }
+.live-title .eyebrow { margin-bottom: 7px; }
+.live-target { color: #467c65; border: 1px solid #cfdfd5; padding: 8px 13px; border-radius: 8px; font-size: 11px; }
+.live-grid { min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(350px, 440px); gap: 20px; }
+.live-preview { min-height: 0; overflow: hidden; position: relative; border-radius: 18px; background: #15372e; color: #eaf3ee; }
+.live-preview video { display: block; height: 100%; width: 100%; object-fit: contain; background: #11291f; }
+.camera-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 17px; background: radial-gradient(ellipse at 50% 40%, #2f6851, #15372e 70%); }
+.camera-placeholder > strong { font-size: 20px; font-weight: 500; }
+.camera-placeholder p { color: #a1bcae; line-height: 1.8; text-align: center; font-size: 12px; }
+.live-preview-top { position: absolute; top: 17px; left: 17px; right: 17px; display: flex; justify-content: space-between; gap: 8px; pointer-events: none; }
+.live-preview-top span { background: #12352bc7; border: 1px solid #ffffff24; padding: 6px 9px; border-radius: 5px; font-size: 9px; }
+.live-preview-top .capture-on { color: #a3e7bc; }
+.live-meter { position: absolute; bottom: 77px; left: 20px; right: 20px; text-align: center; background: #12372bcc; border-radius: 10px; padding: 10px; pointer-events: none; }
+.live-meter > span { color: #b5cebf; font-size: 10px; }
+.live-meter strong { display: block; font-size: 28px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.live-meter small { font-size: 10px; margin-left: 8px; color: #b7cebd; }
+.live-meter p { color: #9fbaab; font-size: 9px; margin-top: 3px; }
+.live-camera-controls { position: absolute; bottom: 20px; left: 20px; right: 20px; display: flex; justify-content: center; }
+.live-camera-controls .button { color: #2f6047; }
+.camera-error { position: absolute; top: 62px; left: 16px; right: 16px; padding: 12px; border-radius: 8px; background: #683927ee; color: #fff1e8; font-size: 12px; line-height: 1.7; }
+.live-diagnostics { overflow-y: auto; min-height: 0; padding: 24px; border: 1px solid #dce6df; border-radius: 14px; background: white; overscroll-behavior: contain; }
+.live-diag-intro h2 { font-size: 17px; font-weight: 650; letter-spacing: -.4px; }
+.live-diag-intro p { color: #718478; font-size: 12px; line-height: 1.8; margin-top: 9px; }
+.live-diag-intro .live-route-hint { font-size: 10px; background: #f3f7f3; padding: 8px 10px; border-radius: 6px; }
+.live-device-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 17px 0; }
+.live-device-fields label { min-width: 0; font-size: 10px; color: #708475; }
+.live-device-fields input { width: 100%; display: block; margin-top: 6px; border: 1px solid #dce6df; padding: 9px; border-radius: 6px; font-size: 12px; color: #294c3a; background: #fcfefc; }
+.live-probe-actions, .live-export { display: flex; gap: 8px; flex-wrap: wrap; }
+.live-probe-actions .primary { flex: 1; }
+.live-status { font-size: 11px; color: #5b7863; line-height: 1.8; min-height: 38px; margin: 12px 0; }
+.probe-table-wrap { overflow-x: auto; }
+.live-route-note { font-size: 10px; line-height: 1.8; color: #85958a; margin-top: 8px; }
+.probe-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; }
+.probe-table th, .probe-table td { padding: 11px 6px; border-bottom: 1px solid #e7eee9; }
+.probe-table thead th { font-size: 10px; color: #89958a; font-weight: 500; background: #f7f9f7; }
+.probe-table tbody th { font-weight: 550; white-space: nowrap; }
+.probe-table small { display: block; font-size: 9px; color: #87978b; margin-top: 4px; overflow-wrap: anywhere; }
+.probe-verdict { padding: 13px; background: #eef6ef; border: 1px solid #d4e5d7; border-radius: 9px; margin: 15px 0; }
+.probe-verdict > span { font-size: 9px; color: #63886b; }
+.probe-verdict h3 { font-size: 15px; margin: 6px 0; }
+.probe-verdict p { font-size: 11px; line-height: 1.8; color: #69806d; }
+.probe-verdict > strong { display: block; font-size: 10px; margin-top: 8px; font-weight: 500; color: #49664c; }
+.channel-meters { margin: 12px 0; }
+.channel-meters > div { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 10px; }
+.channel-meters meter { flex: 1; min-width: 0; height: 15px; }
+.channel-meters strong { width: 76px; text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+.probe-details { font-size: 11px; line-height: 1.8; margin: 17px 0; color: #748577; }
+.probe-details summary { cursor: pointer; color: #4d7458; }
+.probe-details p { margin: 10px 0; }
+.probe-details pre { font-size: 10px; overflow: auto; padding: 10px; border-radius: 6px; background: #f6f8f5; }
+.live-privacy { font-size: 10px; line-height: 1.9; margin-top: 15px; color: #8a998d; }
+.live-link { white-space: nowrap; }
+@media (max-width: 760px) {
+  .live-page { padding: 0 12px 10px; }
+  .live-header { height: 45px; }
+  .live-header a { font-size: 18px; }
+  .live-version { font-size: 9px; }
+  .live-title { padding: 12px 0; }
+  .live-title h1 { font-size: 18px; }
+  .live-title p { font-size: 9px; margin-top: 3px; }
+  .live-title .eyebrow, .live-target { display: none; }
+  .live-grid { display: grid; grid-template-columns: 1fr; grid-template-rows: minmax(140px, 30dvh) minmax(0, 1fr); gap: 10px; }
+  .live-preview { border-radius: 12px; }
+  .live-preview-top { top: 8px; left: 9px; right: 9px; }
+  .live-preview-top span { font-size: 8px; padding: 4px 6px; }
+  .camera-placeholder { gap: 8px; padding-bottom: 33px; }
+  .camera-placeholder > svg { width: 25px; height: 25px; }
+  .camera-placeholder > strong { font-size: 14px; }
+  .camera-placeholder > p { display: none; }
+  .live-meter { left: 10px; right: auto; bottom: 9px; padding: 5px 9px; text-align: left; }
+  .live-meter > span { font-size: 8px; }
+  .live-meter strong { font-size: 17px; }
+  .live-meter p { display: none; }
+  .live-camera-controls { left: auto; bottom: 11px; right: 10px; }
+  .live-camera-controls .button { font-size: 10px; padding: 8px; }
+  .camera-error { top: 37px; font-size: 10px; padding: 8px; }
+  .live-diagnostics { padding: 15px; border-radius: 11px; }
+  .live-diag-intro h2 { font-size: 15px; }
+  .live-diag-intro p { font-size: 11px; }
+  .live-device-fields input { font-size: 16px; padding: 7px; }
+  .live-link > span { display: none; }
+}

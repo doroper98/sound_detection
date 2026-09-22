@@ -50,6 +50,25 @@
 
 <!-- improvements -->
 
+### v0.3.0 — 2026-09-22
+
+| 변경 | 내용 |
+|---|---|
+| 릴리즈 | 작은 슬라이더 설정과 실제 카메라·Safari 채널 진단 |
+
+EXP-005 · REQ-LIVE-001/002, REQ-UI-003, NFR-001 · SC-16/17/18.
+
+- 변경: /diagnostics 실제 카메라·PCM 수음 진단, 입력 채널 보존 Worklet, 원음 없는 보고서, 명시적 시작·해제와 취소 후 늦은 권한 결과 정리.
+- 시뮬레이터와 진단은 별도 lazy 경로. 위치 SDK 변경 없음. 실제 진단은 source/scene 입력을 사용하지 않으며 방향 열지도를 그리지 않음.
+- 설정 패널 데스크톱 225→112px, 모바일 280→174px. 탭별 슬라이더·프리셋만 표시하고 3D 영역 확대. 폰 렌더 크기는 컨테이너 여유 높이를 사용해 짧은 화면에서 버튼이 잘리지 않도록 수정.
+- BUG-011 (검증): 합성 MediaStream 1/4채널이 Chromium의 MediaStreamAudioSource 경로에서 모두 2채널로 도착. 생성 후 channelCount 변경 대신 생성자 설정도 같은 결과. Chromium 처리 소스와 실제 브라우저 테스트로 내부 stereo 변환 확인. 실제 전달값을 그대로 표시하고 설정값을 검증값으로 쓰지 않음. 4채널 UI 검증은 native Web Audio 합성 소스를 해당 경계에 주입한다고 명시; 별도 테스트에서 실제 스트림 변환을 검증.
+- BUG-012 (검증): Windows용 Playwright WebKit에서 캡처 API가 없어 합성 수음 시나리오 5개 실패. 이는 iOS Safari 하드웨어 결과가 아님. 미지원 안내·환경 보고서 저장은 WebKit 1/1 PASS. 미지원 오류도 JSON으로 내보낼 수 있도록 보완.
+- BUG-013: 설정을 줄여도 기존 휴대폰 높이 공식 때문에 1366×768에서 하단 버튼이 잘림. 실제 scanner 컨테이너 높이 기준으로 폰 크기 계산. 장식용 상단 설명도 접어 3D 공간 확보.
+- 검증: Gate/단위 테스트 30/30, Chromium E2E 13/13 PASS. 1366×768 설정 탭 모두 112px, 390×844에서 174px 및 내부/페이지 넘침 없음. 두 크기에서 3D canvas 높이 360px 초과 유지. 데스크톱·모바일·진단 화면 직접 검토, 최신 README 화면 갱신.
+- 미검증: 실제 iPhone 17 Pro Safari 채널 수, 물리 마이크 독립성·동기화, 실측 위치 정확도. 자동 테스트를 실기기 성공으로 기록하지 않음.
+- 배포: Pages deployment 8bcdddd5, https://soundfield-lab.pages.dev/diagnostics HTTP 200, version.json 0.3.0 및 동일 origin 카메라/마이크 권한 정책 확인. 추가 로그인 없이 배포 성공.
+- 원격 검증: 공개 Pages 주소에서 Chromium E2E 13/13 PASS. 실제 미디어 권한은 자동 테스트의 합성 입력으로 대체했으며 iPhone 결과로 간주하지 않음.
+
 ### 문서 보완 — 2026-09-22
 
 EXP-004 · REQ-DOC-001 · SC-08.

@@ -1,5 +1,14 @@
 # Cloudflare 배포
 
+## v0.3.0 공개 배포 (2026-09-22)
+
+- 영구 주소: https://soundfield-lab.pages.dev · 실제 입력 진단: https://soundfield-lab.pages.dev/diagnostics
+- 배포: https://8bcdddd5.soundfield-lab.pages.dev. 기존 Pages 인증으로 성공, 재로그인 불필요.
+- 공개 /diagnostics HTTP 200, version.json 0.3.0, CSP 및 `camera=(self), microphone=(self)` 확인. 캡처는 사용자 시작/권한 허용 후에만 수행한다.
+- 로컬 Gate/단위 테스트 30/30, Chromium E2E 13/13 PASS. Windows WebKit의 기능 미지원 처리 1/1 PASS; 해당 환경에는 캡처 API가 없어 iPhone Safari 검증을 대체하지 못한다.
+- 공개 사이트 Chromium E2E 13/13 PASS. 축소 설정·볼륨 회귀와 진단의 합성 수음/카메라 fixture를 포함한다. 실제 iPhone 수음 테스트가 아니다.
+- 실제 iPhone 17 Pro 보고서는 아직 미확보. 공개 웹앱의 가상 결과를 실제 위치 정확도로 제시하지 않는다.
+
 ## v0.2.1 공개 배포 (2026-09-22)
 
 - 영구 주소: https://soundfield-lab.pages.dev

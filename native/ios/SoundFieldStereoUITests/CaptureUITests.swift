@@ -214,10 +214,6 @@ final class CaptureUITests: XCTestCase {
         let button = app.buttons["liveCaptureButton"]
         let leftWaveform = app.descendants(matching: .any).matching(identifier: "leftWaveform").firstMatch
         let rightWaveform = app.descendants(matching: .any).matching(identifier: "rightWaveform").firstMatch
-        // DSP can finish before the independent, deliberately delayed preview.
-        expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: leftWaveform)
-        expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: rightWaveform)
-        waitForExpectations(timeout: 5)
         XCTAssertTrue(button.isHittable)
         XCTAssertEqual(leftWaveform.value as? String, "입력 없음")
         XCTAssertEqual(rightWaveform.value as? String, "입력 없음")
@@ -228,6 +224,10 @@ final class CaptureUITests: XCTestCase {
         expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["liveLagValue"])
         waitForExpectations(timeout: 10)
         XCTAssertTrue(app.staticTexts["cameraStatus"].label.contains("실제 카메라 영상 없음"))
+        // DSP can finish before the independent, deliberately delayed preview.
+        expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: leftWaveform)
+        expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: rightWaveform)
+        waitForExpectations(timeout: 5)
         XCTAssertEqual(leftWaveform.value as? String, "수신 중")
         XCTAssertEqual(rightWaveform.value as? String, "수신 중")
         XCTAssertTrue(leftWaveform.isHittable)

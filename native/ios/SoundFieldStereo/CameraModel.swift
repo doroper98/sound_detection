@@ -71,6 +71,7 @@ final class CameraModel: ObservableObject {
     enum Phase { case idle, starting, running }
     @Published private(set) var phase: Phase = .idle
     @Published private(set) var status = "카메라와 마이크를 시작하면 실시간 화면이 표시됩니다."
+    var onInterrupted: (@MainActor () -> Void)?
     private let controller = CameraController()
     private var request = 0
     private var observers: [NSObjectProtocol] = []
@@ -91,6 +92,7 @@ final class CameraModel: ObservableObject {
                 Task { @MainActor [weak self] in
                     guard let self, self.isBusy else { return }
                     self.stop(reason: "카메라가 중단되었습니다. 다른 카메라 앱을 닫고 다시 시작하세요.")
+                    self.onInterrupted?()
                 }
             })
         }

@@ -124,12 +124,14 @@ struct CaptureView: View {
                 model.enteredBackground()
             }
         }
-        .onChange(of: model.phase) { previous, current in
-            if previous != .idle, current == .idle, camera.isBusy { camera.stop() }
-        }
-        .onChange(of: camera.phase) { previous, current in
-            if previous == .running, current == .idle, model.isBusy {
-                model.stop(reason: "카메라가 중지되어 수음도 해제했습니다.")
+        .onAppear {
+            // Cleanup must not depend on SwiftUI rendering an intermediate
+            // phase; permission or route failure can return to idle immediately.
+            model.onStopped = { [weak camera] in
+                if let camera, camera.isBusy { camera.stop() }
+            }
+            camera.onInterrupted = { [weak model] in
+                if let model, model.isBusy { model.stop(reason: "카메라가 중지되어 수음도 해제했습니다.") }
             }
         }
     }

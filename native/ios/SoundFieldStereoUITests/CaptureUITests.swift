@@ -157,6 +157,15 @@ final class CaptureUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts["liveCaptureStatus"].label, "대기")
     }
 
+    func testMicrophoneStartupFailureAlsoReleasesCamera() {
+        let app = launch(["--synthetic-mono"], details: false)
+        app.buttons["liveCaptureButton"].tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "1채널"), evaluatedWith: app.staticTexts["liveCaptureStatus"])
+        waitForExpectations(timeout: 10)
+        XCTAssertEqual(app.buttons["liveCaptureButton"].label, "카메라·수음 시작")
+        XCTAssertTrue(app.staticTexts["cameraStatus"].label.contains("카메라를 중지"))
+    }
+
     func testCancelCameraPermissionDoesNotStartLater() {
         let app = launch(["--delayed-camera-permission"], details: false)
         let button = app.buttons["liveCaptureButton"]

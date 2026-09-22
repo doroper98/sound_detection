@@ -215,6 +215,7 @@ final class CaptureModel: ObservableObject {
     @Published private(set) var report = NativeReport()
     @Published var source = "back"
     @Published var exportError: String?
+    var onStopped: (@MainActor () -> Void)?
     private var engine: AVAudioEngine?
     private var pipeline: TapPipeline?
     private var tapInstalled = false
@@ -562,6 +563,7 @@ final class CaptureModel: ObservableObject {
         phase = .idle
         report.status = finalReason
         report.stoppedAt = Date()
+        onStopped?()
     }
 
     func enteredBackground() {

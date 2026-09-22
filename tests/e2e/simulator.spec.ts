@@ -6,7 +6,10 @@ const version = JSON.parse(readFileSync('package.json', 'utf8')).version;
 for (const mobile of [false, true]) test(`volume changes heatmap area and intensity in both modes (${mobile ? 'mobile' : 'desktop'})`, async ({ page }) => {
   if (mobile) await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  const heatStats = () => page.getByTestId('heatmap-canvas').evaluate(element => {
+  const heatStats = () => page.getByTestId('heatmap-canvas').evaluate(async element => {
+    // React commits the new level before PhoneView paints it on the next frame.
+    // Wait through rendering, including other rAF callbacks in that frame.
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 0))));
     const canvas = element as HTMLCanvasElement;
     const pixels = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
     let area = 0; let alpha = 0; let warm = 0;

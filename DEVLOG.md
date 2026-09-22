@@ -67,6 +67,8 @@ EXP-003 · REQ-VIEW-003 / REQ-DEPLOY-002 · SC-15 / SC-14.
 - 실제 카메라 웹앱 문의에 대해 HTTPS/권한/후면 video, PCM 채널 진단, 독립 수음 검증, 카메라 축 교정을 단계별로 docs_canonical/LIVE_CAMERA_PLAN.md에 기록. 실제 촬영·수음은 이번 수정에 포함하지 않음.
 - BUG-009: Pages 배포가 `--config wrangler.pages.jsonc`를 거부. Pages는 사용자 정의 설정 경로를 지원하지 않아 표준 wrangler.jsonc에 pages_build_output_dir를 설정하고 npm/CI 명령의 --config 제거.
 - 배포: https://soundfield-lab.pages.dev, deployment 7efc0de4. HTTP 200/version.json 0.2.1/보안 헤더 확인 및 원격 Chromium E2E 4/4 PASS. 페이지에 계정명이 없는 URL 요구 완료.
+- BUG-010 (검증): v0.2.1 Release workflow는 PASS했지만 별도 Verify에서 볼륨 테스트가 실패. 모드/입력 변경 직후 이전 canvas 면적 1354를 기준으로 잡아, 복귀 후 새 모드의 50 dB 면적 462와 비교했음. canvas 읽기 전에 렌더 프레임 완료를 기다리도록 테스트를 수정. 제품 코드·배포·태그는 그대로 유지하고 테스트 보완 커밋으로 관리.
+- BUG-010 재검증: 데스크톱/모바일 볼륨 시나리오를 각 3회 반복하여 6/6 PASS, Gate 25개 단위 테스트 및 버전 무결성 PASS.
 
 ### v0.2.0 — 2026-09-22
 

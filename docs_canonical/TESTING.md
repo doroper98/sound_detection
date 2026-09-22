@@ -1,5 +1,16 @@
 # 검증
 
+## 빌드 6 카메라 위 방향·공간 후보 (EXP-016)
+
+코드 `5facebb`에서 [Native iOS](https://github.com/doroper98/sound_detection/actions/runs/35795916043) Swift 53/53·합성 UI 21/21·Release 기기 빌드·IPA 포장 PASS. [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35795915981) 단위 40/40·E2E 16/16 PASS. 로컬 gate·웹 E2E와 최종 화면 검토도 완료했다.
+
+빌드 6 IPA 486,175바이트, SHA-256 `edaa60bc934e83dbd519a95aa29e50348d2f430ca7807616815e27b07ef0205d`. ZIP CRC·실제 iPhoneOS arm64·빌드 번호·새 DEBUG 위치/방향 인자 제외를 확인했다. [검증 기록](../docs/reports/2026-09-23-native-build6-verification.json) · [방향 띠](../docs/assets/native-build6-bearing-synthetic.png) · [위치 후보](../docs/assets/native-build6-position-synthetic.png). 합성 화면이며 실제 아이폰의 카메라/음향 측정이 아니다.
+
+추가 검증: 실제 AR 축과 대응하는 좌표에서 경험적 응답 부호·반복성·다른 샘플률/스펙트럼/범위/상반된 특성 거부, 6단계 회전 보정의 고정 위치/수집 시간, 시각 대응·빠른 이동 거부, stale/무음 제거. 단일 자세 반복·제자리 회전·수평 이동만으로 고도 생성 금지, 다양한 이동/기울기의 합성 평면 교점 복원, 모순된 이동 음원 거부. UI에서는 합성 보정 응답의 방향 띠·조건부 후보 원/거리·중지/백그라운드 제거·실제 전체 화면 중심의 정렬 기준점·AR 없는 상태에서 보정 거부를 검사했다. 기존 스테레오/알림/파형/비교 회귀도 유지했다.
+
+물리 마이크 배열/카메라와 유효 음향 중심의 외부 보정/반사·잡음/실기기 AR+오디오 동시 사용/실제 정확도는 검증하지 않았다. 후보 반경은 모델 민감도이며 검증된 물리 신뢰구간이 아니다. 1m 이상 고정된 단일 광대역 음원의 해당 세션을 대상으로 한다.
+
+
 ## 빌드 5 방향 비교·파형 표시 주기 (EXP-015)
 
 **최종 자동 검증 PASS:** 코드 `37bce7f`에서 [Native iOS](https://github.com/doroper98/sound_detection/actions/runs/35744865905) Swift 42/42·합성 UI 18/18·Release 기기 빌드·IPA 포장 PASS. [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35744865907) 단위 40/40·E2E 16/16 PASS. 로컬 gate와 E2E 16/16도 통과했다.

@@ -16,7 +16,7 @@
 2. 이 폴더의 `SoundFieldStereo.xcodeproj`를 Xcode에서 연다. 로컬 Swift 패키지만 사용하므로 외부 라이브러리 다운로드나 npm 설치는 필요 없다.
 3. SoundFieldStereo target → Signing & Capabilities → Team에서 자신의 Apple 계정을 선택한다. Bundle Identifier는 자신이 사용할 수 있는 고유 값으로 바꾼다. 저장소에는 인증서·개인 Team ID를 넣지 않는다.
 4. 아이폰을 연결하고 신뢰·개발자 모드를 설정한 뒤, 실행 기기로 아이폰을 선택하여 Run(⌘R)한다. 개인 계정 설치의 유효기간 등 서명 정책은 Xcode 안내를 따른다.
-5. 앱에서 **후면 → 스테레오 수음 시작**을 누르고 마이크를 허용한다. 아이폰을 세로로 고정한다. 실제 PCM 2채널이 아니거나 stereo 선택이 적용되지 않으면 분석을 시작하지 않는다.
+5. 앱에서 **후면 → 카메라·수음 시작**을 누르고 카메라·마이크를 허용한다. 아이폰을 세로로 고정한다. 실제 PCM 2채널이 아니거나 stereo 선택이 적용되지 않으면 분석을 시작하지 않는다. 영상 없이 비교하려면 **측정 상세 → 스테레오 수음 시작**을 사용한다.
 
 ## Mac 없이 Windows에서 설치
 
@@ -65,6 +65,8 @@ Apple 스테레오는 데이터 소스/빔포밍을 사용해 생성될 수 있�
 Mac에서 `bash scripts/verify.sh`를 실행한다. Swift 패키지 단위 검증, 서명 없는 Release 기기 빌드, DEBUG 합성 입력의 UI 검증을 수행한다. 실제 시작 버튼은 권한 확인 전에는 수음하지 않는다. 합성 모드는 `#if DEBUG` 내부에만 있고 화면과 JSON에 명확히 표시된다.
 
 검증 결과와 실패 수정 기록은 저장소 루트 `DEVLOG.md`, `docs_canonical/TESTING.md`에서 관리한다. GitHub Actions의 **Native iOS**가 동일 절차를 실행하고 로그·xcresult·화면을 보관한다.
+
+빌드 2의 기준 코드는 `95cda61`이다. [Mac CI](https://github.com/doroper98/sound_detection/actions/runs/35725200763)에서 Swift 25/25, UI 11/11, Release 기기 빌드와 IPA 포장 PASS. [영구 결과](../../docs/reports/2026-09-22-native-camera-routefix-verification.json)에 해시와 실기기 미검증 범위를 보존했다. 기존 Sideloadly 사용자는 전달받은 새 `SoundFieldStereo-build2-unsigned.ipa`를 선택하고 같은 Apple 계정·번들 설정으로 덮어쓴 뒤 앱 하단 **빌드 2**를 확인한다.
 
 ## 1차 출처
 

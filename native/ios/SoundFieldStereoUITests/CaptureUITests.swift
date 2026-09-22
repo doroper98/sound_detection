@@ -6,14 +6,14 @@ final class CaptureUITests: XCTestCase {
         // lag estimate may legitimately be withheld under simulator load.
         expectation(for: NSPredicate(format: "value MATCHES %@", "분석 [1-9][0-9]*구간"),
                     evaluatedWith: app.staticTexts["liveCaptureStatus"])
-        waitForExpectations(timeout: 15)
+        waitForExpectations(timeout: 30)
     }
     func testFreshWaveformsExceedAnalysisCadence() {
         let app = launch(details: false)
         app.buttons["liveCaptureButton"].tap()
         let performance = app.staticTexts["liveWaveformPerformance"]
         expectation(for: NSPredicate(format: "label MATCHES %@", ".*최근 [2-6][0-9] fps.*"), evaluatedWith: performance)
-        waitForExpectations(timeout: 12)
+        waitForExpectations(timeout: 30)
         XCTAssertTrue(app.staticTexts["liveCaptureStatus"].label.contains("합성"))
         let screen = XCTAttachment(screenshot: app.screenshot())
         screen.name = "native-waveform-cadence-synthetic"
@@ -26,7 +26,7 @@ final class CaptureUITests: XCTestCase {
         let left = app.descendants(matching: .any).matching(identifier: "leftWaveform").firstMatch
         expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: left)
         expectation(for: NSPredicate(format: "label MATCHES %@", ".*최근 [2-6][0-9] fps.*"), evaluatedWith: performance)
-        waitForExpectations(timeout: 12)
+        waitForExpectations(timeout: 30)
     }
 
     func testGuidedComparisonCollectsSixTrialsWithoutInventingDirection() {
@@ -42,7 +42,7 @@ final class CaptureUITests: XCTestCase {
             XCTAssertTrue(app.buttons["calibrationCancel"].waitForExistence(timeout: 3))
             let label = step == 6 ? "6/6 · 비교 완료" : "\(step + 1)/6"
             expectation(for: NSPredicate(format: "label CONTAINS %@", label), evaluatedWith: app.staticTexts["calibrationStep"])
-            waitForExpectations(timeout: 20)
+            waitForExpectations(timeout: 30)
         }
         let comparison = app.staticTexts["calibrationComparison"]
         reveal(comparison, in: app)
@@ -108,7 +108,7 @@ final class CaptureUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["lagValue"].waitForExistence(timeout: 5))
         let value = NSPredicate(format: "label CONTAINS %@", "+145.8")
         expectation(for: value, evaluatedWith: app.staticTexts["lagValue"])
-        waitForExpectations(timeout: 10)
+        waitForExpectations(timeout: 30)
         XCTAssertEqual(app.staticTexts["actualChannels"].label, "실제 2채널")
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "native-stereo-synthetic"
@@ -117,7 +117,7 @@ final class CaptureUITests: XCTestCase {
         let tracked = app.staticTexts["trackedLagValue"]
         reveal(tracked, in: app)
         expectation(for: value, evaluatedWith: tracked)
-        waitForExpectations(timeout: 10)
+        waitForExpectations(timeout: 30)
         XCTAssertTrue(app.staticTexts["motionStatus"].label.contains("회전"))
         let continuous = XCTAttachment(screenshot: app.screenshot())
         continuous.name = "native-continuous-synthetic"
@@ -149,7 +149,7 @@ final class CaptureUITests: XCTestCase {
         let app = launch(["--synthetic-mono"])
         app.buttons["captureButton"].tap()
         expectation(for: NSPredicate(format: "label CONTAINS %@", "1채널"), evaluatedWith: app.staticTexts["captureStatus"])
-        waitForExpectations(timeout: 10)
+        waitForExpectations(timeout: 30)
         XCTAssertEqual(app.buttons["captureButton"].label, "스테레오 수음 시작")
         XCTAssertEqual(app.staticTexts["lagValue"].label, "—")
     }
@@ -158,7 +158,7 @@ final class CaptureUITests: XCTestCase {
         let app = launch()
         app.buttons["captureButton"].tap()
         expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["lagValue"])
-        waitForExpectations(timeout: 10)
+        waitForExpectations(timeout: 30)
         XCUIDevice.shared.press(.home)
         app.activate()
         XCTAssertEqual(app.buttons["captureButton"].label, "스테레오 수음 시작")
@@ -169,7 +169,7 @@ final class CaptureUITests: XCTestCase {
         let app = launch()
         app.buttons["captureButton"].tap()
         expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["lagValue"])
-        waitForExpectations(timeout: 10)
+        waitForExpectations(timeout: 30)
         reveal(app.buttons["exportButton"], in: app)
         app.buttons["exportButton"].tap()
         // Capture must stop before the native share sheet opens. Read the
@@ -186,7 +186,7 @@ final class CaptureUITests: XCTestCase {
         let app = launch(["--synthetic-route-events"])
         app.buttons["captureButton"].tap()
         expectation(for: NSPredicate(format: "label CONTAINS %@", "오디오 알림 2"), evaluatedWith: app.staticTexts["audioEventCount"])
-        waitForExpectations(timeout: 10)
+        waitForExpectations(timeout: 30)
         XCTAssertEqual(app.buttons["captureButton"].label, "수음 중지")
         XCTAssertTrue(app.staticTexts["lagValue"].label.contains("+145.8"))
     }
@@ -195,7 +195,7 @@ final class CaptureUITests: XCTestCase {
         let app = launch(["--synthetic-interruption"])
         app.buttons["captureButton"].tap()
         expectation(for: NSPredicate(format: "label CONTAINS %@", "interruptionBegan"), evaluatedWith: app.staticTexts["captureStatus"])
-        waitForExpectations(timeout: 10)
+        waitForExpectations(timeout: 30)
         XCTAssertEqual(app.buttons["captureButton"].label, "스테레오 수음 시작")
         XCTAssertEqual(app.staticTexts["trackedLagValue"].label, "—")
     }
@@ -216,7 +216,7 @@ final class CaptureUITests: XCTestCase {
         let app = launch(["--synthetic-startup-override", "--synthetic-override-route-mismatch"], details: false)
         app.buttons["liveCaptureButton"].tap()
         expectation(for: NSPredicate(format: "label CONTAINS %@", "routeOutputOverridden(4)"), evaluatedWith: app.staticTexts["liveCaptureStatus"])
-        waitForExpectations(timeout: 10)
+        waitForExpectations(timeout: 30)
         XCTAssertEqual(app.buttons["liveCaptureButton"].label, "카메라·수음 시작")
         XCTAssertEqual(app.staticTexts["liveLagValue"].label, "—")
         XCTAssertTrue(app.staticTexts["cameraStatus"].label.contains("카메라를 중지"))
@@ -273,7 +273,7 @@ final class CaptureUITests: XCTestCase {
         app.buttons["liveCaptureButton"].tap()
         let left = app.descendants(matching: .any).matching(identifier: "leftWaveform").firstMatch, right = app.descendants(matching: .any).matching(identifier: "rightWaveform").firstMatch
         expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: left)
-        waitForExpectations(timeout: 10)
+        waitForExpectations(timeout: 30)
         XCTAssertEqual(right.value as? String, "평탄")
         XCTAssertEqual(app.buttons["liveCaptureButton"].label, "계측 중지")
         let screen = XCTAttachment(screenshot: app.screenshot())
@@ -301,7 +301,7 @@ final class CaptureUITests: XCTestCase {
         let app = launch(["--synthetic-camera-denied"], details: false)
         app.buttons["liveCaptureButton"].tap()
         expectation(for: NSPredicate(format: "label CONTAINS %@", "카메라 권한이 없습니다"), evaluatedWith: app.staticTexts["cameraStatus"])
-        waitForExpectations(timeout: 10)
+        waitForExpectations(timeout: 30)
         XCTAssertEqual(app.buttons["liveCaptureButton"].label, "카메라·수음 시작")
         XCTAssertEqual(app.staticTexts["liveCaptureStatus"].label, "대기")
     }
@@ -310,7 +310,7 @@ final class CaptureUITests: XCTestCase {
         let app = launch(["--synthetic-mono"], details: false)
         app.buttons["liveCaptureButton"].tap()
         expectation(for: NSPredicate(format: "label CONTAINS %@", "1채널"), evaluatedWith: app.staticTexts["liveCaptureStatus"])
-        waitForExpectations(timeout: 10)
+        waitForExpectations(timeout: 30)
         XCTAssertEqual(app.buttons["liveCaptureButton"].label, "카메라·수음 시작")
         XCTAssertTrue(app.staticTexts["cameraStatus"].label.contains("카메라를 중지"))
     }

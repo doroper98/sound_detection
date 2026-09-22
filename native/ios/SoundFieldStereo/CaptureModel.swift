@@ -644,15 +644,17 @@ final class CaptureModel: ObservableObject {
     }
 
     private func accept(_ reading: FrameReading) {
+        var updated = report
+        defer { report = updated } // One observable update per analysis/timer tick.
         lastFrameAt = Date()
-        report.latest = reading
-        report.analyzedFrames += 1
-        if reading.analysis.channels[0].active { report.activeLeftFrames += 1 }
-        if reading.analysis.channels[1].active { report.activeRightFrames += 1 }
-        if reading.analysis.duplicateSuspected { report.duplicateFrames += 1 }
-        if reading.analysis.status == .candidate { report.candidateLagFrames += 1 }
+        updated.latest = reading
+        updated.analyzedFrames += 1
+        if reading.analysis.channels[0].active { updated.activeLeftFrames += 1 }
+        if reading.analysis.channels[1].active { updated.activeRightFrames += 1 }
+        if reading.analysis.duplicateSuspected { updated.duplicateFrames += 1 }
+        if reading.analysis.status == .candidate { updated.candidateLagFrames += 1 }
         guard let hostTime = reading.hostTime else {
-            report.motionStatus = "오디오 시각이 없어 회전 대응 보류"
+            updated.motionStatus = "오디오 시각이 없어 회전 대응 보류"
             return
         }
         let midpoint = AVAudioTime.seconds(forHostTime: hostTime)
@@ -667,25 +669,27 @@ final class CaptureModel: ObservableObject {
             orientation = syntheticOrientation.aligned(at: midpoint)
         } else {
             orientation = motion.aligned(at: midpoint)
-            report.motionStatus = orientation == nil ? "동일 시각의 회전 데이터 대기" : "기기 회전 기록 중 · 이동거리 미측정"
+            updated.motionStatus = orientation == nil ? "동일 시각의 회전 데이터 대기" : "기기 회전 기록 중 · 이동거리 미측정"
         }
-        report.latestOrientation = orientation
+        updated.latestOrientation = orientation
         calibration.append(analysis: reading.analysis, midpoint: midpoint, orientation: orientation)
         guard let origin = timeOrigin else { return }
         let elapsed = midpoint - origin
         tracker.append(TimedLag(timeSeconds: elapsed, analysis: reading.analysis, orientation: orientation))
-        report.trend = tracker.snapshot(at: elapsed)
+        updated.trend = tracker.snapshot(at: elapsed)
     }
 
     private func refreshTrend() {
         guard phase == .running else { return }
-        report.waveformDisplay = waveformDisplay.statistics
+        var updated = report
+        defer { report = updated } // One observable update per analysis/timer tick.
+        updated.waveformDisplay = waveformDisplay.statistics
         let now = ProcessInfo.processInfo.systemUptime
         calibration.tick(at: now)
-        report.calibration = calibration.snapshot(at: now)
+        updated.calibration = calibration.snapshot(at: now)
         guard let origin = timeOrigin else { return }
-        report.trend = tracker.snapshot(at: ProcessInfo.processInfo.systemUptime - origin)
-        if report.trend?.state == .stale { report.latestOrientation = nil }
+        updated.trend = tracker.snapshot(at: ProcessInfo.processInfo.systemUptime - origin)
+        if updated.trend?.state == .stale { updated.latestOrientation = nil }
     }
 
     func stop(reason: String = "수음을 중지하고 마이크를 해제했습니다.") {

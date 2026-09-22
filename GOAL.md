@@ -38,7 +38,7 @@
 
 ## iPhone 네이티브 스테레오 입력 (개발 중)
 
-개발용 앱 구현 및 자동 검증 PASS: Swift 단위 10/10, iphoneos Release 빌드, iPhone 16 Pro/iOS 18.5 시뮬레이터 UI 5/5. 실제 iPhone 17 Pro의 입력·교정은 아직 미검증이다. [Mac CI 결과](https://github.com/doroper98/sound_detection/actions/runs/35718003457).
+초기 개발용 앱 자동 검증은 Swift 10/10·Release 기기 빌드·시뮬레이터 UI 5/5로 통과했다. [당시 Mac CI](https://github.com/doroper98/sound_detection/actions/runs/35718003457). 빌드 3은 Swift 27/27·UI 13/13으로 검증했고, 2026-09-22 사용자 실기기 보고서에서 카메라를 켠 상태로 후면 스테레오 48kHz 수음을 시작해 약 25초·245개 구간의 좌우 활성을 확인했다. 복제 의심·분석 건너뛰기·분석 타임라인 불연속은 0이다. 시간차 후보는 14/245(5.7%)이며 음향 교정·위치 정확도는 미검증이다. [실측 해석](docs/reports/2026-09-22-iphone17pro-native-build3-analysis.json).
 
 - REQ-NATIVE-001 / SC-22: SwiftUI iPhone 앱에서 내장 마이크의 front/back 데이터 소스와 stereo polar pattern을 선택한다. 요청 2채널과 실제 세션·PCM 채널 수를 분리하고, 실제 2채널이 아니면 분석을 거부한다. 명시적 시작·취소·중지·백그라운드·경로 변경·인터럽트·PCM 무응답 시 입력을 해제한다.
 - REQ-NATIVE-002 / SC-23: 같은 PCM 버퍼의 좌우 레벨, 무음·복제·포화, 정규화 상호상관 지연과 모호성을 계산한다. 합성 양/음 지연·무음·복제·주기 신호를 단위 검증하고, 통계만 JSON으로 내보낸다. 신호 지연을 물리 TDOA·방향·거리로 표시하지 않는다.

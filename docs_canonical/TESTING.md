@@ -57,3 +57,13 @@ Remove-Item Env:PLAYWRIGHT_BASE_URL
 WebKit의 미지원 처리 재현: `npx playwright install webkit` 후 PowerShell에서 `$env:PLAYWRIGHT_BROWSER='webkit'`를 설정하고 `npx playwright test tests/e2e/diagnostics.spec.ts --grep 'unsupported capture' --output test-results-webkit`를 실행한다. 기본 CI 브라우저는 Chromium이다.
 
 실기기에서는 [검사 순서](LIVE_CAMERA_PLAN.md)대로 iOS 버전과 진단 보고서를 확보한다. 카메라 동시 사용 유무, 권한 최초/거절, 화면 회전, 탭 숨김 후 캡처 해제도 확인한다.
+
+## 공개 사이트 native 캡처 경로 추가 점검 (2026-09-22)
+
+이전 대화에서 수행한 추가 검증 결과를 보존한다. 이번 문서화에서 iPhone 검증을 새로 수행한 것은 아니다.
+
+- 근거: 로컬 `.local/camera-native-audit.json`, `checkedAt=2026-09-22T06:01:21.796Z`. 브라우저 Chromium 153.0.8010.12, 대상 공개 `/diagnostics`.
+- `--use-fake-device-for-media-stream` 및 `--use-fake-ui-for-media-stream`으로 브라우저 가상 장치/권한 승인을 사용했다. JavaScript getUserMedia API는 대체하지 않았다.
+- HTTPS/동일 origin 권한 정책, 1280×720 video의 프레임·미디어 시간 증가, 3회 재시작, 세로/가로 viewport, 마이크 검사 중/후 영상, pagehide 이벤트 후 재시작·새로고침을 확인했다.
+- 해당 Windows headless 환경에서 가상 UI 승인 플래그 없이 native 캡처가 NotSupportedError를 반환했다. 가상 UI 승인은 권한 거절을 덮어쓰므로 실제 사용자의 거절 경로 검증으로 계산하지 않는다.
+- 실제 iPhone 카메라·Safari 채널 수·OS 잠금/회전 센서 동작의 증거가 아니다. 임시 스크립트/원본 로그의 `.local/`은 Git 제외 경로다. 영구 기록은 이 요약이며, 기존 합성 E2E와 실기기 확인을 구분한다.

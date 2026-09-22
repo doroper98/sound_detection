@@ -74,5 +74,6 @@ node packages/localization/examples/replay.mjs experiment.json
 - [요구사항과 성공 기준](GOAL.md) · [개발 로그](DEVLOG.md) · [작업 절차](WORKFLOWS.md)
 - [아키텍처](docs_canonical/ARCHITECTURE.md) · [코드 규칙](docs_canonical/STYLEGUIDE.md) · [검증](docs_canonical/TESTING.md) · [파일 지도](docs_canonical/REPO_MAP.md)
 - [실제 카메라·수음 웹앱 확장 계획](docs_canonical/LIVE_CAMERA_PLAN.md)
+- [야외 주파수 지도와 500m 드론 거리 ±50m: 논의·조건부 계산·검증 계획](docs_canonical/FIELD_ACOUSTICS_FEASIBILITY.md) — 구현·실측 성능과 구분한 연구 기록
 
 사용자가 지정한 [YK_BP/docs_bp](https://github.com/doroper98/YK_BP/tree/main/docs_bp)의 요구사항 추적·CLI Gate·원자적 버전 관리·정규 문서 체계를 적용했습니다.

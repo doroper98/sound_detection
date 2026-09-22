@@ -54,6 +54,11 @@ struct CaptureDetailsView: View {
                         .accessibilityIdentifier("captureStatus")
                     Text("오디오 알림 \(model.report.audioEvents.count) · 초기 재설정 \(model.report.startupEngineRestarts)")
                         .font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("audioEventCount")
+                    if let display = model.report.waveformDisplay {
+                        Text("파형 최근 \(display.recentFreshFPS) fps · 누적 \(display.presentedFrames) · 표시 지연 \(Int(display.presentationDelaySeconds * 1000))ms")
+                            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                            .accessibilityIdentifier("waveformPerformance")
+                    }
                     if let event = model.report.audioEvents.last {
                         Text("마지막 알림 \(event.reasonCode.map(String.init) ?? "—") · 입력 확인 \(event.routeMatches ? "정상" : "불일치") · 당시 분석 \(event.analyzedFramesBeforeEvent)")
                             .font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("lastAudioEvent")
@@ -175,6 +180,112 @@ struct CaptureDetailsView: View {
         case .stopped: return "계측 중지 · 마지막 변화 기록"
         case nil: return "수음을 시작하면 자동으로 누적합니다."
         }
+    }
+}
+
+struct DirectionCalibrationView: View {
+    @ObservedObject var model: CaptureModel
+    @State private var sharedReport: SharedReport?
+    private var data: DirectionCalibrationReport? { model.report.calibration }
+    private var step: Int { data?.nextStep ?? 0 }
+    private var measuring: Bool { data?.state == "preparing" || data?.state == "measuring" }
+    private var side: String { ["왼쪽", "정면", "오른쪽"][min(step, 5) % 3] }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("방향 비교").font(.largeTitle.bold())
+                Text("소리 위치를 바꾸면 좌우 시간차도 반복해서 달라지는지 확인합니다.")
+                    .foregroundStyle(.secondary)
+                if model.isSynthetic { Text("합성 테스트 · 실제 방향 교정 아님").foregroundStyle(.orange) }
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("1  폰을 세로로 고정하고 후면 카메라로 수음을 시작하세요.")
+                    Text("2  폰 뒤 카메라가 보는 쪽에 소리 하나만 두세요. 폰을 돌리지 말고, 화면 기준 왼쪽·정면·오른쪽으로 소리를 옮기세요.")
+                    Text("3  약 1m의 비슷한 거리에서 종이를 계속 비비세요. 각 위치에서 버튼을 누르면 3초 준비 후 5초를 모읍니다. 같은 순서로 두 번 반복합니다.")
+                }.font(.subheadline).card()
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(step < 6 ? "\(step + 1)/6 · \(step / 3 + 1)회차 · \(side)" : "6/6 · 비교 완료")
+                        .font(.title2.bold()).accessibilityIdentifier("calibrationStep")
+                    Text(progressText).font(.headline.monospacedDigit())
+                        .accessibilityIdentifier("calibrationProgress")
+                    if measuring {
+                        ProgressView(value: data?.state == "preparing" ? 0 : 5 - min(5, data?.secondsRemaining ?? 5), total: 5)
+                        Button("이번 구간 취소") { model.cancelCalibrationTrial() }
+                            .buttonStyle(.bordered).accessibilityIdentifier("calibrationCancel")
+                    } else if step < 6 {
+                        Button("\(side) 5초 측정") { model.beginCalibrationTrial() }
+                            .buttonStyle(.borderedProminent).accessibilityIdentifier("calibrationStart")
+                            .disabled(model.phase != .running || model.report.requestedSource != "back" || data?.state == "attemptLimit")
+                    }
+                    if model.phase != .running {
+                        Text("카메라 화면에서 수음을 시작한 뒤 돌아오세요. 새 수음을 시작하면 이전 비교 기록은 초기화됩니다.")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    } else if model.report.requestedSource != "back" {
+                        Text("이번 비교는 후면 입력으로 진행합니다. 수음을 중지하고 후면을 선택하세요.")
+                            .font(.footnote).foregroundStyle(.orange)
+                    }
+                }.card()
+                if step == 6 {
+                    Text(comparisonText).font(.headline).accessibilityIdentifier("calibrationComparison")
+                }
+                ForEach(data?.trials ?? []) { trial in
+                    VStack(alignment: .leading, spacing: 7) {
+                        Text("\(trial.repetition)회차 · \(sideName(trial.declaredSide)) · \(trial.completed ? "수집 완료" : "중단")").font(.headline)
+                        Text("시간차 \(trial.medianLagSeconds.map { String(format: "%+.1f µs", $0 * 1e6) } ?? "—") · 후보 \(Int((trial.candidateFraction * 100).rounded()))%")
+                        Text("R−L 레벨 \(trial.medianRightMinusLeftDb.map { String(format: "%+.1f dB", $0) } ?? "—") · 폰 회전 \(trial.maxRotationDegrees.map { String(format: "%.1f°", $0) } ?? "—")")
+                            .font(.caption.monospacedDigit())
+                        Text(trial.usable ? "비교에 사용할 통계 확보" : trial.qualityIssues.map(issueName).joined(separator: " · "))
+                            .font(.footnote).foregroundStyle(trial.usable ? .green : .orange)
+                        if let reason = trial.interruptionReason { Text(reason).font(.caption).foregroundStyle(.secondary) }
+                    }.card()
+                }
+                Text("중앙값은 채택된 후보만의 요약입니다. 후보 비율이 낮으면 방향 비교를 보류합니다. 같은 차이가 반복돼도 각도·거리 교정 완료를 뜻하지 않습니다.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                HStack {
+                    Button("비교 기록 초기화") { model.resetCalibration() }.disabled(measuring)
+                        .accessibilityIdentifier("calibrationReset")
+                    Spacer()
+                    Button("계측 중지") { model.stop() }.disabled(!model.isBusy)
+                }.buttonStyle(.bordered)
+                Button {
+                    if let url = model.export() { sharedReport = SharedReport(url: url) }
+                } label: { Label("비교 JSON 공유", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity) }
+                    .buttonStyle(.borderedProminent).accessibilityIdentifier("calibrationExport")
+                Text("공유하면 수음이 중지됩니다. 구간별 통계만 포함하고 원음·파형·영상은 포함하지 않습니다.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }.padding(20)
+        }
+        .background(Color(red: 0.055, green: 0.075, blue: 0.07))
+        .sheet(item: $sharedReport) { ShareSheet(url: $0.url) }
+        .alert("보고서 저장 오류", isPresented: Binding(get: { model.exportError != nil }, set: { if !$0 { model.exportError = nil } })) {
+            Button("확인") { model.exportError = nil }
+        } message: { Text(model.exportError ?? "") }
+    }
+
+    private var progressText: String {
+        switch data?.state {
+        case "preparing": return "준비 \(Int(ceil(data?.secondsRemaining ?? 0)))초 · 손을 떼고 소리를 내세요"
+        case "measuring": return "수집 중 · \(String(format: "%.1f", data?.secondsRemaining ?? 0))초 남음"
+        case "complete": return "여섯 구간을 JSON으로 공유해 주세요"
+        case "attemptLimit": return "시도 상한에 도달했습니다. 공유 후 초기화하세요"
+        default: return "소리 위치를 준비한 뒤 눌러주세요"
+        }
+    }
+
+    private var comparisonText: String {
+        switch data?.comparison {
+        case "repeatableSeparation": return "위치별 시간차가 두 번 같은 순서로 구분됐습니다. 다음 교정을 위한 자료가 확보됐습니다."
+        case "notRepeatable": return "두 번의 시간차가 일치하지 않아 방향 비교를 보류합니다."
+        case "noClearSeparation": return "위치별 시간차가 충분히 구분되지 않았습니다."
+        default: return "품질이 부족한 구간이 있어 방향 비교를 보류합니다. 아래 원인을 확인하세요."
+        }
+    }
+
+    private func sideName(_ side: String) -> String { ["left": "왼쪽", "center": "정면", "right": "오른쪽"][side] ?? side }
+    private func issueName(_ issue: String) -> String {
+        ["interrupted": "구간 중단", "insufficientCoverage": "수집량 부족", "insufficientLagCandidates": "시간차 후보 부족",
+         "missingOrientation": "자세 자료 부족", "phoneMoved": "폰이 5° 이상 움직임", "sampleRateChanged": "샘플률 변경",
+         "unstableLag": "시간차 흔들림", "observationLimit": "통계 상한 도달"][issue] ?? issue
     }
 }
 

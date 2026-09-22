@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "kind": "user-supplied-native-physical-capture-analysis",
+  "sourceReport": "2026-09-22-iphone17pro-native-build4-stereo.json",
+  "provenance": "사용자가 제공한 JSON의 값 보존 기록 및 별도 파생 해석. 에이전트 실측 아님.",
+  "userReportedSound": null,
+  "userFeedback": [
+    "수음 자체는 이제 잘 되는것 같아",
+    "오실로그래프가 너무 끊기는 느낌"
+  ],
+  "findings": {
+    "wallDurationSeconds": 27,
+    "analyzedFrames": 259,
+    "activeLeftFrames": 259,
+    "activeRightFrames": 259,
+    "actualChannels": 2,
+    "sampleRate": 48000,
+    "duplicateFrames": 0,
+    "skippedBuffers": 0,
+    "analyzedTimelineGaps": 0,
+    "candidateLagFrames": 15,
+    "candidateFraction": 0.05791505791505792,
+    "latestLevelsDbfs": [
+      -75.25529244907085,
+      -74.25410181077712
+    ],
+    "exportedHistoryCount": 19,
+    "exportedHistoryCandidateCount": 0,
+    "lastHalfSecondCandidates": 0,
+    "lastHalfSecondTotal": 4,
+    "startupEngineRestarts": 0,
+    "allRouteChecksPassed": true,
+    "finalRotationFromStartDegrees": 91.63568315617044
+  },
+  "conclusions": [
+    "이번 기록에서 실제 내장 후면 스테레오 48kHz 수음과 시작 알림 처리가 안정적으로 동작했다.",
+    "후보 비율은 약 5.79%이며 최종 구간은 ambiguous다. 후보 정답률이나 방향 정확도가 아니다.",
+    "91.64°는 폰 자체의 시작 대비 자세 변화로 음원 방향이 아니다. 방향 비교는 폰 고정 조건에서 새로 수집한다.",
+    "최신 4800 samples / 48000Hz는 100ms 구간이다. 빌드 4는 분석과 파형 갱신이 결합되어 있으나 화면 fps 자체는 기록되지 않았다."
+  ],
+  "notVerified": [
+    "물리 마이크 독립성·하드웨어 동기화·음향 교정·방향/거리/위치",
+    "전체 259개 상세 상태와 이번 소리 종류/위치",
+    "실기기 파형 fps·전체 카메라 연속성"
+  ]
+}

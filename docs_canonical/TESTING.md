@@ -1,5 +1,11 @@
 # 검증
 
+## 빌드 5 방향 비교·파형 표시 주기 (EXP-015)
+
+자동 검증 진행 중. 추가 검사는 100ms PCM의 서로 다른 여섯 10ms 창, 10Hz 입력의 60Hz 표시 스케줄, 상한·지연/중지 제거·채널 차이, 6구간 반복 분리/동일값 거부/모호성 보존/기기 움직임·자세 누락/취소/수집 경계·희소 입력/샘플률 변경이다. UI는 6개 구간과 비교·공유, 취소/백그라운드, 초당 20개 이상의 새 파형 표시를 검사한다. 시뮬레이터 속도는 실제 iPhone 성능을 대신하지 않는다.
+
+[빌드 4 실측](../docs/reports/2026-09-22-iphone17pro-native-build4-stereo.json)에서 259/259 양쪽 활성과 초기 경로 유지, 누락/복제 0을 확인했다. [해석](../docs/reports/2026-09-22-iphone17pro-native-build4-analysis.json). 후보 15/259, 마지막 이력 19개 ambiguous, 기기 자세 91.64°는 방향 정확도를 뜻하지 않는다. 파형 끊김은 사용자 보고이며 빌드 4 JSON에는 fps가 없다.
+
 ## 빌드 4 L/R 미니 파형 (EXP-014)
 
 **자동 검증 PASS:** 코드 `d9b5c31`, [Native iOS CI](https://github.com/doroper98/sound_detection/actions/runs/35733399591)에서 Swift 31/31·iPhone 16 Pro/iOS 18.5 UI 15/15·Xcode 16.4 Release 기기 빌드·IPA 포장 통과. 최신 최대 10ms 좌우 크기 차이, 여러 샘플률의 피크/마지막 샘플 보존, 무음/짧은 버퍼·비정상 입력 거부, 양쪽 표시/화면 내 배치/한쪽 무음/350ms 지연 후 제거/중지·백그라운드를 검증했다. [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35733399620) 단위 40/40·Chromium E2E 16/16도 PASS.

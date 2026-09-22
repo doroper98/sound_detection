@@ -18,11 +18,6 @@ struct FrameReading: Codable {
     let analysis: StereoAnalysis
 }
 
-private struct CapturedFrame {
-    let reading: FrameReading
-    let waveform: StereoWaveformPreview?
-}
-
 struct MarkedReading: Codable, Identifiable {
     let id: UUID
     let declaredSoundSide: String
@@ -63,8 +58,8 @@ struct AudioRouteInspection: Encodable {
 }
 
 struct NativeReport: Encodable {
-    var schemaVersion = 4
-    var appVersion = "0.4.0-native-waveform-build4"
+    var schemaVersion = 5
+    var appVersion = "0.4.0-native-calibration-smooth-build5"
     var inputOrigin = "AVAudioEngine.inputNode"
     var operatingSystem = UIDevice.current.systemVersion
     var startedAt: Date?
@@ -90,6 +85,8 @@ struct NativeReport: Encodable {
     var activeRightFrames = 0
     var duplicateFrames = 0
     var candidateLagFrames = 0
+    var waveformDisplay: WaveformDisplayStatistics?
+    var calibration: DirectionCalibrationReport?
     var trend: LagTrend?
     var motionStatus = "회전 측정 대기"
     var latestOrientation: AlignedOrientation?
@@ -161,58 +158,78 @@ private final class NotificationGate: @unchecked Sendable {
     func read() -> Int? { lock.lock(); defer { lock.unlock() }; return value }
 }
 
-/// One analysis job at a time, including its pending UI delivery. The audio tap
-/// never queues an unbounded PCM history; busy buffers are counted and dropped.
+/// Independent bounded preview and analysis deliveries. Slow DSP cannot hold
+/// the preview gate, and the display link never drives analysis or audio I/O.
 private final class TapPipeline: @unchecked Sendable {
     private let gate = DispatchSemaphore(value: 1)
+    private let previewGate = DispatchSemaphore(value: 1)
     private let queue = DispatchQueue(label: "soundfield.stereo.analysis", qos: .userInitiated)
+    private let previewQueue = DispatchQueue(label: "soundfield.stereo.preview", qos: .userInteractive)
     private let lock = NSLock()
     private var skipped = 0
     private var sequence = 0
     private var gaps = 0
     private var nextSampleTime: Int64?
-    private let deliver: @MainActor (Result<CapturedFrame, Error>) -> Void
+    private let deliver: @MainActor (Result<FrameReading, Error>) -> Void
+    private let deliverPreview: @MainActor ([TimedWaveform], Double) -> Void
 
-    init(deliver: @escaping @MainActor (Result<CapturedFrame, Error>) -> Void) {
+    init(deliverPreview: @escaping @MainActor ([TimedWaveform], Double) -> Void,
+         deliver: @escaping @MainActor (Result<FrameReading, Error>) -> Void) {
         self.deliver = deliver
+        self.deliverPreview = deliverPreview
     }
 
     func submit(_ buffer: AVAudioPCMBuffer, at time: AVAudioTime) {
-        guard gate.wait(timeout: .now()) == .success else {
-            lock.lock(); skipped += 1; lock.unlock()
-            return
-        }
         guard buffer.format.channelCount == 2,
               buffer.format.commonFormat == .pcmFormatFloat32,
               let pointers = buffer.floatChannelData,
               (128...16_384).contains(Int(buffer.frameLength)) else {
-            finish(.failure(CaptureFailure.message("실제 PCM이 분석 가능한 2채널 Float32 형식이 아닙니다. 수음을 중지했습니다.")))
+            if gate.wait(timeout: .now()) == .success {
+                finish(.failure(CaptureFailure.message("실제 PCM이 분석 가능한 2채널 Float32 형식이 아닙니다. 수음을 중지했습니다.")))
+            }
             return
         }
-        let count = Int(buffer.frameLength)
-        let stride = buffer.stride
+        let analysisReady = gate.wait(timeout: .now()) == .success
+        let previewReady = previewGate.wait(timeout: .now()) == .success
+        if !analysisReady { lock.lock(); skipped += 1; lock.unlock() }
+        guard analysisReady || previewReady else { return }
+        let count = Int(buffer.frameLength), stride = buffer.stride
         let left = (0..<count).map { pointers[0][$0 * stride] }
-        let right: [Float]
-        if buffer.format.isInterleaved {
-            right = (0..<count).map { pointers[0][$0 * stride + 1] }
-        } else {
-            right = (0..<count).map { pointers[1][$0 * stride] }
-        }
-        analyze(left: left, right: right, sampleRate: buffer.format.sampleRate,
-                sampleTime: time.isSampleTimeValid ? time.sampleTime : nil,
-                hostTime: time.isHostTimeValid ? time.hostTime : nil)
+        let right = buffer.format.isInterleaved
+            ? (0..<count).map { pointers[0][$0 * stride + 1] }
+            : (0..<count).map { pointers[1][$0 * stride] }
+        process(left: left, right: right, sampleRate: buffer.format.sampleRate,
+            sampleTime: time.isSampleTimeValid ? time.sampleTime : nil,
+            hostTime: time.isHostTimeValid ? time.hostTime : nil,
+            analysisReady: analysisReady, previewReady: previewReady)
     }
 
     #if DEBUG
     func submitSynthetic(left: [Float], right: [Float], sampleTime: Int64) {
-        guard gate.wait(timeout: .now()) == .success else { return }
+        let analysisReady = gate.wait(timeout: .now()) == .success
+        let previewReady = previewGate.wait(timeout: .now()) == .success
         let bufferStart = ProcessInfo.processInfo.systemUptime - Double(left.count) / 48_000
-        analyze(left: left, right: right, sampleRate: 48_000, sampleTime: sampleTime,
-                hostTime: AVAudioTime.hostTime(forSeconds: bufferStart))
+        process(left: left, right: right, sampleRate: 48_000, sampleTime: sampleTime,
+            hostTime: AVAudioTime.hostTime(forSeconds: bufferStart),
+            analysisReady: analysisReady, previewReady: previewReady)
     }
     #endif
 
-    private func analyze(left: [Float], right: [Float], sampleRate: Double, sampleTime: Int64?, hostTime: UInt64?) {
+    private func process(left: [Float], right: [Float], sampleRate: Double, sampleTime: Int64?,
+                         hostTime: UInt64?, analysisReady: Bool, previewReady: Bool) {
+        if previewReady {
+            let duration = Double(left.count) / sampleRate
+            let start = hostTime.map { AVAudioTime.seconds(forHostTime: $0) }
+                ?? ProcessInfo.processInfo.systemUptime - duration
+            previewQueue.async { [self] in
+                let frames = WaveformBatch.make(left: left, right: right, sampleRate: sampleRate, startTimeSeconds: start)
+                Task { @MainActor [self] in
+                    deliverPreview(frames, duration)
+                    previewGate.signal()
+                }
+            }
+        }
+        guard analysisReady else { return }
         queue.async { [self] in
             do {
                 let analysis = try StereoAnalyzer.analyze(left: left, right: right, sampleRate: sampleRate)
@@ -220,19 +237,49 @@ private final class TapPipeline: @unchecked Sendable {
                 if let expected = nextSampleTime, let actual = sampleTime, expected != actual { gaps += 1 }
                 nextSampleTime = sampleTime.map { $0 + Int64(left.count) }
                 lock.lock(); let skippedCount = skipped; lock.unlock()
-                let reading = FrameReading(sequence: sequence, sampleTime: sampleTime, hostTime: hostTime,
-                    skippedBuffers: skippedCount, analyzedTimelineGaps: gaps, analysis: analysis)
-                let waveform = StereoWaveformPreview.make(left: left, right: right, sampleRate: sampleRate)
-                finish(.success(CapturedFrame(reading: reading, waveform: waveform)))
+                finish(.success(FrameReading(sequence: sequence, sampleTime: sampleTime, hostTime: hostTime,
+                    skippedBuffers: skippedCount, analyzedTimelineGaps: gaps, analysis: analysis)))
             } catch { finish(.failure(error)) }
         }
     }
 
-    private func finish(_ result: Result<CapturedFrame, Error>) {
-        Task { @MainActor [self] in
-            deliver(result)
-            gate.signal()
+    private func finish(_ result: Result<FrameReading, Error>) {
+        Task { @MainActor [self] in deliver(result); gate.signal() }
+    }
+}
+
+@MainActor
+final class WaveformDisplayModel: NSObject, ObservableObject {
+    @Published private(set) var preview: StereoWaveformPreview?
+    private var playback = WaveformPlayback()
+    private var displayLink: CADisplayLink?
+    private var displayedTime: Double?
+
+    func start() {
+        stop(); playback = WaveformPlayback()
+        let link = CADisplayLink(target: self, selector: #selector(tick))
+        link.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 60, preferred: 60)
+        link.add(to: .main, forMode: .common)
+        displayLink = link
+    }
+
+    func receive(_ frames: [TimedWaveform], duration: Double) {
+        playback.append(frames, bufferDuration: duration)
+    }
+
+    @objc private func tick() {
+        let frame = playback.frame(at: ProcessInfo.processInfo.systemUptime)
+        if frame?.endTimeSeconds != displayedTime {
+            displayedTime = frame?.endTimeSeconds
+            preview = frame?.preview
         }
+    }
+
+    var statistics: WaveformDisplayStatistics { playback.statistics(at: ProcessInfo.processInfo.systemUptime) }
+
+    func stop() {
+        displayLink?.invalidate(); displayLink = nil
+        playback.clear(); displayedTime = nil; preview = nil
     }
 }
 
@@ -241,7 +288,8 @@ final class CaptureModel: ObservableObject {
     enum Phase { case idle, requestingPermission, running }
     @Published private(set) var phase: Phase = .idle
     @Published private(set) var report = NativeReport()
-    @Published private(set) var waveform: StereoWaveformPreview?
+    let waveformDisplay = WaveformDisplayModel()
+    private var calibration = DirectionCalibration()
     @Published var source = "back"
     @Published var exportError: String?
     var onStopped: (@MainActor () -> Void)?
@@ -309,7 +357,8 @@ final class CaptureModel: ObservableObject {
         generation += 1
         let token = generation
         report = NativeReport()
-        waveform = nil
+        waveformDisplay.stop()
+        calibration = DirectionCalibration()
         report.cameraSessionRunningAtAudioStart = cameraPreviewActive
         report.startControl = startControl
         configuredSampleRate = nil
@@ -336,12 +385,13 @@ final class CaptureModel: ObservableObject {
                 return
             }
             do {
-                let processor = TapPipeline { [weak self] result in
+                let processor = TapPipeline(deliverPreview: { [weak self] frames, duration in
+                    guard let self, self.generation == token, self.phase == .running else { return }
+                    self.waveformDisplay.receive(frames, duration: duration)
+                }) { [weak self] result in
                     guard let self, self.generation == token, self.phase == .running else { return }
                     switch result {
-                    case .success(let frame):
-                        self.waveform = frame.waveform
-                        self.accept(frame.reading)
+                    case .success(let reading): self.accept(reading)
                     case .failure(let error): self.stop(reason: error.localizedDescription)
                     }
                 }
@@ -355,6 +405,7 @@ final class CaptureModel: ObservableObject {
                     try startHardware(processor)
                 }
                 phase = .running
+                waveformDisplay.start()
                 captureStartedUptime = ProcessInfo.processInfo.systemUptime
                 notificationGate.set(token)
                 report.startedAt = Date()
@@ -598,6 +649,7 @@ final class CaptureModel: ObservableObject {
             report.motionStatus = orientation == nil ? "동일 시각의 회전 데이터 대기" : "기기 회전 기록 중 · 이동거리 미측정"
         }
         report.latestOrientation = orientation
+        calibration.append(analysis: reading.analysis, midpoint: midpoint, orientation: orientation)
         guard let origin = timeOrigin else { return }
         let elapsed = midpoint - origin
         tracker.append(TimedLag(timeSeconds: elapsed, analysis: reading.analysis, orientation: orientation))
@@ -606,7 +658,10 @@ final class CaptureModel: ObservableObject {
 
     private func refreshTrend() {
         guard phase == .running else { return }
-        if Date().timeIntervalSince(lastFrameAt) > 0.35 { waveform = nil }
+        report.waveformDisplay = waveformDisplay.statistics
+        let now = ProcessInfo.processInfo.systemUptime
+        calibration.tick(at: now)
+        report.calibration = calibration.snapshot(at: now)
         guard let origin = timeOrigin else { return }
         report.trend = tracker.snapshot(at: ProcessInfo.processInfo.systemUptime - origin)
         if report.trend?.state == .stale { report.latestOrientation = nil }
@@ -614,7 +669,10 @@ final class CaptureModel: ObservableObject {
 
     func stop(reason: String = "수음을 중지하고 마이크를 해제했습니다.") {
         notificationGate.set(nil)
-        waveform = nil
+        report.waveformDisplay = waveformDisplay.statistics
+        waveformDisplay.stop()
+        calibration.cancel(reason: reason)
+        report.calibration = calibration.snapshot(at: ProcessInfo.processInfo.systemUptime)
         generation += 1 // Invalidates permission results and queued old frames.
         watchdog?.invalidate(); watchdog = nil
         syntheticTimer?.invalidate(); syntheticTimer = nil
@@ -645,6 +703,22 @@ final class CaptureModel: ObservableObject {
 
     func enteredBackground() {
         if isBusy { stop(reason: "앱이 백그라운드로 이동해 마이크를 해제했습니다.") }
+    }
+
+    func beginCalibrationTrial() {
+        guard phase == .running, report.requestedSource == "back" else { return }
+        _ = calibration.begin(at: ProcessInfo.processInfo.systemUptime)
+        report.calibration = calibration.snapshot(at: ProcessInfo.processInfo.systemUptime)
+    }
+
+    func cancelCalibrationTrial() {
+        calibration.cancel(reason: "사용자 구간 취소")
+        report.calibration = calibration.snapshot(at: ProcessInfo.processInfo.systemUptime)
+    }
+
+    func resetCalibration() {
+        calibration = DirectionCalibration()
+        report.calibration = calibration.snapshot(at: ProcessInfo.processInfo.systemUptime)
     }
 
     func mark(side: String) {
@@ -706,14 +780,14 @@ final class CaptureModel: ObservableObject {
         report.selectedSource = "합성 테스트"
         syntheticPCMEnabled = !ProcessInfo.processInfo.arguments.contains("--synthetic-startup-override")
         var state: UInt64 = 7
-        let left: [Float] = (0..<2048).map { _ in
+        let left: [Float] = (0..<4800).map { _ in
             state = state &* 6364136223846793005 &+ 1
             return Float(Double(state >> 33) / Double(UInt32.max) - 0.25)
         }
         let arguments = ProcessInfo.processInfo.arguments
         let right: [Float] = arguments.contains("--synthetic-silent-right")
             ? [Float](repeating: 0, count: left.count)
-            : (0..<2048).map { $0 >= 7 ? left[$0 - 7] : 0 }
+            : (0..<4800).map { $0 >= 7 ? left[$0 - 7] : 0 }
         let fixtureStartedAt = ProcessInfo.processInfo.systemUptime
         var position: Int64 = 0
         syntheticTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
@@ -722,7 +796,7 @@ final class CaptureModel: ObservableObject {
                 if arguments.contains("--synthetic-waveform-stale"),
                    ProcessInfo.processInfo.systemUptime - fixtureStartedAt > 4 { return }
                 processor.submitSynthetic(left: left, right: right, sampleTime: position)
-                position += 2048
+                position += 4800
             }
         }
     }

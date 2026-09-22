@@ -55,6 +55,25 @@ private struct InputWaveform: View {
     }
 }
 
+/// Only this small subtree observes 60 Hz snapshots; the camera controls,
+/// diagnostic report and DSP retain their independent update cadence.
+private struct StereoWaveformPanel: View {
+    @ObservedObject var display: WaveformDisplayModel
+    let green: Color
+    var body: some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 12) {
+                InputWaveform(label: "L", columns: display.preview?.left ?? [],
+                    amplitudeRange: display.preview?.amplitudeRange ?? 1, tint: green, identifier: "leftWaveform")
+                InputWaveform(label: "R", columns: display.preview?.right ?? [],
+                    amplitudeRange: display.preview?.amplitudeRange ?? 1, tint: .cyan, identifier: "rightWaveform")
+            }
+            Text("10ms 파형 · 공통 자동 배율 · 최대 60fps")
+                .font(.system(size: 10)).foregroundStyle(.secondary)
+        }
+    }
+}
+
 private final class CameraSurface: UIView {
     override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
     var preview: AVCaptureVideoPreviewLayer { layer as! AVCaptureVideoPreviewLayer }
@@ -88,6 +107,7 @@ struct CaptureView: View {
     @StateObject private var camera = CameraModel()
     @Environment(\.scenePhase) private var scenePhase
     @State private var showDetails = false
+    @State private var showCalibration = false
     private let green = Color(red: 0.48, green: 0.95, blue: 0.68)
     private var busy: Bool { camera.isBusy || model.isBusy }
 
@@ -112,9 +132,15 @@ struct CaptureView: View {
                         Text("카메라 · 스테레오 계측").font(.caption)
                     }
                     Spacer()
+                    Button { showCalibration = true } label: {
+                        Label("방향 비교", systemImage: "arrow.left.and.right")
+                            .font(.caption.bold()).padding(10)
+                    }
+                    .background(.black.opacity(0.55), in: Capsule())
+                    .accessibilityIdentifier("calibrationButton")
                     Button { showDetails = true } label: {
                         Label("측정 상세", systemImage: "waveform.path")
-                            .font(.subheadline.bold()).padding(11)
+                            .font(.caption.bold()).padding(10)
                     }
                     .background(.black.opacity(0.55), in: Capsule())
                     .accessibilityIdentifier("detailsButton")
@@ -137,16 +163,7 @@ struct CaptureView: View {
                             Text("연속 시간차 · 방향 교정 전").font(.caption2)
                         }
                     }
-                    VStack(spacing: 4) {
-                        HStack(spacing: 12) {
-                            InputWaveform(label: "L", columns: model.waveform?.left ?? [],
-                                amplitudeRange: model.waveform?.amplitudeRange ?? 1, tint: green, identifier: "leftWaveform")
-                            InputWaveform(label: "R", columns: model.waveform?.right ?? [],
-                                amplitudeRange: model.waveform?.amplitudeRange ?? 1, tint: .cyan, identifier: "rightWaveform")
-                        }
-                        Text(model.waveform.map { String(format: "최근 %.0fms · 공통 자동 배율", $0.durationSeconds * 1_000) } ?? "실시간 파형 · 공통 자동 배율")
-                            .font(.system(size: 10)).foregroundStyle(.secondary)
-                    }
+                    StereoWaveformPanel(display: model.waveformDisplay, green: green)
                     Text(model.report.status).font(.caption).frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityIdentifier("liveCaptureStatus")
                     Picker("카메라와 마이크 방향", selection: $model.source) {
@@ -169,7 +186,7 @@ struct CaptureView: View {
                             .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 12)
                     }.buttonStyle(.borderedProminent).tint(green).foregroundStyle(.black)
                         .accessibilityIdentifier("liveCaptureButton")
-                    Text("영상·원음 저장 없음 · 빌드 4").font(.caption2).foregroundStyle(.secondary)
+                    Text("영상·원음 저장 없음 · 빌드 5").font(.caption2).foregroundStyle(.secondary)
                 }
                 .padding(18)
                 .background(.black.opacity(0.78), in: RoundedRectangle(cornerRadius: 22))
@@ -181,6 +198,12 @@ struct CaptureView: View {
             NavigationStack {
                 CaptureDetailsView(model: model)
                     .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("닫기") { showDetails = false } } }
+            }.presentationDetents([.large])
+        }
+        .sheet(isPresented: $showCalibration) {
+            NavigationStack {
+                DirectionCalibrationView(model: model)
+                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("닫기") { showCalibration = false } } }
             }.presentationDetents([.large])
         }
         .onChange(of: scenePhase) { _, phase in

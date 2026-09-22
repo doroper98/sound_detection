@@ -1,6 +1,64 @@
 import XCTest
 
 final class CaptureUITests: XCTestCase {
+    func testFreshWaveformsExceedAnalysisCadence() {
+        let app = launch(details: false)
+        app.buttons["liveCaptureButton"].tap()
+        app.buttons["detailsButton"].tap()
+        let performance = app.staticTexts["waveformPerformance"]
+        expectation(for: NSPredicate(format: "label MATCHES %@", ".*최근 [2-6][0-9] fps.*"), evaluatedWith: performance)
+        waitForExpectations(timeout: 12)
+        XCTAssertTrue(app.staticTexts["captureStatus"].label.contains("합성"))
+    }
+
+    func testGuidedComparisonCollectsSixTrialsWithoutInventingDirection() {
+        let app = launch(details: false)
+        app.buttons["liveCaptureButton"].tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["liveLagValue"])
+        waitForExpectations(timeout: 10)
+        app.buttons["calibrationButton"].tap()
+        for step in 1...6 {
+            let start = app.buttons["calibrationStart"]
+            reveal(start, in: app)
+            XCTAssertTrue(app.staticTexts["calibrationStep"].label.contains("\(step)/6"))
+            start.tap()
+            XCTAssertTrue(app.buttons["calibrationCancel"].waitForExistence(timeout: 3))
+            let label = step == 6 ? "6/6 · 비교 완료" : "\(step + 1)/6"
+            expectation(for: NSPredicate(format: "label CONTAINS %@", label), evaluatedWith: app.staticTexts["calibrationStep"])
+            waitForExpectations(timeout: 12)
+        }
+        let comparison = app.staticTexts["calibrationComparison"]
+        reveal(comparison, in: app)
+        XCTAssertTrue(comparison.label.contains("구분되지"))
+        let screen = XCTAttachment(screenshot: app.screenshot())
+        screen.name = "native-direction-comparison-synthetic"
+        screen.lifetime = .keepAlways
+        add(screen)
+        let export = app.buttons["calibrationExport"]
+        reveal(export, in: app)
+        export.tap()
+        XCTAssertTrue(app.buttons["Close"].waitForExistence(timeout: 5) || app.otherElements["ActivityListView"].exists)
+    }
+
+    func testCalibrationCancellationAndBackgroundDoNotAdvanceStep() {
+        let app = launch(details: false)
+        app.buttons["liveCaptureButton"].tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "+145.8"), evaluatedWith: app.staticTexts["liveLagValue"])
+        waitForExpectations(timeout: 10)
+        app.buttons["calibrationButton"].tap()
+        let start = app.buttons["calibrationStart"]
+        reveal(start, in: app)
+        start.tap()
+        app.buttons["calibrationCancel"].tap()
+        XCTAssertTrue(app.staticTexts["calibrationStep"].label.contains("1/6"))
+        start.tap()
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        XCTAssertTrue(app.staticTexts["calibrationStep"].label.contains("1/6"))
+        XCTAssertFalse(start.isEnabled)
+        XCTAssertFalse(app.buttons["calibrationCancel"].exists)
+    }
+
     private func launch(_ extra: [String] = [], details: Bool = true) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--synthetic-stereo"] + extra

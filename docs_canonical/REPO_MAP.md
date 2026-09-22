@@ -28,6 +28,7 @@
 | wrangler.jsonc | soundfield-lab Pages 정적 배포 설정 (pages_build_output_dir) |
 | docs/releases/ | 버전별 한국어 노트 (UI와 GitHub가 공유) |
 | docs_canonical/ | 설계·모델·검증·운영 문서 |
+| docs_canonical/FIELD_ACOUSTICS_FEASIBILITY.md | 사용자 논의, 주파수별 지도, 500m/±50m 기하 계산과 합성개구 검토, 미검증 범위 |
 | docs_bp/README.md | 원본 BP 출처와 적용 방식 |
 
 런타임 데이터는 브라우저 메모리에만 있다. 내보내기는 사용자의 기본 다운로드 경로에 JSON을 만든다. dist/는 정적 빌드, version.json은 package 버전을 노출한다. .local/은 로컬 실행/스크린샷/배포 보조 도구용이며 Git에서 제외한다. .wrangler/와 환경 파일도 제외한다.

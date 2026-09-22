@@ -1,0 +1,28 @@
+name: Native iOS
+on:
+  pull_request:
+    paths:
+      - 'native/ios/**'
+      - '.github/workflows/native-ios.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'native/ios/**'
+      - '.github/workflows/native-ios.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify native iPhone prototype
+        run: bash native/ios/scripts/verify.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-ios-evidence
+          path: native/ios/DerivedData/evidence/
+          retention-days: 14

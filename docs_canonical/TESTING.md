@@ -67,3 +67,34 @@ WebKit의 미지원 처리 재현: `npx playwright install webkit` 후 PowerShel
 - HTTPS/동일 origin 권한 정책, 1280×720 video의 프레임·미디어 시간 증가, 3회 재시작, 세로/가로 viewport, 마이크 검사 중/후 영상, pagehide 이벤트 후 재시작·새로고침을 확인했다.
 - 해당 Windows headless 환경에서 가상 UI 승인 플래그 없이 native 캡처가 NotSupportedError를 반환했다. 가상 UI 승인은 권한 거절을 덮어쓰므로 실제 사용자의 거절 경로 검증으로 계산하지 않는다.
 - 실제 iPhone 카메라·Safari 채널 수·OS 잠금/회전 센서 동작의 증거가 아니다. 임시 스크립트/원본 로그의 `.local/`은 Git 제외 경로다. 영구 기록은 이 요약이며, 기존 합성 E2E와 실기기 확인을 구분한다.
+
+## iPhone 17 Pro 실기기 진단 첫 보고서 (2026-09-22, Chrome for iOS)
+
+사용자가 실제 iPhone 17 Pro에서 공개 `/diagnostics`를 실행해 전달한 첫 보고서다. 원본 JSON은 [docs/reports/2026-09-22-iphone17pro-crios-diagnostics.json](../docs/reports/2026-09-22-iphone17pro-crios-diagnostics.json)에 그대로 보존한다. 원음·영상·deviceId는 포함되지 않는다.
+
+### 조건
+
+- 앱 0.3.0, `startedAt=2026-09-22T08:59:28.051Z`, 검사 완료(`completed=true`), 총 소요 약 6.3초.
+- userAgent: `iPhone OS 27_0_0`, `CriOS/153.0.8010.24`. **Chrome for iOS이며 Safari 앱이 아니다.** iOS의 타사 브라우저는 WebKit 엔진을 사용하므로 엔진 수준의 참고 자료다. Safari 앱 자체의 결과로 기록하지 않는다.
+- 기종은 사용자 입력 "iPhone 17 Pro". iOS 버전 입력란은 비어 있어 userAgent의 27.0.0을 참고값으로 쓴다.
+- secureContext, getUserMedia, AudioContext, AudioWorkletNode 모두 사용 가능.
+- 카메라를 켠 상태에서 검사(`cameraActiveAtProbeStart=true`). 후면(`environment`) 1280×720, 30 fps가 실제 선택됐다. 카메라를 끈 상태의 검사는 아직 없다.
+
+### 요청별 결과
+
+| 요청 | status | PCM 채널 수 | 신호 있는 채널 | 채널 1 레벨(최종 프레임) | 채널 2 |
+|---|---|---|---|---|---|
+| 4채널 exact | captured | 2 | 1 | −58.8 dBFS, peak 0.0042 | 무음(peak 0) |
+| 2채널 exact | captured | 2 | 1 | −59.9 dBFS, peak 0.0032 | 무음(peak 0) |
+| 기본 입력 | captured | 2 | 1 | −54.4 dBFS, peak 0.0065 | 무음(peak 0) |
+
+- 각 요청 20 프레임 × 4096 샘플 = 81,920 샘플, 48 kHz. `settings.echoCancellation=false`가 적용값으로 보고됐다.
+- `getSupportedConstraints()`에 `channelCount`, `noiseSuppression`, `autoGainControl`이 없다. 사양상 인식하지 못하는 제약은 무시되므로 4채널·2채널 exact 요청이 OverconstrainedError 없이 성공한 것은 **수락이 아니라 무시**로 해석한다. `settings.channelCount`와 `capabilities.channelCount`도 보고되지 않았다.
+- 채널 2가 세 요청 모두 정확히 0이므로 상관·복제 판정은 계산되지 않았다(`correlation=null`). 두 물리 마이크의 증거가 아니며, 브라우저 내부 변환의 결과인지 캡처 형식 자체인지 이 보고서만으로는 판정할 수 없다.
+- 앱 판정: "4채널 안정 수신 미확인". `physicalMicrophonesVerified`, `hardwareSynchronizationVerified`, `localizationEnabled`는 모두 false.
+
+### 해석과 한계
+
+- 이 브라우저·경로에서는 실효 1채널(모노) PCM만 얻는다. 방향 추정에 필요한 다채널 입력은 확보되지 않았다.
+- 레벨은 디지털 dBFS이며 조용한 환경의 값이다. 낮은 레벨은 마이크 고장의 증거가 아니다. 손뼉 등 큰 소리를 냈는지는 보고서에 남지 않는다.
+- Safari 앱, 카메라 끈 상태, 권한 거절, 화면 회전, 잠금 후 복귀는 이 보고서에 포함되지 않았다. 한 기기·한 브라우저·한 회의 결과다.

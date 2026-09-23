@@ -1,0 +1,657 @@
+{
+  "acousticCalibrationVerified": false,
+  "activeLeftFrames": 245,
+  "activeRightFrames": 245,
+  "actualInputPort": "MicrophoneBuiltIn",
+  "actualOrientation": 1,
+  "actualSampleRate": 48000,
+  "analyzedFrames": 245,
+  "appVersion": "0.4.0-native-override-fix-build3",
+  "attitudeReferenceFrame": "CoreMotion.xArbitraryZVertical; quaternion x,y,z,w",
+  "audioEvents": [
+    {
+      "analyzedFramesBeforeEvent": 0,
+      "decision": "continueCapture",
+      "engineRunning": true,
+      "event": "routeSetupChanged",
+      "inputPort": "MicrophoneBuiltIn",
+      "reasonCode": 3,
+      "routeInspection": {
+        "category": "AVAudioSessionCategoryRecord",
+        "checks": {
+          "builtInMic": true,
+          "categoryRecord": true,
+          "engineAvailable": true,
+          "hardwareSampleRateUnchanged": true,
+          "hardwareStereo": true,
+          "modeDefault": true,
+          "portraitOrientation": true,
+          "requestedSource": true,
+          "sampleRateConfigured": true,
+          "sessionSampleRateUnchanged": true,
+          "sessionStereo": true,
+          "stereoPattern": true,
+          "tapFloat32": true,
+          "tapSampleRateUnchanged": true,
+          "tapStereo": true
+        },
+        "hardwareChannels": 2,
+        "hardwareSampleRate": 48000,
+        "inputOrientation": 1,
+        "inputPort": "MicrophoneBuiltIn",
+        "mode": "AVAudioSessionModeDefault",
+        "polarPattern": "Stereo",
+        "sampleRate": 48000,
+        "sessionChannels": 2,
+        "sourceOrientation": "Back",
+        "tapChannels": 2,
+        "tapSampleRate": 48000
+      },
+      "routeMatches": true,
+      "sampleRate": 48000,
+      "sessionChannels": 2,
+      "time": "2026-09-22T13:09:14Z"
+    },
+    {
+      "analyzedFramesBeforeEvent": 0,
+      "decision": "continueCapture",
+      "engineRunning": true,
+      "event": "routeOutputOverridden",
+      "inputPort": "MicrophoneBuiltIn",
+      "reasonCode": 4,
+      "routeInspection": {
+        "category": "AVAudioSessionCategoryRecord",
+        "checks": {
+          "builtInMic": true,
+          "categoryRecord": true,
+          "engineAvailable": true,
+          "hardwareSampleRateUnchanged": true,
+          "hardwareStereo": true,
+          "modeDefault": true,
+          "portraitOrientation": true,
+          "requestedSource": true,
+          "sampleRateConfigured": true,
+          "sessionSampleRateUnchanged": true,
+          "sessionStereo": true,
+          "stereoPattern": true,
+          "tapFloat32": true,
+          "tapSampleRateUnchanged": true,
+          "tapStereo": true
+        },
+        "hardwareChannels": 2,
+        "hardwareSampleRate": 48000,
+        "inputOrientation": 1,
+        "inputPort": "MicrophoneBuiltIn",
+        "mode": "AVAudioSessionModeDefault",
+        "polarPattern": "Stereo",
+        "sampleRate": 48000,
+        "sessionChannels": 2,
+        "sourceOrientation": "Back",
+        "tapChannels": 2,
+        "tapSampleRate": 48000
+      },
+      "routeMatches": true,
+      "sampleRate": 48000,
+      "sessionChannels": 2,
+      "time": "2026-09-22T13:09:14Z"
+    },
+    {
+      "analyzedFramesBeforeEvent": 0,
+      "decision": "continueCapture",
+      "engineRunning": true,
+      "event": "routeOutputOverridden",
+      "inputPort": "MicrophoneBuiltIn",
+      "reasonCode": 4,
+      "routeInspection": {
+        "category": "AVAudioSessionCategoryRecord",
+        "checks": {
+          "builtInMic": true,
+          "categoryRecord": true,
+          "engineAvailable": true,
+          "hardwareSampleRateUnchanged": true,
+          "hardwareStereo": true,
+          "modeDefault": true,
+          "portraitOrientation": true,
+          "requestedSource": true,
+          "sampleRateConfigured": true,
+          "sessionSampleRateUnchanged": true,
+          "sessionStereo": true,
+          "stereoPattern": true,
+          "tapFloat32": true,
+          "tapSampleRateUnchanged": true,
+          "tapStereo": true
+        },
+        "hardwareChannels": 2,
+        "hardwareSampleRate": 48000,
+        "inputOrientation": 1,
+        "inputPort": "MicrophoneBuiltIn",
+        "mode": "AVAudioSessionModeDefault",
+        "polarPattern": "Stereo",
+        "sampleRate": 48000,
+        "sessionChannels": 2,
+        "sourceOrientation": "Back",
+        "tapChannels": 2,
+        "tapSampleRate": 48000
+      },
+      "routeMatches": true,
+      "sampleRate": 48000,
+      "sessionChannels": 2,
+      "time": "2026-09-22T13:09:14Z"
+    },
+    {
+      "analyzedFramesBeforeEvent": 0,
+      "decision": "continueCapture",
+      "engineRunning": true,
+      "event": "routeOutputOverridden",
+      "inputPort": "MicrophoneBuiltIn",
+      "reasonCode": 4,
+      "routeInspection": {
+        "category": "AVAudioSessionCategoryRecord",
+        "checks": {
+          "builtInMic": true,
+          "categoryRecord": true,
+          "engineAvailable": true,
+          "hardwareSampleRateUnchanged": true,
+          "hardwareStereo": true,
+          "modeDefault": true,
+          "portraitOrientation": true,
+          "requestedSource": true,
+          "sampleRateConfigured": true,
+          "sessionSampleRateUnchanged": true,
+          "sessionStereo": true,
+          "stereoPattern": true,
+          "tapFloat32": true,
+          "tapSampleRateUnchanged": true,
+          "tapStereo": true
+        },
+        "hardwareChannels": 2,
+        "hardwareSampleRate": 48000,
+        "inputOrientation": 1,
+        "inputPort": "MicrophoneBuiltIn",
+        "mode": "AVAudioSessionModeDefault",
+        "polarPattern": "Stereo",
+        "sampleRate": 48000,
+        "sessionChannels": 2,
+        "sourceOrientation": "Back",
+        "tapChannels": 2,
+        "tapSampleRate": 48000
+      },
+      "routeMatches": true,
+      "sampleRate": 48000,
+      "sessionChannels": 2,
+      "time": "2026-09-22T13:09:14Z"
+    }
+  ],
+  "availableSources": [
+    {
+      "name": "하단",
+      "orientation": "Bottom",
+      "supportedPolarPatterns": [
+        "Omnidirectional"
+      ]
+    },
+    {
+      "name": "앞면",
+      "orientation": "Front",
+      "supportedPolarPatterns": [
+        "Omnidirectional",
+        "Cardioid",
+        "Cardioid",
+        "Stereo"
+      ]
+    },
+    {
+      "name": "뒷면",
+      "orientation": "Back",
+      "supportedPolarPatterns": [
+        "Omnidirectional",
+        "Subcardioid",
+        "Stereo"
+      ]
+    }
+  ],
+  "cameraSessionRunningAtAudioStart": true,
+  "candidateLagFrames": 14,
+  "duplicateFrames": 0,
+  "hardwareChannels": 2,
+  "hardwareSynchronizationVerified": false,
+  "inputOrigin": "AVAudioEngine.inputNode",
+  "lagConvention": "right-minus-left; positive means right arrives later",
+  "latest": {
+    "analysis": {
+      "channels": [
+        {
+          "active": true,
+          "clipped": false,
+          "peak": 0.0024275556206703186,
+          "rmsDbfs": -61.91483043088237
+        },
+        {
+          "active": true,
+          "clipped": false,
+          "peak": 0.0022481742780655622,
+          "rmsDbfs": -60.92967287217899
+        }
+      ],
+      "duplicateSuspected": false,
+      "gainAdjustedResidual": 0.497001834887007,
+      "peakCorrelation": 0.8719620639619715,
+      "peakMargin": 0.0014652563757336923,
+      "relativeDifference": 0.49763125654299567,
+      "sampleCount": 4800,
+      "sampleRate": 48000,
+      "searchLimitSamples": 48,
+      "status": "ambiguous",
+      "zeroLagCorrelation": 0.8677494892645851
+    },
+    "analyzedTimelineGaps": 0,
+    "hostTime": 102467922615,
+    "sampleTime": 202495467,
+    "sequence": 245,
+    "skippedBuffers": 0
+  },
+  "latestOrientation": {
+    "motionMinusAudioSeconds": -0.00450695833296777,
+    "rotationFromStartDegrees": 25.35939762750741,
+    "sample": {
+      "quaternion": [
+        0.25590787438372614,
+        -0.11681035196556086,
+        -0.16866327874724044,
+        0.9446794164711728
+      ],
+      "timestampSeconds": 4269.542268666667
+    }
+  },
+  "localizationEnabled": false,
+  "markedReadings": [],
+  "motionStatus": "회전 측정 중지",
+  "note": "Processed stereo signal lag only. No microphone geometry or physical TDOA calibration. No PCM, audio files, camera frames, device IDs, or source coordinates are exported.",
+  "operatingSystem": "27.0",
+  "physicalMicrophonesVerified": false,
+  "positionTrackingEnabled": false,
+  "requestedChannels": 2,
+  "requestedOrientation": "portrait",
+  "requestedSampleRate": 48000,
+  "requestedSource": "back",
+  "schemaVersion": 4,
+  "selectedPolarPattern": "Stereo",
+  "selectedSource": "뒷면",
+  "sessionChannels": 2,
+  "startControl": "cameraAndAudio",
+  "startedAt": "2026-09-22T13:09:14Z",
+  "startupEngineRestarts": 0,
+  "status": "수음을 중지하고 마이크를 해제했습니다.",
+  "stoppedAt": "2026-09-22T13:09:39Z",
+  "tapFormatChannels": 2,
+  "trend": {
+    "estimateWindowSeconds": 0.5,
+    "history": [
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.005523166667444457,
+          "rotationFromStartDegrees": 33.52682583555571,
+          "sample": {
+            "quaternion": [
+              0.3479499684712963,
+              -0.14001479861568958,
+              -0.25427165038746663,
+              0.8914441112143071
+            ],
+            "timestampSeconds": 4267.641296666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 22.4994931250003
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.005204833333664283,
+          "rotationFromStartDegrees": 33.210417732663295,
+          "sample": {
+            "quaternion": [
+              0.3515236897289446,
+              -0.14252611156669479,
+              -0.24960903130679793,
+              0.8909616908549485
+            ],
+            "timestampSeconds": 4267.741612666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 22.59949079166654
+      },
+      {
+        "frameStatus": "candidate",
+        "lagSeconds": -0.00008333333333333333,
+        "orientation": {
+          "motionMinusAudioSeconds": -0.004887500000222644,
+          "rotationFromStartDegrees": 32.97101851993651,
+          "sample": {
+            "quaternion": [
+              0.3515032795710954,
+              -0.14328587707765797,
+              -0.2469136561250204,
+              0.8915987036216606
+            ],
+            "timestampSeconds": 4267.841927666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 22.69948845833369
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.004570208333461778,
+          "rotationFromStartDegrees": 32.73828101004562,
+          "sample": {
+            "quaternion": [
+              0.34999005537595457,
+              -0.14375257867703514,
+              -0.2445710077848027,
+              0.8927637870191447
+            ],
+            "timestampSeconds": 4267.942242666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 22.79948616666661
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.00425287500002014,
+          "rotationFromStartDegrees": 32.378914304907205,
+          "sample": {
+            "quaternion": [
+              0.34477716312944234,
+              -0.1422540698828994,
+              -0.2423852956424241,
+              0.8956237244750161
+            ],
+            "timestampSeconds": 4268.042557666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 22.89948383333285
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.008951916666774196,
+          "rotationFromStartDegrees": 31.93217458258346,
+          "sample": {
+            "quaternion": [
+              0.34033571679525354,
+              -0.13979503370925356,
+              -0.23973163743301018,
+              0.8984195514554306
+            ],
+            "timestampSeconds": 4268.137856666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 22.99948187500013
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.008634583333332557,
+          "rotationFromStartDegrees": 31.56695633492978,
+          "sample": {
+            "quaternion": [
+              0.33901654847138457,
+              -0.139648899117454,
+              -0.23635800750947566,
+              0.8998337941664467
+            ],
+            "timestampSeconds": 4268.238171666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 23.09947954166637
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.008317291667481186,
+          "rotationFromStartDegrees": 31.4154372551955,
+          "sample": {
+            "quaternion": [
+              0.34011401974144206,
+              -0.1394176502188702,
+              -0.23498791158945695,
+              0.8998143440674815
+            ],
+            "timestampSeconds": 4268.3384866666665
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 23.1994772500002
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.007999958333130053,
+          "rotationFromStartDegrees": 31.338569211931024,
+          "sample": {
+            "quaternion": [
+              0.34220317578503257,
+              -0.13820843409176237,
+              -0.23483997653114969,
+              0.8992472411141389
+            ],
+            "timestampSeconds": 4268.438801666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 23.29947491666644
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.007681625000259373,
+          "rotationFromStartDegrees": 31.071464804726396,
+          "sample": {
+            "quaternion": [
+              0.34242871675988834,
+              -0.1378244826341178,
+              -0.23247512770712844,
+              0.8998345964244585
+            ],
+            "timestampSeconds": 4268.539117666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 23.39947258333359
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.007364291666817735,
+          "rotationFromStartDegrees": 30.77118399725438,
+          "sample": {
+            "quaternion": [
+              0.3416442491258102,
+              -0.13742418114263555,
+              -0.22984399577040981,
+              0.9008693240891429
+            ],
+            "timestampSeconds": 4268.639432666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 23.49947024999983
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.007047000000966364,
+          "rotationFromStartDegrees": 30.410783631132194,
+          "sample": {
+            "quaternion": [
+              0.34018981713008534,
+              -0.13541053265064354,
+              -0.2275767661067468,
+              0.902299114205851
+            ],
+            "timestampSeconds": 4268.7397476666665
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 23.599467958333662
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.006729624999934458,
+          "rotationFromStartDegrees": 30.112498879059068,
+          "sample": {
+            "quaternion": [
+              0.3314169784915097,
+              -0.13159044834770275,
+              -0.22699427025518087,
+              0.906267257238463
+            ],
+            "timestampSeconds": 4268.840062666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 23.69946558333322
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.006412333334083087,
+          "rotationFromStartDegrees": 29.568101656048523,
+          "sample": {
+            "quaternion": [
+              0.2887373790029017,
+              -0.12454027811765397,
+              -0.22059247284396877,
+              0.923287282495267
+            ],
+            "timestampSeconds": 4268.940377666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 23.799463291667053
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.006095000000641448,
+          "rotationFromStartDegrees": 29.736729784133686,
+          "sample": {
+            "quaternion": [
+              0.22294829440663255,
+              -0.09352872080666177,
+              -0.21048174416901436,
+              0.9472295771232087
+            ],
+            "timestampSeconds": 4269.0406926666665
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 23.899460958333293
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.005777250000392087,
+          "rotationFromStartDegrees": 28.71988478431305,
+          "sample": {
+            "quaternion": [
+              0.21490729475026146,
+              -0.08794329354312551,
+              -0.19655101753549512,
+              0.9526009286630334
+            ],
+            "timestampSeconds": 4269.141007666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 23.999458208333635
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.005458916666611913,
+          "rotationFromStartDegrees": 27.50512553468434,
+          "sample": {
+            "quaternion": [
+              0.22136622006449316,
+              -0.0911276476102821,
+              -0.18593670980659027,
+              0.9529534555274326
+            ],
+            "timestampSeconds": 4269.241323666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 24.099455874999876
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.005141625000760541,
+          "rotationFromStartDegrees": 25.71176032649439,
+          "sample": {
+            "quaternion": [
+              0.23403740796601358,
+              -0.09371304301466023,
+              -0.1729415521311665,
+              0.9521216186958182
+            ],
+            "timestampSeconds": 4269.341638666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 24.199453583333707
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.004824291666409408,
+          "rotationFromStartDegrees": 25.737284657354657,
+          "sample": {
+            "quaternion": [
+              0.23731602914918015,
+              -0.10335424426567609,
+              -0.1701801492495827,
+              0.9508089815007672
+            ],
+            "timestampSeconds": 4269.441953666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 24.299451249999947
+      },
+      {
+        "frameStatus": "ambiguous",
+        "orientation": {
+          "motionMinusAudioSeconds": -0.00450695833296777,
+          "rotationFromStartDegrees": 25.35939762750741,
+          "sample": {
+            "quaternion": [
+              0.25590787438372614,
+              -0.11681035196556086,
+              -0.16866327874724044,
+              0.9446794164711728
+            ],
+            "timestampSeconds": 4269.542268666667
+          }
+        },
+        "sampleRate": 48000,
+        "timeSeconds": 24.399448916666188
+      }
+    ],
+    "historyWindowSeconds": 2,
+    "recentAccepted": 0,
+    "recentTotal": 5,
+    "state": "stopped"
+  }
+}

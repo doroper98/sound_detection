@@ -2,7 +2,13 @@
 
 3D 공간에서 음원을 배치하고, 가상 휴대폰 마이크로 음압 분포와 음원 위치 추정을 비교하는 한국어 웹 실험실입니다.
 
-**현재 버전: 0.3.0. 가상 시뮬레이터와 실제 카메라·마이크 진단을 제공합니다. 실제 음원 위치 추정은 미검증입니다.**
+**현재 버전: 0.4.0. 가상 시뮬레이터, 실제 카메라·마이크 진단, 연속 주파수·음량 분석을 제공합니다. 실제 음원 위치 추정은 미검증입니다.**
+
+**iPhone 네이티브 입력:** [SwiftUI 스테레오 진단 앱](native/ios/README.md)을 추가했습니다. 내장 스테레오 설정, 실제 좌우 PCM 검증, 신호 시간차 후보와 JSON 공유를 제공합니다. Xcode 프로젝트에서 아이폰에 설치하는 개발용 앱이며 물리 TDOA·방향·거리 교정은 아직 필요합니다.
+
+**실시간 분석:** `/listen`에서 ‘분석 시작’을 누르면 한 채널만 있어도 스펙트럼, 전체/선택 대역 dBFS, 최대 주파수를 확인할 수 있습니다. 채널·저역/중역/고역 선택, 마지막 통계 JSON 저장을 지원합니다. 먼저 카메라를 켜면 함께 볼 수 있습니다. 공개 주소의 반영 여부는 [배포 상태](docs_canonical/DEPLOYMENT.md)를 확인하세요.
+
+**Safari 결과 추가:** 2026-09-22 사용자가 제공한 Safari 보고서도 2채널 PCM 중 채널 1만 신호가 있었습니다. [원본](docs/reports/2026-09-22-iphone17pro-safari-diagnostics.json). 이 결과로는 다채널 방향 추정 조건이 확보되지 않았으며, 실시간 분석도 위치·거리·소리 종류를 판정하지 않습니다.
 
 **웹사이트:** [SoundField Lab 열기](https://soundfield-lab.pages.dev) · [배포 상태](docs_canonical/DEPLOYMENT.md)
 
@@ -67,6 +73,8 @@ node packages/localization/examples/replay.mjs experiment.json
 자유 음장, 음속 343 m/s, 동기화된 합성 PCM을 사용합니다. 벽 반사·차폐·회절은 포함하지 않습니다. 기종 이름과 간격은 실험 프리셋이며 실측 하드웨어 사양이 아닙니다. 웹 브라우저가 실제 기기의 독립 마이크 채널을 제공하는지도 별도 검증이 필요합니다. 자세한 내용: [음향 모델](docs_canonical/ACOUSTICS.md).
 
 ## 배포와 문서
+
+- [빌드 1~9 개발·실패·수정 이력과 iPhone 위치 추정 가능성 재진단](docs_canonical/NATIVE_LOCALIZATION_FEASIBILITY.md) — 크기 차이 실패 조건, 시간차 구현 비교, 미확정 원인과 다음 증거
 
 - [Cloudflare 배포 절차 및 상태](docs_canonical/DEPLOYMENT.md)
 - [v0.2.1 배포 결과와 카메라 웹앱 안내문](docs/updates/2026-09-22-v0.2.1.md)

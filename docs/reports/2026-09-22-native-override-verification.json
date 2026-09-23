@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "kind": "native-output-override-software-verification",
+  "date": "2026-09-22",
+  "sourceHeadCommit": "ac5562da5a5478781b68130d1a26e5d839403155",
+  "buildMergeCommit": "23396830346d742ad2e45d409704618fbdb6eee5",
+  "nativeWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35730115675",
+  "webWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35730115684",
+  "xcodeVersion": "16.4",
+  "swiftUnitTests": {
+    "passed": 27,
+    "failed": 0
+  },
+  "simulator": {
+    "device": "iPhone 16 Pro",
+    "runtime": "iOS 18.5",
+    "input": "DEBUG 합성 PCM·자세·권한·오디오 알림, 실제 카메라 영상 없음",
+    "uiTests": {
+      "passed": 13,
+      "failed": 0
+    },
+    "checks": [
+      "시작·위치 표시·중지와 연속 중앙값",
+      "마이크 권한 대기 취소",
+      "모노 입력 거부",
+      "백그라운드 중지",
+      "공유 전 수음·누적값 중지",
+      "지연된 정상 설정 알림·인터럽트 종료 알림에서 수음 유지",
+      "인터럽트 시작 알림에서 중지",
+      "전체 화면 카메라 영역·통합 시작/중지·재시작·백그라운드 해제",
+      "카메라 권한 거절 시 마이크 미시작",
+      "카메라 권한 대기 취소",
+      "카메라 시작 후 수음 실패 시 영상 해제",
+      "첫 PCM 전 출력 override 사유 4에서 입력 검사 후 카메라·수음 유지",
+      "출력 override라도 실제 입력 조건 불일치 시 카메라·수음 중지"
+    ],
+    "fixtureLagSamples": 7,
+    "fixtureSampleRate": 48000,
+    "displayedLagMicroseconds": 145.8,
+    "screenshotVisuallyReviewed": true
+  },
+  "webRegression": {
+    "unitTestsPassed": 40,
+    "browserTestsPassed": 16
+  },
+  "ipa": {
+    "artifact": "SoundFieldStereo-unsigned.ipa",
+    "deliveredFilename": "SoundFieldStereo-build3-unsigned.ipa",
+    "sha256": "c4cf9e5e592f3c88dc68bf49ffd5a090ecbafdb1b371fe4b7fdb3f3cf81767a8",
+    "bytes": 260418,
+    "bundleIdentifier": "dev.soundfield.stereo",
+    "buildNumber": "3",
+    "minimumOSVersion": "17.0",
+    "configuration": "Release",
+    "platform": "iPhoneOS",
+    "architecture": "arm64",
+    "zipCRC": "Mac·Windows PASS",
+    "hashMatchesDownloadedArtifact": true,
+    "debugLaunchFixturesAbsent": true,
+    "cameraPermissionDeclared": true,
+    "embeddedProvisioningProfile": false,
+    "signing": "서명 없음; 사용자 개인 서명 후 설치"
+  },
+  "previousBuildUserReport": {
+    "build": "0.4.0-native-camera-routefix-build2",
+    "source": "2026-09-22-iphone17pro-native-build2-override.json",
+    "installationAndLaunchConfirmedByUser": true,
+    "analyzedFrames": 0,
+    "reasonCode": 4,
+    "eventInOldReport": "routeUnknown",
+    "correctEvent": "routeOutputOverridden",
+    "routeMatchesActuallyEvaluatedByOldBuild": false,
+    "userObservedCameraStartThenStop": true,
+    "cameraFlagInOldReport": false,
+    "cameraFlagDiscrepancyResolved": false
+  },
+  "thisBuildPhysicalInstallationVerified": false,
+  "thisBuildPhysicalDeviceTestPerformed": false,
+  "cameraAudioSimultaneousCaptureVerifiedOnDevice": false,
+  "reportedDeviceFailureResolvedOnDevice": false,
+  "motionAudioAlignmentVerifiedOnDevice": false,
+  "positionTrackingEnabled": false,
+  "acousticCalibrationVerified": false,
+  "physicalMicrophonesVerified": false,
+  "hardwareSynchronizationVerified": false,
+  "localizationEnabled": false,
+  "note": "사유 4 알림을 첫 PCM 전에 게시한 합성 회귀 검증. 동일 입력에서는 카메라·수음 유지, 변경된 입력에서는 둘 다 해제한다. 실제 iPhone 빌드 3 수음 성공·음향 교정은 후속 검증이며 이전 사용자 원본을 성공으로 바꾸지 않는다."
+}

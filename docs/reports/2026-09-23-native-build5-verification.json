@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "kind": "native-stereo-guided-comparison-waveform-software-verification",
+  "date": "2026-09-23",
+  "sourceHeadCommit": "37bce7f6933b9a882132b16fbf6686d43e38893d",
+  "buildMergeCommit": "f88e9f17cfd10e359ad1c6e0e93f7d397eb42397",
+  "nativeWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35744865905",
+  "webWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35744865907",
+  "swiftUnitTests": {
+    "passed": 42,
+    "failed": 0
+  },
+  "simulatorUITests": {
+    "passed": 18,
+    "failed": 0
+  },
+  "simulatorInput": "DEBUG-only generated stereo PCM and pose, not a physical microphone",
+  "screenshotVisuallyReviewed": true,
+  "ipa": {
+    "deliveredFilename": "SoundFieldStereo-build5-unsigned.ipa",
+    "sha256": "8d5d650b558f85f2dab7b74b17abc4ca8d60a0bb737ff227bd7de501592d048d",
+    "bytes": 348143,
+    "buildNumber": "5",
+    "platform": "arm64 iPhoneOS",
+    "signing": "unsigned; user must sign before installation"
+  },
+  "waveform": {
+    "targetFPS": 60,
+    "defaultPresentationDelaySeconds": 0.12,
+    "maximumQueuedSnapshots": 24,
+    "staleAfterSeconds": 0.35,
+    "sharedAmplitudeScale": true,
+    "interpolatedAudio": false,
+    "waveformIncludedInReport": false,
+    "physicalDeviceFPSVerified": false,
+    "hiddenDrawingSuspended": true,
+    "simulatorAssertion": "Recent unique snapshots exceed 20 per second; DSP remains at tap cadence."
+  },
+  "directionComparison": {
+    "steps": 6,
+    "preparationSeconds": 3,
+    "measurementSeconds": 5,
+    "maximumAttempts": 12,
+    "maximumStatisticalObservationsPerAttempt": 600,
+    "checks": [
+      "Minimum observed duration and candidate coverage",
+      "Stationary phone and aligned orientation",
+      "Same sample rate",
+      "Repeat consistency and separation",
+      "Interrupted trials retained",
+      "Identical lag at all declared positions does not become directional evidence"
+    ]
+  },
+  "previousBuildUserReport": {
+    "build": "4",
+    "source": "2026-09-22-iphone17pro-native-build4-stereo.json",
+    "analyzedFrames": 259,
+    "leftActiveFrames": 259,
+    "rightActiveFrames": 259,
+    "candidateLagFrames": 15,
+    "scope": "사용자 빌드 4 실측이며 빌드 5의 실기기 성능/교정 검증이 아님"
+  },
+  "physicalMicrophonesVerified": false,
+  "hardwareSynchronizationVerified": false,
+  "acousticCalibrationVerified": false,
+  "localizationEnabled": false,
+  "note": "통계 수집/비교 및 실제 PCM 창 표시의 소프트웨어 검증. iPhone 17 Pro 빌드 5 실측 fps·음향 교정·방향 정확도는 사용자 재설치 후 별도 확인한다.",
+  "screenshots": [
+    "native-waveform-cadence-synthetic",
+    "native-direction-comparison-synthetic"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "kind": "selected-user-report-fields-and-analysis",
+  "source": "User-pasted build8 report; full source remains in conversation",
+  "appVersion": "0.4.0-native-calibration-diagnostics-build8",
+  "startedAt": "2026-09-23T11:15:57Z",
+  "stoppedAt": "2026-09-23T11:17:04Z",
+  "selectedFields": {
+    "analyzedFrames": 672,
+    "activeLeftFrames": 672,
+    "activeRightFrames": 672,
+    "candidateLagFrames": 672,
+    "duplicateFrames": 0,
+    "skippedBuffers": 0,
+    "analyzedTimelineGaps": 0,
+    "actualSampleRate": 48000,
+    "hardwareChannels": 2,
+    "sessionChannels": 2,
+    "tapFormatChannels": 2,
+    "cameraSessionRunningAtAudioStart": true,
+    "latestLevelDbfs": -37.79027240128213,
+    "latestLagSamples": -5,
+    "waveformFreshFPS": 59,
+    "spatialRejectedFrames": 644,
+    "spatialAcceptedFrames": 0,
+    "calibrationStep": 0,
+    "calibrationCompletedSamples": 0,
+    "calibrationCurrentDegreesPresent": false,
+    "calibrationPhaseAfterStop": "idle"
+  },
+  "findings": [
+    "스테레오 수음과 지연 계산은 작동함.",
+    "보정이 첫 자세를 받지 못한 상태와 일치함.",
+    "644개 공간 거부가 모두 한 원인이라는 증거는 없음.",
+    "AR 대응 nil/오디오 시각 거부를 구분하는 로그와 중지 전 사유가 빌드 8에 빠졌음.",
+    "Core Motion 정상 데이터만으로 AR 위치 추적 정상 여부를 증명할 수 없음."
+  ],
+  "physicalRootCauseConfirmed": false,
+  "physicalLocalizationAccuracyVerified": false
+}

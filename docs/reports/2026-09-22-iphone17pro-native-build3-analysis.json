@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "kind": "user-supplied-native-physical-capture-analysis",
+  "date": "2026-09-22",
+  "sourceReport": "2026-09-22-iphone17pro-native-build3-stereo.json",
+  "provenance": "사용자 제공 iPhone JSON 및 소리 조건 답변. 에이전트가 기기를 직접 측정한 결과가 아님.",
+  "deviceDeclaredInConversation": "iPhone 17 Pro",
+  "userReportedSound": "기침, 컴퓨터 앞에서 재생한 영상 소리",
+  "findings": {
+    "wallDurationSeconds": 25,
+    "actualChannels": {
+      "session": 2,
+      "hardware": 2,
+      "tap": 2
+    },
+    "sampleRate": 48000,
+    "analyzedFrames": 245,
+    "leftActiveFrames": 245,
+    "rightActiveFrames": 245,
+    "duplicateSuspectedFrames": 0,
+    "skippedBuffers": 0,
+    "analyzedTimelineGaps": 0,
+    "candidateLagFrames": 14,
+    "candidateFraction": 0.05714285714285714,
+    "latestLevelsDbfs": [
+      -61.91483043088237,
+      -60.92967287217899
+    ],
+    "latestLagStatus": "ambiguous",
+    "latestPeakCorrelation": 0.8719620639619715,
+    "latestPeakMargin": 0.0014652563757336923,
+    "implementedMinimumPeakMargin": 0.08,
+    "exportedHistoryCount": 20,
+    "exportedHistoryCandidateCount": 1,
+    "exportedCandidateLagsMicroseconds": [
+      -83.33333333333333
+    ],
+    "lastHalfSecondCandidates": 0,
+    "lastHalfSecondTotal": 5,
+    "cameraRunningAtAudioStart": true,
+    "startControl": "cameraAndAudio",
+    "routeReasonCodes": [
+      3,
+      4,
+      4,
+      4
+    ],
+    "allAudioEventsContinued": true,
+    "allRouteChecksPassed": true,
+    "startupEngineRestarts": 0,
+    "lastMotionMinusAudioMilliseconds": -4.50695833296777,
+    "finalRotationFromStartDegrees": 25.35939762750741
+  },
+  "conclusions": [
+    "이번 약 25초 관측에서 카메라를 켠 상태로 실제 내장 후면 스테레오 수음을 시작하고 좌우 활성 245개 구간을 분석했다.",
+    "기존 사유 4 시작 중지 오류는 이번 관측에서 재현되지 않았다. 3회의 override와 1회의 category 알림을 통과했고 초기 엔진 재시작은 없었다.",
+    "14개 시간차 후보는 전체의 약 5.7%다. 내보낸 마지막 약 2초의 20개 중 19개는 ambiguous이며 마지막 0.5초는 0/5 후보라 안정된 시간차를 확정할 수 없다.",
+    "원본은 최신 상세 1개와 마지막 약 2초 이력, 전체 누적 개수만 담는다. 후보 14개의 발생 시점/기침/영상 구간 대응이나 전체 나머지 231개의 상태 분포는 복원할 수 없다."
+  ],
+  "notVerified": [
+    "독립 물리 마이크 원음·하드웨어 동기화·음향 축/처리 지연 교정",
+    "방향·거리·3D 위치 및 시간차 후보의 물리 정확도",
+    "전체 25초 동안의 카메라 프레임 연속성과 전면 입력·장시간 반복 수음",
+    "소리 종류/반사/잡음/앱의 보수적인 peak margin 기준 중 모호성의 주원인"
+  ]
+}

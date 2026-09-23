@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-23",
+  "kind": "native-empirical-bearing-AR-position-software-verification",
+  "sourceHeadCommit": "5facebb62c32074145854e272b5be44b9b77ef82",
+  "buildMergeCommit": "bcd7789e5e2efb18fd3bafda9d9e22417e5cc3b1",
+  "nativeWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35795916043",
+  "webWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35795915981",
+  "swiftUnitTests": {
+    "passed": 53,
+    "failed": 0
+  },
+  "simulatorUITests": {
+    "passed": 21,
+    "failed": 0
+  },
+  "webUnitTests": {
+    "passed": 40,
+    "failed": 0
+  },
+  "webE2ETests": {
+    "passed": 16,
+    "failed": 0
+  },
+  "screenshotVisuallyReviewed": true,
+  "ipa": {
+    "filename": "SoundFieldStereo-build6-unsigned.ipa",
+    "sha256": "edaa60bc934e83dbd519a95aa29e50348d2f430ca7807616815e27b07ef0205d",
+    "bytes": 486175,
+    "buildNumber": "6",
+    "platform": "arm64 iPhoneOS",
+    "signing": "unsigned; user must sign before installation"
+  },
+  "features": [
+    "Same-source rotation calibration",
+    "Continuous horizontal bearing band",
+    "AR portrait-view pose alignment",
+    "Independent bearing-plane position candidate and projection",
+    "Degeneracy/uncertainty/signal/stale/stop/background rejection",
+    "Maximum 60fps PCM waveform target"
+  ],
+  "geometry": {
+    "minimumIndependentPoses": 8,
+    "minimumBaselineMeters": 0.3,
+    "historySeconds": 12,
+    "maximumObservations": 60,
+    "rangeMeters": [
+      0.4,
+      8
+    ],
+    "maximumSensitivityRadiusMeters": 1,
+    "calibratedSourceType": "One stationary broadband source in the front hemisphere, same source and acoustic scene as calibration"
+  },
+  "simulatorInput": "Explicit DEBUG-only synthetic PCM/cues and AR poses; not real microphone/camera/world tracking",
+  "physicalInstallationVerified": false,
+  "physicalARAndStereoVerified": false,
+  "physicalDirectionAccuracyVerified": false,
+  "physicalPositionAccuracyVerified": false,
+  "physicalMicrophonesVerified": false,
+  "hardwareSynchronizationVerified": false,
+  "note": "Software implementation and synthetic validation only. Empirical profile, response model and displayed radius do not establish physical acoustic accuracy. No ground-truth source location enters Release inference.",
+  "screenshots": [
+    "native-build6-bearing-synthetic",
+    "native-build6-position-synthetic",
+    "native-build6-guide-synthetic"
+  ]
+}

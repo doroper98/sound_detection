@@ -1,5 +1,11 @@
 # Cloudflare 배포
 
+## v0.4.0 배포 준비 (2026-09-22)
+
+코드·로컬 Gate·Chromium E2E 16/16 검증을 완료했다. 새 경로는 `/listen`이며 현재 공개 배포 완료 상태는 아니다. Wrangler 4.136.1 `whoami`에서 기존 OAuth token 만료와 갱신 실패를 확인했고, 연결 가능한 브라우저도 Cloudflare 로그인 화면이었다. GitHub repository secrets와 environments도 비어 있어 CI 배포 우회 경로는 없다.
+
+재로그인 후 검증한 dist를 기존 soundfield-lab 프로젝트의 기능 브랜치 preview로 먼저 배포하고 `/listen`, version.json 0.4.0, 권한 정책과 원격 캡처 UI를 확인한다. 실기기 연속 수음 결과는 별도 검증 대상이다. 기존 v0.3.0 공개 배포 기록은 아래에 보존한다.
+
 ## v0.3.0 공개 배포 (2026-09-22)
 
 - 영구 주소: https://soundfield-lab.pages.dev · 실제 입력 진단: https://soundfield-lab.pages.dev/diagnostics

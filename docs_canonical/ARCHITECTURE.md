@@ -1,5 +1,31 @@
 # 아키텍처
 
+빌드 8의 `RotationCalibrator.evaluate`는 기존 적합 조건을 유지하면서 `RotationFitDiagnostics`를 반환한다. `spatial.calibration.diagnostics`는 최대 6개의 완료 구간 요약과 두 방법별 실패 단계·기울기·반복 오차·RMS 잔차·기준을 포함한다. JSON에 없는 선택 속성은 아직 계산하지 않았거나 없는 값이며 0으로 해석하지 않는다. `issue`가 없는 방법은 통과이며, 전체 `issue`가 없을 때만 profile을 만든다. 실패 원인은 소프트웨어 조건의 위반으로서 환경/기기/사용자 원인을 확정하지 않는다. 정상 stop은 거부 결과를 보존하고 새 begin은 초기화한다. 이동 안내는 현재 스피커 각도에서 목표 각도를 뺀 값으로 폰의 좌우 회전 부호를 결정한다.
+
+빌드 7은 `SoundSpectrumAnalyzer`가 동일 PCM 버퍼 가운데 최대 4096샘플의 좌우 FFT power를 평균해 주파수/대역과 DC 제거 RMS dBFS를 계산한다. PCM 합산을 피하므로 역상에서도 스펙트럼이 상쇄되지 않는다. 공간 계산과 별도인 `SpatialReport.sound`는 유효한 현재 방향과 함께만 표시하며 실패/중지/오래된 자료에서 제거한다. `SpatialOverlay`는 고정 −65~−15 dBFS 색상과 공간 추정 영역의 부드러운 감쇠를 결합한다. 3D 후보는 방사형 열섬, 높이 미정은 세로 열지도다. 크기는 시인성을 위해 64~120pt로 제한되므로 음압장/신뢰구간/SPL로 해석하지 않는다. 대표 주파수는 80Hz~min(16kHz,Nyquist)의 가장 강한 peak 주변 3bin 합이 대역 power 12% 이상일 때만 표시하고 나머지는 10~90% 에너지 대역이다. 주파수는 현재 입력 전체이며 음원별 분리 결과가 아니다.
+
+구현 참고: [Apple RadialGradient](https://developer.apple.com/documentation/swiftui/radialgradient), [MathWorks periodogram/Hann](https://www.mathworks.com/help/signal/ref/periodogram.html). Swift 순수 FFT는 별도 단위 테스트로 주파수·레벨·역상을 검증한다.
+
+빌드 6은 후면에서 `ARWorldTrackingConfiguration(providesAudioData=false)`와 ARSCNView로 영상/기기 자세를 얻으며 기존 AVCaptureSession을 동시에 실행하지 않는다. `[ARCamera.viewMatrix(for: .portrait)]⁻¹`의 축으로 화면 오른쪽/위/전방을 정의한다. AR 시각을 오디오 버퍼 중간 host 시각과 최대 60ms 안에서 맞추고 버퍼 전후 2.5cm/3° 이상 움직이면 관측을 거부한다. 추적 손실과 세션 재시작은 위치 누적을 지운다.
+
+`AcousticFeatures`는 실제 동일 PCM의 레벨 차이·유효한 신호 지연·대략적인 세 대역 에너지 비율을 만든다. 이는 소리 일치 검사이며 음원 인식이 아니다. `RotationCalibrator`는 중앙 정렬을 사용자가 선언한 고정 소리를 제자리 회전하여 6개 구간에서 측정하고, 레벨/지연의 각도 응답을 반복 검증한다. ±25° 보정 구간을 벗어난 응답·상반된 특성·대역 비율 변화·약한 신호를 거부한다. `BearingTracker`는 표시만 평활화하고 공간 계산에는 각 버퍼의 원래 추정과 대응 자세를 사용한다.
+
+`SpatialAccumulator`의 관측 법선은 `n = cos(θ) × viewRight − sin(θ) × viewForward`이며 `n·(p−cameraOrigin)=0`인 평면 제약이다. 같은 위치/방향의 관측을 반복해서 독립 증거로 세지 않는다. 최근 12초/최대 60관측으로 가중 최소제곱을 풀고 8개 이상 자세·30cm 이동·고유값 조건·전방·0.4~8m 범위·각도 잔차·계산상 반경을 검사한다. 수평 자세만 사용해 높이를 관측할 수 없거나 제자리 회전만으로 거리를 정할 수 없는 경우 후보를 내지 않는다. 정확도는 가정과 실제 기기 음향에 의존하며 검증된 확률 신뢰구간이 아니다.
+
+`SpatialModel`은 보정/현재 방향/공간 후보/오래된 값 해제를 관리하고 `SpatialOverlay`는 방향 띠와 조건부 후보를 AR 카메라에 투영한다. 중지 뒤에는 현재 표시를 제거하고 시각이 있는 `lastBearing`/`lastCandidate`만 통계 공유에 남긴다. 새 보정/위치 초기화는 이전 후보도 지운다. PCM·이미지·world map은 보고서에 없다.
+
+API 근거: [Apple AR 세계 추적](https://developer.apple.com/documentation/arkit/arworldtrackingconfiguration), [AR 오디오 캡처 설정](https://developer.apple.com/documentation/arkit/arconfiguration/providesaudiodata), [카메라 view matrix](https://developer.apple.com/documentation/arkit/arcamera/viewmatrixfororientation:), [카메라 점 투영](https://developer.apple.com/documentation/arkit/arcamera/projectpoint:orientation:viewportsize:), [AR 프레임 시각](https://developer.apple.com/documentation/arkit/arframe/timestamp). 기존 iOS 17 API로 빌드하며 새 베타 회전 API에 의존하지 않는다.
+
+빌드 5는 `TapPipeline`의 DSP/표시 작업에 각각 최대 한 개의 처리·메인 전달만 허용한다. PCM 복사는 공유하며 별도 표시 큐에서 버퍼 내부 실제 구간을 `WaveformBatch`로 축소한다. `WaveformPlayback`은 최대 24개 축소 표시만 유지하고 기본 120ms 지연으로 묶음 도착을 흡수하며 CADisplayLink가 최대 60Hz로 표시한다. 오래 밀린 구간은 버리고 350ms 동안 새로운 오디오가 없으면 지운다. 보고서·계산은 기존 주기이며 작은 파형 뷰만 별도 관찰한다. 표시 속도는 최근 1초에 새로 선택한 PCM 창 개수이며 물리 디스플레이 refresh rate 보장이 아니다. 상세/방향 비교 시트로 가려지면 display link를 중지하고 복귀 때 최신 프레임으로 재개한다. 상세에는 마지막 보이는 동안의 fps를 유지하며 JSON에 측정 시각을 함께 남긴다.
+
+`DirectionCalibration`은 6단계 통계 수집기다. 동일 수음 세션 안에서 하나의 폰 자세를 기준으로 사용자가 선언한 좌/정면/우를 두 번 비교한다. 3초 준비와 5초 관측 안에 완전히 포함된 분석 버퍼만 사용하며 종료 뒤 200ms 전달 여유를 둔다. 구간 길이 합·중복 시간 거부·자세 가용성·움직임·샘플률·시간차 품질을 검사한다. 중단도 최대 12개 시도에 포함해 보존한다. schemaVersion 5의 calibration에는 구간별 통계(최대 600개/시도)와 비교 결과만 포함하며 PCM·미니 파형·물리 좌표는 없다. 반복 분리 관찰도 물리 교정/위치 활성화로 승격하지 않는다.
+
+빌드 4의 L/R 미니 파형은 분석 큐에서 현재 PCM 버퍼의 마지막 최대 10ms를 채널당 최대 96개 min/max 열로 줄여 만든다. 두 채널의 같은 구간과 공통 배율을 사용한다. `CapturedFrame`은 통계와 표시 자료를 함께 MainActor로 전달하지만, `NativeReport`에는 통계만 들어간다. 파형은 비-Codable 타입의 최신 한 묶음으로 별도 보관하며 Stop/재시작/백그라운드와 350ms 입력 지연에서 제거한다. 분석/오디오 경로 선택에 파형 자료를 역으로 사용하지 않는다.
+
+네이티브 빌드 2의 기본 화면은 전체 화면 카메라 미리보기와 수음 오버레이다. AVCaptureSession은 영상 입력과 preview layer만 연결하고 오디오 세션 자동 설정을 끈다. 카메라 권한과 영상 세션이 준비된 뒤 AVAudioEngine 수음을 시작하며 세부 통계는 별도 시트에 표시한다. 영상·PCM 파일을 저장하지 않고 위치 표시를 만들지 않는다. 카메라 작업은 직렬 큐, 상태 갱신은 MainActor에서 처리하며 취소 토큰으로 늦은 권한/시작 완료를 무효화한다.
+
+오디오 알림은 이유와 실제 입력 상태로 판정한다. 빌드 3은 category/config뿐 아니라 output override(사유 4)도 내장 stereo/portrait/실제 2채널·기존 샘플률을 재검사하고 엔진이 실행 중이면 유지한다. 초기 엔진 재시작은 첫 PCM 전 2초 이내·최대 2회만 허용하며 실제 장치 변경·인터럽트 시작·서비스 손실은 해제한다. 해당 엔진의 알림만 처리하고 notification 내부 스레드에서 엔진을 파괴하지 않는다. schemaVersion 4는 최근 32개 알림 종류/원인 코드/판정, 당시 입력의 항목별 검사와 분석 프레임 수, 시작 조작 경로를 기록한다. 알림 종류로 검사 실행을 생략한 뒤 false로 기록하지 않으며 기기 식별자는 포함하지 않는다.
+
 | 영역 | 선택 | 이유 |
 |---|---|---|
 | UI | React + TypeScript strict | 입력·관측 상태와 화면 반영 |
@@ -30,6 +56,19 @@ flowchart LR
 
 ## 설계 결정
 
+- 연속 네이티브 진단은 `ContinuousLagTracker`로 2초/240개 통계만 보관하고 최근 0.5초 중앙값·산포를 갱신한다. 프레임별 PCM 처리는 유지하며, 위치 엔진의 관측 개수나 정확도를 임의로 늘리지 않는다. 현재 숫자와 마지막 구간 숫자를 별도로 표시한다.
+- `OrientationHistory`는 Core Motion quaternion을 4초/256개만 보관한다. AVAudioTime의 host 시각을 초로 변환한 PCM 중간 시점에 ±60ms 안에서 대응하고 실제 편차를 출력한다. IMU 적분으로 이동거리를 만들거나 마이크 축을 추정하지 않는다. 센서 미지원/시각 누락은 null 대응으로 남기고 수음은 지속한다.
+- CI의 unsigned IPA는 개인 서명 전 실행할 수 없는 배포 준비물이다. 플랫폼·CRC·실행 파일과 SHA-256을 검증하지만 아이폰 설치나 Enterprise/TestFlight 배포를 검증한 것은 아니다.
+
+- iPhone 네이티브 입력은 `native/ios/`의 별도 SwiftUI 앱이다. `.record`/`.default` 세션 → 내장 front/back + stereo polar pattern + portrait 입력 방향 → 실제 2채널 검사 → AVAudioEngine tap → StereoCore 신호 진단으로 이어진다. 웹 브리지나 모노 복제는 사용하지 않는다.
+- Apple 내장 스테레오의 처리 특성을 고려해 채널 지연 진단과 물리 위치 추론 사이에 교정 경계를 둔다. 기존 TypeScript 위치 엔진에 임의 센서 좌표·동기화 true를 전달하지 않는다. 앱은 좌표·카메라를 입력받지 않는다.
+- 네이티브 PCM은 버퍼 한 개만 처리하고, 처리/메인 스레드 전달 중 추가 입력은 개수만 기록하여 건너뛴다. 원음 이력·녹음 파일·네트워크 호출이 없다. 통계 공유 전에도 수음을 중지한다. sampleTime 불연속은 분석 건너뛰기를 포함하며 하드웨어 동기화 측정값이 아니다.
+- 앱 설정 과정의 자체 route/config 알림은 수음 중 경로 변경으로 오인하지 않도록 알림 발생 시점의 실행 토큰을 검사한다. 중지 시 토큰을 무효화하므로 늦은 권한 응답·분석 결과가 입력을 재개하지 못한다.
+
+- v0.4.0 `/listen`: 기존 카메라 화면과 별도로 `monitorMicrophone`이 기본 오디오 입력을 연속 수집한다. 동일 채널 보존 Worklet → `analyzeChannels` / 선택한 채널의 `analyzeSpectrum` → 스펙트럼·숫자 표시. 최신 통계 하나만 유지하고 PCM 이력·녹음·오디오 재생·서버 업로드는 없다.
+- `spectrum.ts`는 PCM·샘플률·대역만 받는 순수 함수다. 위치 SDK·가상 source·카메라 축을 받지 않는다. 4096개 샘플에서 평균 제거/주기 Hann/실수 FFT, 창 에너지 보정 단측 power를 계산한다. Nyquist bin은 두 배 하지 않는다.
+- 연속 입력은 Stop/abort, 페이지 숨김/종료, 트랙 ended, processor error, 8초 PCM 무응답에 정리한다. getUserMedia 권한 대기는 별도이며 사용자가 취소한 뒤 늦게 허용하면 즉시 트랙을 해제한다.
+
 - 정답 음압과 추정 적합도를 별도 모드로 분리한다. `estimate()`와 `likelihood()`에는 음원 정답 좌표를 전달하지 않는다.
 - `src/simulation.ts`만 정답에서 마이크 PCM을 생성한다. `measureFrame()`에는 PCM과 마이크 배치만 제공한다. 이론 시간차로 만든 fixture는 테스트 파일에만 남아 있다. UI의 오차 비교는 검증용 정답을 사용한다.
 - 시뮬레이터는 실제 입력에 접근하지 않는다. 별도 /diagnostics 화면에서 시작 버튼을 누른 경우만 실제 카메라/마이크를 연다. 미리듣기는 출력 전용이다.
@@ -50,3 +89,9 @@ flowchart LR
 ## 보안 경계
 
 정적 클라이언트 앱이며 서버 저장·API 호출이 없다. Cloudflare 인증은 CLI 또는 GitHub Actions secrets에만 둔다. 브라우저에는 시크릿을 제공하지 않는다. `public/_headers`에서 CSP, iframe 차단, MIME 보호, 동일 origin의 카메라/마이크만 허용한다. 실제 브라우저 권한 동의가 별도로 필요하다. 폰트와 Worklet은 앱과 같은 사이트에서 제공한다.
+
+## 빌드 9 소리·AR 연결
+
+`SpatialAudioSynchronizer`는 PCM 대신 특징·스펙트럼·원래 버퍼 시각 최대 4개만 보관한다. 카메라 도착이 늦으면 최대 180ms 재검사하고, 300ms 음향 신선도 내에서 기존 공간 시각/움직임 검사를 통과한 동일 시점 자세만 사용한다. `SpatialPoseHistory.inspect`는 무효 시각, 오래된 음향, 카메라 중단/추적 불량/갱신 중단/누락/시각 불일치/버퍼 내 움직임을 구분한다. SpatialModel은 100ms 타이머와 새 음향 도착 때 큐를 처리하고 중지·새 보정·AR 중단 때 대기 요약을 폐기한다.
+
+ARSession은 SpatialCameraController만 시작/중지한다. 미리보기 분해 시 shared session을 pause하지 않는다. AR delegate의 frame과 session.currentFrame은 동일 timestamp를 보존하며, 최신 이미지나 현재 자세로 과거 소리 시각을 바꾸지 않는다. 센서 이미지/원음의 새 저장은 없다. 앱 JSON schema 9는 연결 사유 통계와 중지 전 보정 상태를 보존한다.

@@ -8,7 +8,8 @@ final class CaptureUITests: XCTestCase {
             let app=launch(extra,details: false)
             app.buttons["liveCaptureButton"].tap()
             let frequency=app.staticTexts["soundHeatFrequency"]
-            expectation(for: NSPredicate(format: "label == %@","주파수 ≈ 1.0 kHz"),evaluatedWith: frequency)
+            // At 48 kHz / 4096, the nearest FFT bin to the 1 kHz fixture is 996.09 Hz.
+            expectation(for: NSPredicate(format: "label == %@","주파수 ≈ 996 Hz"),evaluatedWith: frequency)
             let level=app.staticTexts["soundHeatLevel"]
             expectation(for: NSPredicate(format: "label == %@",quiet ? "입력 -57 dBFS" : "입력 -23 dBFS"),evaluatedWith: level)
             waitForExpectations(timeout: 30)

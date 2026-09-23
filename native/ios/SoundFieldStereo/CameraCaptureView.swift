@@ -164,6 +164,7 @@ struct CaptureView: View {
                 }
                 Spacer()
                 VStack(spacing: 12) {
+                    SoundHeatLegend(spatial: model.spatial)
                     HStack(spacing: 18) {
                         meter("L", index: 0)
                         meter("R", index: 1)

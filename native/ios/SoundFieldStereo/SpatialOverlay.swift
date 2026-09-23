@@ -23,6 +23,24 @@ private enum HeatPalette {
     }
 }
 
+struct SoundHeatLegend: View {
+    @ObservedObject var spatial: SpatialModel
+    var body: some View {
+        if spatial.report.bearing != nil, spatial.report.sound != nil {
+            VStack(spacing: 3) {
+                HStack(spacing: 7) {
+                    Text("약함 −65")
+                    LinearGradient(colors: HeatPalette.colors,startPoint: .leading,endPoint: .trailing)
+                        .frame(width: 90,height: 5).clipShape(Capsule())
+                    Text("−15 강함 · dBFS")
+                }
+                Text("색: 입력 크기 · 영역: 추정 범위")
+            }.font(.system(size: 10)).foregroundStyle(.white.opacity(0.9))
+                .accessibilityElement(children: .combine).accessibilityIdentifier("soundHeatLegend")
+        }
+    }
+}
+
 struct SpatialOverlay: View {
     @ObservedObject var spatial: SpatialModel
     @ObservedObject var camera: CameraModel
@@ -57,7 +75,7 @@ struct SpatialOverlay: View {
                 if let estimate=data.solution?.estimate,
                    let p=project(estimate.point,size: size),
                    let pose=data.latestPose, let sound=data.sound {
-                    if (20...size.width-20).contains(p.x) && (110...size.height-260).contains(p.y) {
+                    if (20...size.width-20).contains(p.x) && (220...max(220,size.height-350)).contains(p.y) {
                         let edge=project(estimate.point+pose.right*estimate.uncertaintyRadiusMeters,size: size)
                         let radius=min(120,max(64,abs((edge?.x ?? p.x+64)-p.x)))
                         ZStack {
@@ -66,6 +84,7 @@ struct SpatialOverlay: View {
                                 .accessibilityLabel("소리 위치 후보 열섬")
                                 .accessibilityIdentifier("soundHeatIsland")
                             frequencyTag(sound)
+                                .offset(x: min(max(p.x,100),size.width-100)-p.x)
                         }.frame(width: radius*2,height: radius*2).position(p)
                         Text(String(format: "위치 후보 · 약 %.1fm",(estimate.point-pose.origin).length))
                             .font(.caption.bold()).padding(8).background(.black.opacity(0.8),in: Capsule())
@@ -107,19 +126,6 @@ struct SpatialOverlay: View {
                     .padding(14).background(.black.opacity(0.58),in: RoundedRectangle(cornerRadius: 14))
                     .frame(maxWidth: size.width-48)
                     .position(x: size.width/2,y: size.height*0.32)
-                }
-                if data.bearing != nil, data.sound != nil {
-                    VStack(spacing: 4) {
-                        HStack(spacing: 7) {
-                            Text("약함 −65")
-                            LinearGradient(colors: HeatPalette.colors,startPoint: .leading,endPoint: .trailing)
-                                .frame(width: 90,height: 5).clipShape(Capsule())
-                            Text("−15 강함 · dBFS")
-                        }
-                        Text("색: 입력 크기 · 영역: 추정 범위")
-                    }.font(.system(size: 10)).padding(9).background(.black.opacity(0.7),in: RoundedRectangle(cornerRadius: 10))
-                        .position(x: size.width/2,y: size.height-285)
-                        .accessibilityElement(children: .combine).accessibilityIdentifier("soundHeatLegend")
                 }
             }.frame(width: size.width,height: size.height)
         }

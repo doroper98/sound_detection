@@ -144,12 +144,14 @@ struct CaptureView: View {
                         Text("소리 방향 · 위치").font(.caption)
                     }
                     Spacer()
-                    Button { showCalibration = true } label: {
-                        Label("입력 비교", systemImage: "arrow.left.and.right")
-                            .font(.caption.bold()).padding(10)
+                    if !model.prefersFOA {
+                        Button { showCalibration = true } label: {
+                            Label("입력 비교", systemImage: "arrow.left.and.right")
+                                .font(.caption.bold()).padding(10)
+                        }
+                        .background(.black.opacity(0.55), in: Capsule())
+                        .accessibilityIdentifier("calibrationButton")
                     }
-                    .background(.black.opacity(0.55), in: Capsule())
-                    .accessibilityIdentifier("calibrationButton")
                     Button { showDetails = true } label: {
                         Label("측정 상세", systemImage: "waveform.path")
                             .font(.caption.bold()).padding(10)

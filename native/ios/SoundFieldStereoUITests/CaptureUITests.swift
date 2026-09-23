@@ -9,6 +9,7 @@ final class CaptureUITests: XCTestCase {
         XCTAssertTrue(frequency.waitForExistence(timeout: 30))
         XCTAssertTrue(frequency.label.contains("1.5 kHz"))
         XCTAssertFalse(app.staticTexts["rotationCalibrationStep"].exists)
+        XCTAssertFalse(app.buttons["calibrationButton"].exists)
         XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
         XCTAssertTrue(app.staticTexts["foaStatus"].label.contains("거리 미측정"))
         attachHeatScreenshot("native-build10-foa-heatmap-synthetic")

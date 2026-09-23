@@ -78,7 +78,7 @@ public enum SoundSpectrumAnalyzer {
             fftSize: n,peakPowerFraction: fraction)
     }
 
-    private static func fft(real: inout [Double], imaginary: inout [Double]) {
+    static func fft(real: inout [Double], imaginary: inout [Double]) {
         let n=real.count
         var j=0
         for i in 1..<n {

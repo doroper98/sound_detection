@@ -60,8 +60,10 @@ struct AudioRouteInspection: Encodable {
 }
 
 struct NativeReport: Encodable {
-    var schemaVersion = 9
-    var appVersion = "0.4.0-native-pose-sync-build9"
+    let sessionID=UUID()
+    var schemaVersion = 10
+    var appVersion = "0.4.0-native-foa-build10"
+    var foa: FOAReport?
     var inputOrigin = "AVAudioEngine.inputNode"
     var operatingSystem = UIDevice.current.systemVersion
     var startedAt: Date?
@@ -207,6 +209,14 @@ private final class TapPipeline: @unchecked Sendable {
             analysisReady: analysisReady, previewReady: previewReady)
     }
 
+    func submitExternal(left: [Float], right: [Float], rate: Double, start: Double) {
+        let analysisReady=gate.wait(timeout: .now()) == .success
+        let previewReady=previewGate.wait(timeout: .now()) == .success
+        if !analysisReady { lock.lock(); skipped+=1; lock.unlock() }
+        process(left: left,right: right,sampleRate: rate,sampleTime: nil,
+            hostTime: AVAudioTime.hostTime(forSeconds: start),analysisReady: analysisReady,previewReady: previewReady)
+    }
+
     #if DEBUG
     func submitSynthetic(left: [Float], right: [Float], sampleTime: Int64, bufferStart: Double) {
         let analysisReady = gate.wait(timeout: .now()) == .success
@@ -316,6 +326,10 @@ final class CaptureModel: ObservableObject {
     @Published private(set) var report = NativeReport()
     let waveformDisplay = WaveformDisplayModel()
     let spatial = SpatialModel()
+    let foa = FOADirectionModel()
+    @Published private(set) var usesFOA=false
+    @Published private(set) var savedReports=[SavedNativeReport]()
+    private var foaCapture: FOACapture?
     private var calibration = DirectionCalibration()
     @Published var source = "back"
     @Published var exportError: String?
@@ -343,6 +357,9 @@ final class CaptureModel: ObservableObject {
     #endif
 
     var isBusy: Bool { phase != .idle }
+    var prefersFOA: Bool {
+        source=="back" && (!isSynthetic || ProcessInfo.processInfo.arguments.contains("--synthetic-foa"))
+    }
     var isSynthetic: Bool {
         #if DEBUG
         return ProcessInfo.processInfo.arguments.contains("--synthetic-stereo")
@@ -352,6 +369,8 @@ final class CaptureModel: ObservableObject {
     }
 
     init() {
+        if let data=UserDefaults.standard.data(forKey: "soundfield.savedReports"),
+           let saved=try? JSONDecoder().decode([SavedNativeReport].self,from: data) { savedReports=Array(saved.prefix(5)) }
         let gate = notificationGate
         for name in [AVAudioSession.interruptionNotification, AVAudioSession.routeChangeNotification,
                      AVAudioSession.mediaServicesWereLostNotification, AVAudioSession.mediaServicesWereResetNotification,
@@ -381,9 +400,16 @@ final class CaptureModel: ObservableObject {
 
     func start(cameraPreviewActive: Bool = false, startControl: String = "audioDetails") {
         guard !isBusy else { return }
+        archiveReport()
         generation += 1
         let token = generation
         report = NativeReport()
+        usesFOA=prefersFOA && startControl=="cameraAndAudio"
+        if usesFOA {
+            foa.start(); report.foa=foa.report
+            report.inputOrigin="AVCaptureAudioDataOutput.FOA+Stereo"
+            report.requestedChannels=4
+        }
         waveformDisplay.stop()
         calibration = DirectionCalibration()
         spatial.start()
@@ -430,7 +456,26 @@ final class CaptureModel: ObservableObject {
                     try startSynthetic(processor)
                     #endif
                 } else {
-                    try startHardware(processor)
+                    if usesFOA {
+                        let capture=FOACapture(stereo: { left,right,rate,start in
+                            processor.submitExternal(left: left,right: right,rate: rate,start: start)
+                        },deliver: { [weak self] analysis,midpoint,duration,diagnostics in
+                            guard let self, self.generation==token, self.phase == .running else { return }
+                            self.lastFOAFrameAt=Date()
+                            self.foa.receive(analysis,midpoint: midpoint,duration: duration,capture: diagnostics)
+                            self.report.foa=self.foa.report
+                            self.report.actualInputPort=diagnostics.inputPort
+                            self.report.tapFormatChannels=diagnostics.foaFormat?.channels
+                            self.report.actualSampleRate=diagnostics.foaFormat?.sampleRate
+                        },failure: { [weak self] message,diagnostics in
+                            guard let self, self.generation==token else { return }
+                            self.foa.failure(message,capture: diagnostics); self.report.foa=self.foa.report
+                            self.stop(reason: message)
+                        })
+                        foaCapture=capture
+                        try await capture.start()
+                        guard token==generation, phase == .requestingPermission else { capture.stop(); return }
+                    } else { try startHardware(processor) }
                 }
                 phase = .running
                 #if DEBUG
@@ -446,8 +491,10 @@ final class CaptureModel: ObservableObject {
                 captureStartedUptime = ProcessInfo.processInfo.systemUptime
                 notificationGate.set(token)
                 report.startedAt = Date()
-                report.status = isSynthetic ? "합성 테스트 입력 · 실기기 결과 아님" : "스테레오 수음 중 · 세로 방향을 유지하세요."
+                report.status = isSynthetic ? "합성 테스트 입력 · 실기기 결과 아님" :
+                    (usesFOA ? "공간 오디오 수음 중 · 6단계 보정 없이 방향 후보를 계산합니다." : "스테레오 수음 중 · 세로 방향을 유지하세요.")
                 lastFrameAt = Date()
+                lastFOAFrameAt=Date()
                 let trendTimer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
                     Task { @MainActor [weak self] in self?.refreshTrend() }
                 }
@@ -455,16 +502,22 @@ final class CaptureModel: ObservableObject {
                 RunLoop.main.add(trendTimer, forMode: .common)
                 watchdog = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
                     Task { @MainActor [weak self] in
-                        guard let self, self.phase == .running, Date().timeIntervalSince(self.lastFrameAt) > 5 else { return }
-                        self.stop(reason: "5초 동안 분석 가능한 PCM이 들어오지 않아 수음을 중지했습니다.")
+                        guard let self, self.phase == .running else { return }
+                        if self.usesFOA && Date().timeIntervalSince(self.lastFOAFrameAt)>5 {
+                            self.foa.failure("5초 동안 4채널 공간 오디오가 도착하지 않았습니다.")
+                            self.stop(reason: "4채널 입력 대기 시간 초과 · 진단 기록을 확인해 주세요.")
+                        } else if Date().timeIntervalSince(self.lastFrameAt)>5 {
+                            self.stop(reason: "5초 동안 스테레오 PCM이 들어오지 않아 수음을 중지했습니다.")
+                        }
                     }
                 }
                 #if DEBUG
                 scheduleSyntheticNotifications(token: token)
                 #endif
-            } catch { stop(reason: error.localizedDescription) }
+            } catch { if token==generation { stop(reason: error.localizedDescription) } }
         }
     }
+    private var lastFOAFrameAt=Date()
 
     private func startHardware(_ processor: TapPipeline) throws {
         let session = AVAudioSession.sharedInstance()
@@ -577,6 +630,16 @@ final class CaptureModel: ObservableObject {
     }
 
     private func handleAudioEvent(name: Notification.Name, reason: UInt?, interruption: UInt?) {
+        if usesFOA {
+            foa.noteEvent("\(name.rawValue):\(reason ?? interruption ?? 0)")
+            let fatal=name==AVAudioSession.mediaServicesWereLostNotification || name==AVAudioSession.mediaServicesWereResetNotification
+                || (name==AVAudioSession.interruptionNotification && interruption != AVAudioSession.InterruptionType.ended.rawValue)
+            if fatal {
+                foa.failure("오디오 서비스 또는 다른 앱이 공간 오디오를 중단했습니다.")
+                stop(reason: "공간 오디오 중단 · 진단 JSON에 알림을 기록했습니다.")
+            }
+            return
+        }
         let event: CaptureEvent
         switch name {
         case AVAudioSession.routeChangeNotification:
@@ -676,7 +739,17 @@ final class CaptureModel: ObservableObject {
         let midpoint = AVAudioTime.seconds(forHostTime: hostTime)
             + Double(reading.analysis.sampleCount) / (2 * reading.analysis.sampleRate)
         let duration = Double(reading.analysis.sampleCount) / reading.analysis.sampleRate
-        if source == "back" {
+        if usesFOA {
+            #if DEBUG
+            if isSynthetic {
+                let silent=ProcessInfo.processInfo.arguments.contains("--synthetic-foa-silence") && updated.analyzedFrames>20
+                foa.synthetic(at: ProcessInfo.processInfo.systemUptime,silent: silent)
+                lastFOAFrameAt=Date()
+            }
+            #endif
+            updated.foa=foa.report
+            updated.tapFormatChannels=foa.report.capture.foaFormat?.channels
+        } else if source == "back" {
             var fixture = false
             #if DEBUG
             if isSynthetic && ProcessInfo.processInfo.arguments.contains("--synthetic-bearing") {
@@ -691,6 +764,7 @@ final class CaptureModel: ObservableObject {
         updated.spatial = spatial.report
         updated.positionTrackingEnabled = spatial.report.trackingAvailable
         updated.localizationEnabled = spatial.report.calibration.profile != nil
+        if usesFOA { updated.localizationEnabled = !foa.regions.isEmpty; updated.positionTrackingEnabled=foa.report.synchronization?.issue == .matched }
         if timeOrigin == nil { timeOrigin = midpoint }
         let orientation: AlignedOrientation?
         if isSynthetic {
@@ -716,10 +790,11 @@ final class CaptureModel: ObservableObject {
         var updated = report
         defer { report = updated } // One observable update per analysis/timer tick.
         updated.waveformDisplay = waveformDisplay.statistics
-        spatial.tick()
+        if usesFOA { foa.tick(); updated.foa=foa.report } else { spatial.tick() }
         updated.spatial = spatial.report
         updated.positionTrackingEnabled = spatial.report.trackingAvailable
         updated.localizationEnabled = spatial.report.calibration.profile != nil
+        if usesFOA { updated.localizationEnabled = !foa.regions.isEmpty; updated.positionTrackingEnabled=foa.report.synchronization?.issue == .matched }
         let now = ProcessInfo.processInfo.systemUptime
         calibration.tick(at: now)
         updated.calibration = calibration.snapshot(at: now)
@@ -732,6 +807,8 @@ final class CaptureModel: ObservableObject {
         notificationGate.set(nil)
         report.waveformDisplay = waveformDisplay.statistics
         waveformDisplay.stop()
+        foaCapture?.stop(); foaCapture=nil
+        if usesFOA { foa.stop(); report.foa=foa.report }
         spatial.stop()
         report.spatial = spatial.report
         report.positionTrackingEnabled = false
@@ -763,6 +840,7 @@ final class CaptureModel: ObservableObject {
         phase = .idle
         report.status = finalReason
         report.stoppedAt = Date()
+        archiveReport()
         onStopped?()
     }
 
@@ -805,6 +883,26 @@ final class CaptureModel: ObservableObject {
             exportURL = url
             return url
         } catch { exportError = "보고서를 만들지 못했습니다: \(error.localizedDescription)"; return nil }
+    }
+
+    private func archiveReport() {
+        guard report.startedAt != nil || report.foa?.capture.lastError != nil else { return }
+        let encoder=JSONEncoder(); encoder.outputFormatting=[.prettyPrinted,.sortedKeys]; encoder.dateEncodingStrategy = .iso8601
+        do {
+            let data=try encoder.encode(report)
+            savedReports.removeAll { $0.id==report.sessionID }
+            savedReports.insert(.init(id: report.sessionID,date: report.startedAt ?? Date(),version: report.appVersion,
+                status: report.status,json: data),at: 0)
+            savedReports=Array(savedReports.prefix(5))
+            UserDefaults.standard.set(try JSONEncoder().encode(savedReports),forKey: "soundfield.savedReports")
+        } catch { exportError="이전 진단 저장 실패: \(error.localizedDescription)" }
+    }
+    func exportSaved(_ saved: SavedNativeReport) -> URL? {
+        if isBusy { stop(reason: "이전 진단을 공유하기 위해 계측을 중지했습니다.") }
+        do {
+            let url=FileManager.default.temporaryDirectory.appendingPathComponent("soundfield-\(saved.id.uuidString).json")
+            try saved.json.write(to: url,options: .atomic); return url
+        } catch { exportError=error.localizedDescription; return nil }
     }
 
     #if DEBUG

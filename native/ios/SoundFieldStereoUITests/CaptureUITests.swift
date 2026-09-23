@@ -2,6 +2,43 @@ import XCTest
 import UIKit
 
 final class CaptureUITests: XCTestCase {
+    func testFOAHeatmapWithoutSixStepCalibration() {
+        let app=launch(["--synthetic-foa"],details: false)
+        app.buttons["liveCaptureButton"].tap()
+        let frequency=app.staticTexts["foaFrequency"]
+        XCTAssertTrue(frequency.waitForExistence(timeout: 30))
+        XCTAssertTrue(frequency.label.contains("1.5 kHz"))
+        XCTAssertFalse(app.staticTexts["rotationCalibrationStep"].exists)
+        XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
+        XCTAssertTrue(app.staticTexts["foaStatus"].label.contains("거리 미측정"))
+        let screen=XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        screen.name="native-build10-foa-heatmap-synthetic"; screen.lifetime = .keepAlways; add(screen)
+        app.buttons["liveCaptureButton"].tap()
+        XCTAssertFalse(frequency.exists)
+        app.buttons["detailsButton"].tap()
+        XCTAssertTrue(app.staticTexts["foaSummary"].waitForExistence(timeout: 5))
+    }
+    func testFOASilenceClearsHeatmap() {
+        let app=launch(["--synthetic-foa","--synthetic-foa-silence"],details: false)
+        app.buttons["liveCaptureButton"].tap()
+        let status=app.staticTexts["foaStatus"]
+        expectation(for: NSPredicate(format: "label CONTAINS %@","소리가 작습니다"),evaluatedWith: status)
+        waitForExpectations(timeout: 30)
+        XCTAssertFalse(app.staticTexts["foaFrequency"].exists)
+    }
+    func testPreviousReportSurvivesRestart() {
+        let app=launch(["--synthetic-foa"],details: false)
+        app.buttons["liveCaptureButton"].tap()
+        XCTAssertTrue(app.staticTexts["foaFrequency"].waitForExistence(timeout: 30))
+        app.buttons["liveCaptureButton"].tap()
+        app.buttons["liveCaptureButton"].tap()
+        XCTAssertTrue(app.staticTexts["foaFrequency"].waitForExistence(timeout: 30))
+        app.buttons["detailsButton"].tap()
+        let heading=app.staticTexts["savedReportHeading"]
+        reveal(heading,in: app)
+        XCTAssertTrue(heading.exists)
+        XCTAssertTrue(app.buttons.matching(identifier: "savedReportShare").firstMatch.exists)
+    }
     func testLateCameraTimestampsAdvanceFirstStepThroughProductionQueue() {
         let app=launch(["--synthetic-pose-delay"],details: false)
         app.buttons["liveCaptureButton"].tap()

@@ -24,7 +24,7 @@ struct CaptureDetailsView: View {
             VStack(alignment: .leading, spacing: 22) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("SOUNDFIELD / iPHONE").font(.caption.monospaced()).foregroundStyle(green)
-                    Text("스테레오 입력").font(.largeTitle.bold())
+                    Text(model.usesFOA ? "공간 오디오 입력" : "스테레오 입력").font(.largeTitle.bold())
                     Text("계속 듣고, 최근 변화를 계산합니다.").foregroundStyle(.secondary)
                 }
                 if model.isSynthetic {
@@ -39,7 +39,7 @@ struct CaptureDetailsView: View {
                     }
                     .pickerStyle(.segmented).disabled(model.isBusy)
                     .accessibilityIdentifier("sourcePicker")
-                    Text("여기는 입력 상세 검사입니다. 방향·위치 표시는 카메라 화면의 소리 찾기에서 시작하세요.")
+                    Text("방향 열지도는 카메라 화면의 후면 카메라·수음 시작을 사용하세요. 아래 버튼은 별도 스테레오 검사입니다. 이전 진단은 아래 목록에 보관됩니다.")
                         .font(.subheadline).foregroundStyle(.secondary)
                     Button {
                         if model.isBusy { model.stop() } else { model.start() }
@@ -72,12 +72,40 @@ struct CaptureDetailsView: View {
                             .font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("lastAudioEvent")
                     }
                     HStack {
-                        Label("요청 2채널", systemImage: "waveform")
+                        Label("요청 \(model.report.requestedChannels)채널", systemImage: "waveform")
                         Spacer()
                         Text("실제 \(model.report.tapFormatChannels.map(String.init) ?? "—")채널")
                             .accessibilityIdentifier("actualChannels")
                     }.font(.caption).foregroundStyle(.secondary)
                 }.card()
+
+                if let foa=model.report.foa {
+                    VStack(alignment: .leading,spacing: 8) {
+                        Text("4채널 공간 오디오").font(.headline)
+                        Text("입력 \(foa.capture.foaBuffers)버퍼 · 분석 \(foa.received) · 카메라 연결 \(foa.matched)")
+                            .accessibilityIdentifier("foaSummary")
+                        Text("실제 FOA \(foa.capture.foaFormat?.channels ?? 0)채널 · 별도 Stereo \(foa.capture.stereoFormat?.channels ?? 0)채널")
+                        Text("상태: \(foa.state) · 시간 누락 \(foa.capture.gaps)")
+                        Text("카메라 축 대응·물리 정확도 미검증 · 거리 계산 안 함").font(.caption)
+                        if let error=foa.capture.lastError { Text(error).font(.footnote) }
+                    }.card()
+                }
+                if !model.savedReports.isEmpty {
+                    VStack(alignment: .leading,spacing: 10) {
+                        Text("이전 진단 · 최근 5개").font(.headline).accessibilityIdentifier("savedReportHeading")
+                        ForEach(model.savedReports) { saved in
+                            Button {
+                                if let url=model.exportSaved(saved) { sharedReport=SharedReport(url: url) }
+                            } label: {
+                                VStack(alignment: .leading,spacing: 3) {
+                                    Text(saved.date,style: .time)
+                                    Text(saved.status).font(.caption).lineLimit(2)
+                                    Text(saved.version).font(.caption2)
+                                }.frame(maxWidth: .infinity,alignment: .leading)
+                            }.accessibilityIdentifier("savedReportShare")
+                        }
+                    }.card()
+                }
 
                 let analysis = model.report.latest?.analysis
                 HStack(spacing: 12) {

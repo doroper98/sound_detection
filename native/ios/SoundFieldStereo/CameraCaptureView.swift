@@ -130,10 +130,13 @@ struct CaptureView: View {
                     Text(camera.status).font(.subheadline).multilineTextAlignment(.center)
                         .accessibilityIdentifier("cameraStatus")
                 }.foregroundStyle(.white.opacity(0.75)).padding(32)
-                    .opacity(camera.isSynthetic && model.spatial.report.bearing != nil ? 0 : 1)
+                    .opacity(camera.isSynthetic && (model.spatial.report.bearing != nil || (model.report.foa?.displayedRegions ?? 0)>0) ? 0 : 1)
             }
-            SpatialOverlay(spatial: model.spatial,camera: camera,synthetic: model.isSynthetic)
-                .ignoresSafeArea() // Projection viewport must match the edge-to-edge ARSCNView.
+            if model.usesFOA || (model.prefersFOA && model.report.startedAt == nil) {
+                FOADirectionOverlay(model: model.foa,camera: camera,synthetic: model.isSynthetic).ignoresSafeArea()
+            } else {
+                SpatialOverlay(spatial: model.spatial,camera: camera,synthetic: model.isSynthetic).ignoresSafeArea()
+            }
             VStack(spacing: 0) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 5) {
@@ -156,7 +159,7 @@ struct CaptureView: View {
                 }.padding(20)
                 .background(LinearGradient(colors: [.black.opacity(0.8), .clear], startPoint: .top, endPoint: .bottom))
                 Button { showSpatialGuide = true } label: {
-                    Label("소리 찾기 · 방향 보정",systemImage: "scope").font(.subheadline.bold()).padding(.horizontal,16).padding(.vertical,9)
+                    Label(model.prefersFOA ? "공간 오디오 · 사용 안내" : "소리 찾기 · 방향 보정",systemImage: "scope").font(.subheadline.bold()).padding(.horizontal,16).padding(.vertical,9)
                 }.background(.black.opacity(0.7),in: Capsule()).foregroundStyle(green)
                     .accessibilityIdentifier("spatialGuideButton")
                 if model.isSynthetic {
@@ -165,7 +168,9 @@ struct CaptureView: View {
                 }
                 Spacer()
                 VStack(spacing: 12) {
-                    SoundHeatLegend(spatial: model.spatial)
+                    if model.usesFOA {
+                        Text("파랑 → 빨강: 해당 주파수 입력 크기 · 거리 미측정").font(.system(size: 10))
+                    } else { SoundHeatLegend(spatial: model.spatial) }
                     HStack(spacing: 18) {
                         meter("L", index: 0)
                         meter("R", index: 1)
@@ -174,7 +179,7 @@ struct CaptureView: View {
                             Text(model.report.trend?.estimateSeconds.map { String(format: "%+.1f µs", $0 * 1_000_000) } ?? "—")
                                 .font(.title3.monospacedDigit().bold()).foregroundStyle(green)
                                 .accessibilityIdentifier("liveLagValue")
-                            Text("연속 신호 시간차").font(.caption2)
+                            Text(model.usesFOA ? "스테레오 참고 시간차" : "연속 신호 시간차").font(.caption2)
                         }
                     }
                     StereoWaveformPanel(display: model.waveformDisplay, green: green,
@@ -202,7 +207,7 @@ struct CaptureView: View {
                             .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 12)
                     }.buttonStyle(.borderedProminent).tint(green).foregroundStyle(.black)
                         .accessibilityIdentifier("liveCaptureButton")
-                    Text("영상·원음 저장 없음 · 실험 열지도 · 빌드 9").font(.caption2).foregroundStyle(.secondary)
+                    Text("영상·원음 저장 없음 · 실험 열지도 · 빌드 10").font(.caption2).foregroundStyle(.secondary)
                 }
                 .padding(18)
                 .background(.black.opacity(0.78), in: RoundedRectangle(cornerRadius: 22))
@@ -223,7 +228,21 @@ struct CaptureView: View {
             }.presentationDetents([.large])
         }
         .sheet(isPresented: $showSpatialGuide) {
-            NavigationStack { SpatialGuide(model: model,camera: camera) }.presentationDetents([.large])
+            NavigationStack {
+                if model.prefersFOA {
+                    ScrollView {
+                        VStack(alignment: .leading,spacing: 18) {
+                            Text("공간 오디오로 소리 방향 보기").font(.title.bold())
+                            Text("후면 카메라·수음 시작을 누르세요. 6단계 방향 보정 없이 지원 기기의 4채널 공간 오디오를 분석합니다.")
+                            Text("처음에는 한 곳에서 나는 소리를 비추고 잠시 멈추세요. 후보가 잡히면 카메라에 열섬과 해당 대역 주파수가 나타납니다.")
+                            Text("열섬은 소리 방향 후보입니다. 색은 폰에서 받은 입력 크기이며, 소리까지의 거리나 물체 크기를 뜻하지 않습니다. 카메라 축 대응과 실제 방향 정확도는 아직 확인 전입니다.")
+                            Text("지원하지 않거나 입력·카메라 연결에 문제가 있으면 화면에 이유가 표시됩니다. 측정 상세에서 현재 진단과 이전 진단을 공유할 수 있습니다.")
+                            Text("원음·카메라 영상은 저장하지 않습니다. 최근 진단 통계만 5개 보관합니다.").font(.caption)
+                        }.padding(22)
+                    }.navigationTitle("공간 오디오 안내")
+                        .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("닫기") { showSpatialGuide=false } } }
+                } else { SpatialGuide(model: model,camera: camera) }
+            }.presentationDetents([.large])
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .background {
@@ -239,7 +258,8 @@ struct CaptureView: View {
                 camera?.spatialCamera.inspect(midpoint: midpoint,duration: duration,now: now)
                     ?? .init(issue: .poseProviderUnavailable)
             }
-            camera.onTrackingLost = { [weak model] in model?.spatial.trackingLost() }
+            model.foa.poseProvider=model.spatial.poseProvider
+            camera.onTrackingLost = { [weak model] in model?.spatial.trackingLost(); model?.foa.trackingLost() }
             // Cleanup must not depend on SwiftUI rendering an intermediate
             // phase; permission or route failure can return to idle immediately.
             model.onStopped = { [weak camera] in

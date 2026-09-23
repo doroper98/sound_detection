@@ -1,0 +1,175 @@
+{
+  "experiment": "EXP-022",
+  "kind": "합성 FOA 수학/실패 반례, iPhone 실측 아님",
+  "input": {
+    "channelOrder": [
+      "W",
+      "Y",
+      "Z",
+      "X"
+    ],
+    "normalization": "SN3D",
+    "sampleRate": 48000,
+    "samples": 4096,
+    "model": "원거리 평면파; 실제 Apple 인코더/마이크/AR/카메라 축을 모사하지 않음",
+    "method": "대역별 Re(conj(W) * [X,Y,Z])의 합을 정규화",
+    "framing": "정수 FFT bin 신호, 직사각 창. 실제 신호용 STFT/창/시간 누적은 구현하지 않음"
+  },
+  "singleSource20DbOmniSNR": [
+    {
+      "azimuth": 0,
+      "elevation": 0,
+      "errorDegrees": 0.2849412726828687,
+      "direction": [
+        0.9999876338484693,
+        -0.003154564191304181,
+        0.003844590342624395
+      ],
+      "vectorCoherence": 0.9917117029485425,
+      "note": "벡터 일관성은 실제 방향이 맞다는 확률이 아니다."
+    },
+    {
+      "azimuth": 90,
+      "elevation": 0,
+      "errorDegrees": 0.2338394613216342,
+      "direction": [
+        0.003433282567881329,
+        0.9999916716351894,
+        -0.0022066334240875563
+      ],
+      "vectorCoherence": 0.9915849834262235,
+      "note": "벡터 일관성은 실제 방향이 맞다는 확률이 아니다."
+    },
+    {
+      "azimuth": -90,
+      "elevation": 0,
+      "errorDegrees": 0.0375058870063025,
+      "direction": [
+        0.0002498887126732667,
+        -0.9999997857486309,
+        0.0006050275395376414
+      ],
+      "vectorCoherence": 0.9921420161062263,
+      "note": "벡터 일관성은 실제 방향이 맞다는 확률이 아니다."
+    },
+    {
+      "azimuth": 180,
+      "elevation": 0,
+      "errorDegrees": 0.06325578101036405,
+      "direction": [
+        -0.9999993905681606,
+        -0.0010063584534739122,
+        0.00045398895451290985
+      ],
+      "vectorCoherence": 0.9919685960645024,
+      "note": "벡터 일관성은 실제 방향이 맞다는 확률이 아니다."
+    },
+    {
+      "azimuth": 0,
+      "elevation": 90,
+      "errorDegrees": 0.05571731120687696,
+      "direction": [
+        0.0008181685900162307,
+        0.0005256043143252208,
+        0.9999995271700197
+      ],
+      "vectorCoherence": 0.9916871184970798,
+      "note": "벡터 일관성은 실제 방향이 맞다는 확률이 아니다."
+    },
+    {
+      "azimuth": 0,
+      "elevation": -90,
+      "errorDegrees": 0.11391447852553888,
+      "direction": [
+        0.0017596907622478876,
+        -0.0009253938215870546,
+        -0.9999980235653949
+      ],
+      "vectorCoherence": 0.9918830914553954,
+      "note": "벡터 일관성은 실제 방향이 맞다는 확률이 아니다."
+    },
+    {
+      "azimuth": 37,
+      "elevation": 24,
+      "errorDegrees": 0.18471784471651284,
+      "direction": [
+        0.7278113577947813,
+        0.5524423255401409,
+        0.4063226604765204
+      ],
+      "vectorCoherence": 0.991957132735712,
+      "note": "벡터 일관성은 실제 방향이 맞다는 확률이 아니다."
+    },
+    {
+      "azimuth": -123,
+      "elevation": -31,
+      "errorDegrees": 0.18269869927260685,
+      "direction": [
+        -0.4648630384879974,
+        -0.7210490086266007,
+        -0.513800236090159
+      ],
+      "vectorCoherence": 0.992090128496098,
+      "note": "벡터 일관성은 실제 방향이 맞다는 확률이 아니다."
+    }
+  ],
+  "frequencySeparatedSources": {
+    "sourceHz": [
+      750,
+      2250
+    ],
+    "sourceAzimuthDegrees": [
+      -60,
+      60
+    ],
+    "low": {
+      "direction": [
+        0.5000000000000002,
+        -0.8660254037844386,
+        0
+      ],
+      "vectorCoherence": 1,
+      "note": "벡터 일관성은 실제 방향이 맞다는 확률이 아니다."
+    },
+    "high": {
+      "direction": [
+        0.5000000000000001,
+        0.8660254037844386,
+        0
+      ],
+      "vectorCoherence": 1,
+      "note": "벡터 일관성은 실제 방향이 맞다는 확률이 아니다."
+    },
+    "broadband": {
+      "direction": [
+        1,
+        5.796380767510068e-28,
+        0
+      ],
+      "vectorCoherence": 0.5000000000000002,
+      "note": "벡터 일관성은 실제 방향이 맞다는 확률이 아니다."
+    },
+    "finding": "주파수별 방향은 분리되지만 전 대역 평균은 실제 음원 없는 중앙을 가리킨다. 일반 음원 분리의 증거는 아님."
+  },
+  "coherentReflectionCounterexample": {
+    "directAzimuth": 0,
+    "reflectionAzimuth": 90,
+    "reflectionGain": 1.4,
+    "errorDegrees": 54.46232220802562,
+    "direction": [
+      0.5812381937190964,
+      0.813733471206735,
+      0
+    ],
+    "vectorCoherence": 1,
+    "note": "벡터 일관성은 실제 방향이 맞다는 확률이 아니다.",
+    "finding": "일관성이 거의 1이어도 직접음에서 50도 이상 틀릴 수 있다. 이 점수 하나로 확정 열섬을 만들면 안 된다."
+  },
+  "equalOpposingCoherentSources": {
+    "direction": null,
+    "reason": "no_resolvable_vector"
+  },
+  "deviceCaptureVerified": false,
+  "cameraAxesVerified": false,
+  "physicalAccuracyVerified": false
+}

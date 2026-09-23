@@ -25,8 +25,8 @@ private enum HeatPalette {
 
 struct SoundHeatLegend: View {
     @ObservedObject var spatial: SpatialModel
+    private var visible: Bool { spatial.report.bearing != nil && spatial.report.sound != nil }
     var body: some View {
-        if spatial.report.bearing != nil, spatial.report.sound != nil {
             VStack(spacing: 3) {
                 HStack(spacing: 7) {
                     Text("약함 −65")
@@ -37,7 +37,7 @@ struct SoundHeatLegend: View {
                 Text("색: 입력 크기 · 영역: 추정 범위")
             }.font(.system(size: 10)).foregroundStyle(.white.opacity(0.9))
                 .accessibilityElement(children: .combine).accessibilityIdentifier("soundHeatLegend")
-        }
+                .frame(height: 28).opacity(visible ? 1 : 0).accessibilityHidden(!visible)
     }
 }
 
@@ -66,10 +66,11 @@ struct SpatialOverlay: View {
                             .fill(LinearGradient(stops: HeatPalette.band(sound.levelDbfs),startPoint: .leading,endPoint: .trailing))
                             .frame(width: max(36,range.1-range.0),height: size.height)
                             .position(x: (range.0+range.1)/2,y: size.height/2)
+                            .mask(Rectangle().padding(.top,190).padding(.bottom,320))
                             .accessibilityLabel("수평 방향 열지도 · 높이 미정")
                             .accessibilityIdentifier("soundBearingBand")
                         frequencyTag(sound)
-                            .position(x: min(max((range.0+range.1)/2,100),size.width-100),y: size.height*0.56)
+                            .position(x: min(max((range.0+range.1)/2,100),size.width-100),y: size.height*0.48)
                     }
                 }
                 if let estimate=data.solution?.estimate,

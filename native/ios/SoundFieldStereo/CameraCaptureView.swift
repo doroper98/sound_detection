@@ -130,6 +130,7 @@ struct CaptureView: View {
                     Text(camera.status).font(.subheadline).multilineTextAlignment(.center)
                         .accessibilityIdentifier("cameraStatus")
                 }.foregroundStyle(.white.opacity(0.75)).padding(32)
+                    .opacity(camera.isSynthetic && model.spatial.report.bearing != nil ? 0 : 1)
             }
             SpatialOverlay(spatial: model.spatial,camera: camera,synthetic: model.isSynthetic)
                 .ignoresSafeArea() // Projection viewport must match the edge-to-edge ARSCNView.

@@ -129,16 +129,18 @@ final class SpatialModel: ObservableObject {
     private var fixtureProfile: BearingProfile?
     func acceptSyntheticDisplay(at now: Double, silent: Bool, spectrum: SoundSpectrum?) {
         guard running else { return }
+        var next=report
+        defer { report=next }
         let features=AcousticFeatures(sampleRate: 48000,levelDbfs: -20,differenceDb: 2.4,lagSamples: 4.8,shape: [0.1,0.2,0.7])
         let value=silent ? nil : fixtureProfile?.estimate(features,at: now)
         tracker.append(value)
-        report.bearing=tracker.estimate(at: now)
-        report.sound=report.bearing == nil ? nil : spectrum
-        report.state=report.bearing == nil ? "signalUnreliable" : "bearing"
-        report.trackingAvailable=true
-        report.latestPose=SpatialPose(time: now,origin: .zero,right: .init(1,0,0),up: .init(0,1,0),forward: .init(0,0,-1))
+        next.bearing=tracker.estimate(at: now)
+        next.sound=next.bearing == nil ? nil : spectrum
+        next.state=next.bearing == nil ? "signalUnreliable" : "bearing"
+        next.trackingAvailable=true
+        next.latestPose=SpatialPose(time: now,origin: .zero,right: .init(1,0,0),up: .init(0,1,0),forward: .init(0,0,-1))
         lastAccepted=now
-        if silent { report.solution=nil }
+        if silent { next.solution=nil }
         if !silent && ProcessInfo.processInfo.arguments.contains("--synthetic-position") {
             var fixtureAccumulator=SpatialAccumulator()
             let source=Vector3(0.1,0.15,-1.6)
@@ -148,15 +150,16 @@ final class SpatialModel: ObservableObject {
                 let pose=SpatialPose(time: now-2.3+Double(i)/10,origin: origin,
                     right: .init(cos(roll),sin(roll),0),up: .init(-sin(roll),cos(roll),0),forward: .init(0,0,-1))
                 fixtureAccumulator.append(.init(pose: pose,angleDegrees: pose.bearing(of: source-origin),uncertaintyDegrees: 4))
-                report.latestPose=pose
+                next.latestPose=pose
             }
-            report.solution=fixtureAccumulator.solve(at: now)
-            if let pose=report.latestPose {
+            next.solution=fixtureAccumulator.solve(at: now)
+            if let pose=next.latestPose {
                 let angle=pose.bearing(of: source-pose.origin)
-                report.bearing=fixtureProfile?.estimate(AcousticFeatures(sampleRate: 48000,levelDbfs: -20,
+                next.bearing=fixtureProfile?.estimate(AcousticFeatures(sampleRate: 48000,levelDbfs: -20,
                     differenceDb: angle*0.2,lagSamples: angle*0.4,shape: [0.1,0.2,0.7]),at: now)
             }
-            report.state=report.solution?.estimate == nil ? "bearing" : "positionCandidate"
+            next.sound=next.bearing == nil ? nil : spectrum
+            next.state=next.solution?.estimate == nil ? "bearing" : "positionCandidate"
         }
     }
     #endif

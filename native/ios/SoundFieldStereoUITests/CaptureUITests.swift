@@ -1,6 +1,50 @@
 import XCTest
+import UIKit
 
 final class CaptureUITests: XCTestCase {
+    private func attachHeatScreenshot(_ name: String, cool: Bool = false) {
+        // A passing AX label can precede a complete rendered frame. Inspect
+        // real pixels too, without pausing capture or weakening stale expiry.
+        var screenshot=XCUIScreen.main.screenshot()
+        var complete=false
+        for _ in 0..<6 {
+            screenshot=XCUIScreen.main.screenshot()
+            if heatPixelsVisible(screenshot,cool: cool) { complete=true; break }
+            Thread.sleep(forTimeInterval: 0.3)
+        }
+        let attachment=XCTAttachment(screenshot: screenshot)
+        attachment.name=name; attachment.lifetime = .keepAlways; add(attachment)
+        XCTAssertTrue(complete,"Heat region and complete header/footer must be present in the captured pixels")
+    }
+    private func heatPixelsVisible(_ screenshot: XCUIScreenshot, cool: Bool) -> Bool {
+        guard let image=UIImage(data: screenshot.pngRepresentation)?.cgImage else { return false }
+        let width=201, height=437
+        var pixels=[UInt8](repeating: 0,count: width*height*4)
+        let drawn=pixels.withUnsafeMutableBytes { raw -> Bool in
+            guard let context=CGContext(data: raw.baseAddress,width: width,height: height,bitsPerComponent: 8,
+                bytesPerRow: width*4,space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return false }
+            context.draw(image,in: CGRect(x: 0,y: 0,width: width,height: height))
+            return true
+        }
+        guard drawn else { return false }
+        var upper=0, lower=0, heat=0
+        for y in 0..<height {
+            for x in 0..<width {
+                let i=(y*width+x)*4
+                let r=Int(pixels[i]), g=Int(pixels[i+1]), b=Int(pixels[i+2])
+                let fraction=Double(y)/Double(height)
+                if g>120 && g>r+20 && g>b+10 {
+                    if (0.07...0.17).contains(fraction) { upper+=1 }
+                    if (0.83...0.93).contains(fraction) { lower+=1 }
+                }
+                if (0.3...0.7).contains(fraction) {
+                    if cool ? (b>25 && b>r+15 && b>g+8) : (r>65 && g>25 && r>g+8 && g>b+10) { heat+=1 }
+                }
+            }
+        }
+        return upper>20 && lower>20 && heat>(cool ? 80 : 40)
+    }
     func testHeatIslandShowsMeasuredFrequencyAndLevelForLoudAndQuietInput() {
         for quiet in [false,true] {
             let extra=["--synthetic-bearing","--synthetic-position","--synthetic-heat-tone"]
@@ -16,9 +60,7 @@ final class CaptureUITests: XCTestCase {
             XCTAssertTrue(app.frame.contains(frequency.frame))
             XCTAssertTrue(app.staticTexts["soundPositionCandidate"].exists)
             XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "soundHeatLegend").firstMatch.exists)
-            let screen=XCTAttachment(screenshot: app.screenshot())
-            screen.name=quiet ? "native-build7-heat-quiet" : "native-build7-heat-tone"
-            screen.lifetime = .keepAlways; add(screen)
+            attachHeatScreenshot(quiet ? "native-build7-heat-quiet" : "native-build7-heat-tone",cool: quiet)
             app.buttons["liveCaptureButton"].tap()
             XCTAssertFalse(frequency.exists)
             XCTAssertFalse(level.exists)
@@ -41,8 +83,7 @@ final class CaptureUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["soundPositionCandidate"].waitForExistence(timeout: 30))
         XCTAssertTrue(app.staticTexts["soundPositionCandidate"].label.contains("위치 후보"))
         XCTAssertTrue(app.staticTexts["soundHeatFrequency"].label.hasPrefix("대역"))
-        let screen=XCTAttachment(screenshot: app.screenshot())
-        screen.name="native-build7-position-synthetic"; screen.lifetime = .keepAlways; add(screen)
+        attachHeatScreenshot("native-build7-position-synthetic")
         XCUIDevice.shared.press(.home); app.activate()
         XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
         XCTAssertFalse(app.staticTexts["soundHeatFrequency"].exists)
@@ -55,8 +96,7 @@ final class CaptureUITests: XCTestCase {
         expectation(for: NSPredicate(format: "label CONTAINS %@","오른쪽 12°"),evaluatedWith: status)
         waitForExpectations(timeout: 30)
         XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
-        let screen=XCTAttachment(screenshot: app.screenshot())
-        screen.name="native-build7-bearing-synthetic"; screen.lifetime = .keepAlways; add(screen)
+        attachHeatScreenshot("native-build7-bearing-synthetic")
         app.buttons["liveCaptureButton"].tap()
         XCTAssertTrue(status.label.contains("소리 방향·위치 찾기"))
         XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "soundBearingBand").firstMatch.exists)

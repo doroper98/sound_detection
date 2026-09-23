@@ -57,6 +57,27 @@ public struct SpatialPoseHistory {
               a.right.angle(to: b.right) <= 3 else { return nil }
         return middle
     }
+    public func inspect(midpoint: Double, duration: Double, now: Double,
+                        running: Bool = true, trackingState: String = "normal") -> PoseAlignmentInspection {
+        let closest=poses.min(by: { abs($0.time-midpoint)<abs($1.time-midpoint) })
+        func result(_ issue: PoseAlignmentIssue, _ pose: SpatialPose? = nil) -> PoseAlignmentInspection {
+            .init(issue: issue,pose: pose,audioAgeSeconds: now-midpoint,
+                latestCameraAgeSeconds: poses.last.map { now-$0.time },
+                nearestCameraMinusAudioSeconds: closest.map { $0.time-midpoint },
+                cameraFrameCount: poses.count,trackingState: trackingState)
+        }
+        guard now.isFinite, midpoint.isFinite, duration.isFinite, duration>0, duration<=0.4 else { return result(.invalidTiming) }
+        guard now-midpoint >= -0.06 else { return result(.audioInFuture) }
+        guard now-midpoint<0.3 else { return result(.audioTooOld) }
+        guard running else { return result(.cameraStopped) }
+        guard trackingState == "normal" else { return result(.trackingUnavailable) }
+        guard let latest=poses.last else { return result(.missingCameraFrames) }
+        guard now-latest.time >= -0.06, now-latest.time<0.2 else { return result(.cameraStale) }
+        guard nearest(midpoint-duration/2) != nil, nearest(midpoint+duration/2) != nil,
+              nearest(midpoint) != nil else { return result(.poseTimeMismatch) }
+        guard let pose=aligned(midpoint: midpoint,duration: duration) else { return result(.movementDuringAudio) }
+        return result(.matched,pose)
+    }
 }
 
 public struct BearingObservation: Codable, Sendable {

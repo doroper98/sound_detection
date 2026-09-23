@@ -2,6 +2,39 @@ import XCTest
 import UIKit
 
 final class CaptureUITests: XCTestCase {
+    func testLateCameraTimestampsAdvanceFirstStepThroughProductionQueue() {
+        let app=launch(["--synthetic-pose-delay"],details: false)
+        app.buttons["liveCaptureButton"].tap()
+        let step=app.staticTexts["rotationCalibrationStep"]
+        expectation(for: NSPredicate(format: "label CONTAINS %@","2/6"),evaluatedWith: step)
+        waitForExpectations(timeout: 30)
+        XCTAssertTrue(app.staticTexts["rotationMovementInstruction"].label.contains("오른쪽"))
+        XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
+        let screen=XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        screen.name="native-build9-delayed-pose-recovered-synthetic"; screen.lifetime = .keepAlways; add(screen)
+        app.buttons["detailsButton"].tap()
+        let summary=app.staticTexts["spatialSyncSummary"]
+        XCTAssertTrue(summary.waitForExistence(timeout: 5))
+        XCTAssertFalse(summary.label.hasSuffix("지연 후 연결 0"))
+    }
+    func testMissingCameraShowsReasonAndPreservesItAfterStop() {
+        let app=launch(["--synthetic-pose-stalled"],details: false)
+        app.buttons["liveCaptureButton"].tap()
+        let guidance=app.staticTexts["rotationMovementInstruction"]
+        expectation(for: NSPredicate(format: "label CONTAINS %@","카메라 자세가 갱신되지"),evaluatedWith: guidance)
+        waitForExpectations(timeout: 30)
+        XCTAssertTrue(app.staticTexts["rotationCalibrationStep"].label.contains("1/6"))
+        XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
+        let screen=XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        screen.name="native-build9-missing-pose-reason-synthetic"; screen.lifetime = .keepAlways; add(screen)
+        app.buttons["liveCaptureButton"].tap()
+        app.buttons["detailsButton"].tap()
+        let reason=app.staticTexts["lastSpatialCalibration"]
+        XCTAssertTrue(reason.waitForExistence(timeout: 5))
+        XCTAssertTrue(reason.label.contains("카메라 자세가 갱신되지"))
+        let export=app.buttons["exportButton"]; reveal(export,in: app)
+        XCTAssertTrue(export.isEnabled)
+    }
     func testRejectedRotationExplainsCauseAndCannotShowLocation() {
         let app=launch(["--synthetic-bearing","--synthetic-rotation-rejected"],details: false)
         app.buttons["liveCaptureButton"].tap()

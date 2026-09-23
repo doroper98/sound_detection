@@ -60,8 +60,8 @@ struct AudioRouteInspection: Encodable {
 }
 
 struct NativeReport: Encodable {
-    var schemaVersion = 8
-    var appVersion = "0.4.0-native-calibration-diagnostics-build8"
+    var schemaVersion = 9
+    var appVersion = "0.4.0-native-pose-sync-build9"
     var inputOrigin = "AVAudioEngine.inputNode"
     var operatingSystem = UIDevice.current.systemVersion
     var startedAt: Date?
@@ -316,7 +316,6 @@ final class CaptureModel: ObservableObject {
     @Published private(set) var report = NativeReport()
     let waveformDisplay = WaveformDisplayModel()
     let spatial = SpatialModel()
-    var spatialPoseProvider: ((Double, Double) -> SpatialPose?)?
     private var calibration = DirectionCalibration()
     @Published var source = "back"
     @Published var exportError: String?
@@ -436,6 +435,12 @@ final class CaptureModel: ObservableObject {
                 phase = .running
                 #if DEBUG
                 if ProcessInfo.processInfo.arguments.contains("--synthetic-bearing") { spatial.prepareSyntheticCalibration() }
+                if isSynthetic && ProcessInfo.processInfo.arguments.contains("--synthetic-pose-delay") {
+                    spatial.prepareSyntheticSynchronization(stalled: false)
+                }
+                if isSynthetic && ProcessInfo.processInfo.arguments.contains("--synthetic-pose-stalled") {
+                    spatial.prepareSyntheticSynchronization(stalled: true)
+                }
                 #endif
                 waveformDisplay.start()
                 captureStartedUptime = ProcessInfo.processInfo.systemUptime
@@ -680,8 +685,8 @@ final class CaptureModel: ObservableObject {
                     silent: reading.acousticFeatures == nil,spectrum: reading.soundSpectrum)
             }
             #endif
-            if !fixture { spatial.accept(features: reading.acousticFeatures,spectrum: reading.soundSpectrum,
-                pose: spatialPoseProvider?(midpoint,duration),midpoint: midpoint) }
+            if !fixture { spatial.enqueue(features: reading.acousticFeatures,spectrum: reading.soundSpectrum,
+                midpoint: midpoint,duration: duration) }
         }
         updated.spatial = spatial.report
         updated.positionTrackingEnabled = spatial.report.trackingAvailable

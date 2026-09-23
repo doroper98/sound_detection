@@ -1,9 +1,22 @@
 import SwiftUI
 import StereoCore
 
+struct SpatialSynchronizationReport: Encodable {
+    var receivedFrames=0
+    var matchedFrames=0
+    var recoveredAfterWait=0
+    var rejectedByReason: [String:Int]=[:]
+    var pendingFrames=0
+    var overflowFrames=0
+    var latest: PoseAlignmentInspection?
+    var lastRejection: PoseAlignmentInspection?
+}
+
 struct SpatialReport: Encodable {
     var state="idle"
     var calibration=RotationCalibrator().snapshot()
+    var calibrationBeforeStop: RotationCalibrationState?
+    var synchronization=SpatialSynchronizationReport()
     var bearing: BearingEstimate?
     var solution: SpatialSolution?
     var lastCandidate: SpatialEstimate?
@@ -26,17 +39,21 @@ final class SpatialModel: ObservableObject {
     private var accumulator=SpatialAccumulator()
     private var running=false
     private var lastAccepted=0.0
+    private var audioSynchronizer=SpatialAudioSynchronizer()
+    var poseProvider: ((Double, Double, Double) -> PoseAlignmentInspection)?
     var active: Bool { running }
 
     func start() {
         calibrator=RotationCalibrator(); tracker=BearingTracker(); accumulator=SpatialAccumulator()
         report=SpatialReport(); running=true; lastAccepted=0
+        audioSynchronizer=SpatialAudioSynchronizer()
         report.state="needsCalibration"
     }
     func beginCalibration(pose: SpatialPose) {
         guard running else { return }
         tracker=BearingTracker(); accumulator.reset()
         calibrator.begin(pose: pose)
+        audioSynchronizer.clear(); report.calibrationBeforeStop=nil
         report.lastBearing=nil; report.lastCandidate=nil
         report.sound=nil
         report.bearing=nil; report.solution=nil; report.calibration=calibrator.snapshot(); report.state="calibrating"
@@ -47,6 +64,7 @@ final class SpatialModel: ObservableObject {
         report.state="alignSource"
     }
     func cancelCalibration() {
+        audioSynchronizer.clear()
         report.sound=nil
         calibrator.cancel("보정을 취소했습니다. 소리를 중앙에 맞추고 다시 시작하세요.")
         tracker=BearingTracker(); accumulator.reset()
@@ -58,18 +76,58 @@ final class SpatialModel: ObservableObject {
     func trackingLost() {
         guard running else { return }
         tracker=BearingTracker(); accumulator.reset()
-        if calibrator.active { calibrator.cancel("AR 추적이 중단되어 보정을 취소했습니다. 중앙 정렬부터 다시 시작하세요.") }
+        audioSynchronizer.clear()
+        if calibrator.active {
+            report.calibrationBeforeStop=calibrator.snapshot()
+            calibrator.cancel("AR 추적이 중단되어 보정을 취소했습니다. 중앙 정렬부터 다시 시작하세요.")
+        }
         report.bearing=nil; report.solution=nil; report.latestPose=nil; report.trackingAvailable=false
         report.sound=nil
         report.calibration=calibrator.snapshot(); report.state="trackingLost"
     }
-    func accept(features: AcousticFeatures?, spectrum: SoundSpectrum?, pose: SpatialPose?, midpoint: Double) {
+    func enqueue(features: AcousticFeatures?, spectrum: SoundSpectrum?, midpoint: Double, duration: Double) {
+        guard running else { return }
+        report.synchronization.receivedFrames+=1
+        audioSynchronizer.append(.init(features: features,spectrum: spectrum,midpoint: midpoint,duration: duration),
+            at: ProcessInfo.processInfo.systemUptime)
+        flushAudio()
+    }
+    private func flushAudio() {
+        let now=ProcessInfo.processInfo.systemUptime
+        let provider=poseProvider
+        let deliveries=audioSynchronizer.drain(at: now) { midpoint,duration,now in
+            provider?(midpoint,duration,now) ?? .init(issue: .poseProviderUnavailable)
+        }
+        report.synchronization.pendingFrames=audioSynchronizer.pendingCount
+        report.synchronization.overflowFrames=audioSynchronizer.overflowCount
+        report.synchronization.latest=audioSynchronizer.latestInspection
+        for delivery in deliveries {
+            let result=delivery.inspection
+            if result.issue == .matched, let pose=result.pose, pose.valid {
+                report.synchronization.matchedFrames+=1
+                if delivery.waitedForCamera { report.synchronization.recoveredAfterWait+=1 }
+                accept(features: delivery.sample.features,spectrum: delivery.sample.spectrum,
+                    pose: pose,midpoint: delivery.sample.midpoint)
+            } else {
+                report.synchronization.rejectedByReason[result.issue.rawValue,default: 0]+=1
+                report.synchronization.lastRejection=result
+                report.rejectedFrames+=1; report.trackingAvailable=false
+                report.bearing=nil; report.solution=nil; report.latestPose=nil; report.sound=nil
+                tracker=BearingTracker()
+                if calibrator.active {
+                    calibrator.waitForPose(result.issue.instruction,at: now)
+                    report.calibration=calibrator.snapshot()
+                }
+            }
+        }
+    }
+    private func accept(features: AcousticFeatures?, spectrum: SoundSpectrum?, pose: SpatialPose, midpoint: Double) {
         guard running else { return }
         var next=report
         next.sound=nil
         defer { report=next }
         let now=ProcessInfo.processInfo.systemUptime
-        guard midpoint.isFinite, now-midpoint >= -0.06, now-midpoint<0.3, let pose else {
+        guard midpoint.isFinite, now-midpoint >= -0.06, now-midpoint<0.3 else {
             next.rejectedFrames+=1; next.bearing=nil; next.solution=nil; next.latestPose=nil
             tracker=BearingTracker()
             return
@@ -100,7 +158,10 @@ final class SpatialModel: ObservableObject {
     }
     func tick() {
         guard running else { return }
+        flushAudio()
         let now=ProcessInfo.processInfo.systemUptime
+        calibrator.tick(at: now)
+        report.calibration=calibrator.snapshot()
         if report.bearing != nil, now-lastAccepted>0.35 {
             tracker=BearingTracker(); report.bearing=nil; report.solution=nil; report.state="signalUnreliable"
             report.sound=nil
@@ -109,13 +170,38 @@ final class SpatialModel: ObservableObject {
     }
     func stop() {
         running=false; tracker=BearingTracker(); accumulator.reset()
-        if calibrator.active { calibrator.cancel("수음을 중지해 보정을 취소했습니다.") }
+        audioSynchronizer.clear(); report.synchronization.pendingFrames=0
+        if calibrator.active {
+            report.calibrationBeforeStop=calibrator.snapshot()
+            calibrator.cancel("수음을 중지해 보정을 취소했습니다.")
+        }
         report.calibration=calibrator.snapshot(); report.bearing=nil; report.solution=nil
         report.sound=nil
         report.latestPose=nil; report.trackingAvailable=false; report.state="stopped"
     }
 
     #if DEBUG
+    /// Real queue/calibrator integration with delayed or absent synthetic camera
+    /// timestamps. Unlike the heatmap fixture, this does not bypass synchronization.
+    func prepareSyntheticSynchronization(stalled: Bool) {
+        let start=ProcessInfo.processInfo.systemUptime
+        func pose(_ time: Double) -> SpatialPose {
+            .init(time: time,origin: .zero,right: .init(1,0,0),up: .init(0,1,0),forward: .init(0,0,-1))
+        }
+        var history=SpatialPoseHistory()
+        var cameraTime=start-0.3
+        poseProvider = { midpoint,duration,now in
+            if stalled {
+                return .init(issue: .cameraStale,audioAgeSeconds: now-midpoint,
+                    latestCameraAgeSeconds: now-start+1,cameraFrameCount: 1,trackingState: "normal")
+            }
+            while cameraTime+1/30.0<=now-0.13 {
+                cameraTime+=1/30.0; history.append(pose(cameraTime))
+            }
+            return history.inspect(midpoint: midpoint,duration: duration,now: now)
+        }
+        beginCalibration(pose: pose(start))
+    }
     /// UI fixture goes through the production profile fitter and estimator.
     /// Fake AR pose is never reachable in Release.
     func prepareSyntheticCalibration() {

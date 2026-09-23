@@ -52,6 +52,14 @@ struct CaptureDetailsView: View {
                     .accessibilityIdentifier("captureButton")
                     Text(model.report.status).font(.footnote)
                         .accessibilityIdentifier("captureStatus")
+                    if let before=model.report.spatial?.calibrationBeforeStop {
+                        Text("중지 전 보정: \(before.instruction)").font(.footnote)
+                            .accessibilityIdentifier("lastSpatialCalibration")
+                    }
+                    if let sync=model.report.spatial?.synchronization, sync.receivedFrames>0 {
+                        Text("소리·자세 연결 \(sync.matchedFrames) · 지연 후 연결 \(sync.recoveredAfterWait)")
+                            .font(.caption).accessibilityIdentifier("spatialSyncSummary")
+                    }
                     Text("오디오 알림 \(model.report.audioEvents.count) · 초기 재설정 \(model.report.startupEngineRestarts)")
                         .font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("audioEventCount")
                     if let display = model.report.waveformDisplay {
@@ -194,7 +202,9 @@ struct DirectionCalibrationView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text("방향 비교").font(.largeTitle.bold())
+                Text("입력 비교 · 상세 검사").font(.largeTitle.bold())
+                Text("소리 위치를 표시할 보정은 카메라 화면의 ‘소리 찾기 · 방향 보정’에서 진행하세요.")
+                    .font(.subheadline)
                 Text("소리 위치를 바꾸면 좌우 시간차도 반복해서 달라지는지 확인합니다.")
                     .foregroundStyle(.secondary)
                 if model.isSynthetic { Text("합성 테스트 · 실제 방향 교정 아님").foregroundStyle(.orange) }

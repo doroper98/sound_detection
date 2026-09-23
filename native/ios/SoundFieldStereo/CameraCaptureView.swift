@@ -118,7 +118,7 @@ struct CaptureView: View {
         ZStack {
             Color.black.ignoresSafeArea()
             if camera.usesSpatialCamera {
-                SpatialCameraPreview(session: camera.spatialCamera.session).ignoresSafeArea()
+                SpatialCameraPreview(controller: camera.spatialCamera).ignoresSafeArea()
             } else {
                 CameraPreview(session: camera.session).ignoresSafeArea()
             }
@@ -142,7 +142,7 @@ struct CaptureView: View {
                     }
                     Spacer()
                     Button { showCalibration = true } label: {
-                        Label("방향 비교", systemImage: "arrow.left.and.right")
+                        Label("입력 비교", systemImage: "arrow.left.and.right")
                             .font(.caption.bold()).padding(10)
                     }
                     .background(.black.opacity(0.55), in: Capsule())
@@ -202,7 +202,7 @@ struct CaptureView: View {
                             .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 12)
                     }.buttonStyle(.borderedProminent).tint(green).foregroundStyle(.black)
                         .accessibilityIdentifier("liveCaptureButton")
-                    Text("영상·원음 저장 없음 · 실험 열지도 · 빌드 8").font(.caption2).foregroundStyle(.secondary)
+                    Text("영상·원음 저장 없음 · 실험 열지도 · 빌드 9").font(.caption2).foregroundStyle(.secondary)
                 }
                 .padding(18)
                 .background(.black.opacity(0.78), in: RoundedRectangle(cornerRadius: 22))
@@ -235,8 +235,9 @@ struct CaptureView: View {
         .onChange(of: showCalibration) { _, _ in model.waveformDisplay.setVisible(!showDetails && !showCalibration && !showSpatialGuide) }
         .onChange(of: showSpatialGuide) { _, _ in model.waveformDisplay.setVisible(!showDetails && !showCalibration && !showSpatialGuide) }
         .onAppear {
-            model.spatialPoseProvider = { [weak camera] midpoint,duration in
-                camera?.spatialCamera.aligned(midpoint: midpoint,duration: duration)
+            model.spatial.poseProvider = { [weak camera] midpoint,duration,now in
+                camera?.spatialCamera.inspect(midpoint: midpoint,duration: duration,now: now)
+                    ?? .init(issue: .poseProviderUnavailable)
             }
             camera.onTrackingLost = { [weak model] in model?.spatial.trackingLost() }
             // Cleanup must not depend on SwiftUI rendering an intermediate

@@ -104,9 +104,9 @@ struct SpatialOverlay: View {
                         Text("화면 가운데 + 위에 스피커가 보이게 하세요.").font(.subheadline.bold()).multilineTextAlignment(.center)
                         Text("1m 이상 거리 · 같은 높이 · 소리는 고정").font(.caption)
                         Button("정렬 완료 · 보정 시작") {
-                            if let pose=camera.spatialCamera.latestPose { spatial.beginCalibration(pose: pose) }
+                            if let pose=camera.spatialCamera.calibrationPose { spatial.beginCalibration(pose: pose) }
                         }.buttonStyle(.borderedProminent).tint(tint).foregroundStyle(.black)
-                            .disabled(camera.spatialCamera.latestPose == nil)
+                            .disabled(camera.spatialCamera.calibrationPose == nil)
                             .accessibilityIdentifier("rotationAlignmentDone")
                         Button("취소") { spatial.cancelCalibration() }.font(.caption)
                     }.padding(16).background(.black.opacity(0.8),in: RoundedRectangle(cornerRadius: 16))
@@ -236,7 +236,7 @@ struct SpatialGuide: View {
                     model.cancelCalibrationTrial(); model.spatial.prepareAlignment(); dismiss()
                 }
                 .buttonStyle(.borderedProminent).frame(maxWidth: .infinity)
-                .disabled(model.phase != .running || model.source != "back" || camera.spatialCamera.latestPose == nil)
+                .disabled(model.phase != .running || model.source != "back" || camera.spatialCamera.calibrationPose == nil)
                 .accessibilityIdentifier("rotationCalibrationStart")
                 if model.phase != .running { Text("먼저 후면 카메라·수음을 시작하세요.").font(.caption) }
                 Button("위치 관측 초기화") { model.spatial.resetMap(); dismiss() }.buttonStyle(.bordered)

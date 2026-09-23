@@ -89,3 +89,9 @@ flowchart LR
 ## 보안 경계
 
 정적 클라이언트 앱이며 서버 저장·API 호출이 없다. Cloudflare 인증은 CLI 또는 GitHub Actions secrets에만 둔다. 브라우저에는 시크릿을 제공하지 않는다. `public/_headers`에서 CSP, iframe 차단, MIME 보호, 동일 origin의 카메라/마이크만 허용한다. 실제 브라우저 권한 동의가 별도로 필요하다. 폰트와 Worklet은 앱과 같은 사이트에서 제공한다.
+
+## 빌드 9 소리·AR 연결
+
+`SpatialAudioSynchronizer`는 PCM 대신 특징·스펙트럼·원래 버퍼 시각 최대 4개만 보관한다. 카메라 도착이 늦으면 최대 180ms 재검사하고, 300ms 음향 신선도 내에서 기존 공간 시각/움직임 검사를 통과한 동일 시점 자세만 사용한다. `SpatialPoseHistory.inspect`는 무효 시각, 오래된 음향, 카메라 중단/추적 불량/갱신 중단/누락/시각 불일치/버퍼 내 움직임을 구분한다. SpatialModel은 100ms 타이머와 새 음향 도착 때 큐를 처리하고 중지·새 보정·AR 중단 때 대기 요약을 폐기한다.
+
+ARSession은 SpatialCameraController만 시작/중지한다. 미리보기 분해 시 shared session을 pause하지 않는다. AR delegate의 frame과 session.currentFrame은 동일 timestamp를 보존하며, 최신 이미지나 현재 자세로 과거 소리 시각을 바꾸지 않는다. 센서 이미지/원음의 새 저장은 없다. 앱 JSON schema 9는 연결 사유 통계와 중지 전 보정 상태를 보존한다.

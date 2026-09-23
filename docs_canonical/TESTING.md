@@ -210,3 +210,7 @@ WebKit의 미지원 처리 재현: `npx playwright install webkit` 후 PowerShel
 - 이 브라우저·경로에서는 실효 1채널(모노) PCM만 얻는다. 방향 추정에 필요한 다채널 입력은 확보되지 않았다.
 - 레벨은 디지털 dBFS이며 조용한 환경의 값이다. 낮은 레벨은 마이크 고장의 증거가 아니다. 손뼉 등 큰 소리를 냈는지는 보고서에 남지 않는다.
 - Safari 앱, 카메라 끈 상태, 권한 거절, 화면 회전, 잠금 후 복귀는 이 보고서에 포함되지 않았다. 한 기기·한 브라우저·한 회의 결과다.
+
+## 빌드 9 첫 단계 정지 회귀
+
+`SpatialSynchronizationTests`는 늦은 실제 시각의 합성 카메라 프레임이 첫 보정 단계를 통과하는지, 영구 누락/오래된 시각/빠른 이동 거부, 대기 큐 한계·세션 폐기, 잘못된 큰 안내를 검사한다. iOS UI는 `--synthetic-pose-delay` 및 `--synthetic-pose-stalled`로 실제 SpatialModel 큐·calibrator 경로를 구동한다. 열지도용 완성 프로필 fixture를 쓰지 않는다. DEBUG 밖에서는 해당 입력 경로가 없다. Mac CI 결과 대기이며 실제 기기 해결을 뜻하지 않는다.

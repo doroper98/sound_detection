@@ -105,10 +105,12 @@ public struct RotationCalibrationState: Codable, Sendable {
     public let completedSamples: Int
     public let profile: BearingProfile?
     public let diagnostics: RotationFitDiagnostics?
+    public let blockingReason: String?
 
     public var movementInstruction: String {
         guard phase == "collecting" else { return instruction }
-        guard let current = currentDegrees else { return "폰을 잠시 멈춰 주세요" }
+        if let blockingReason, blockingReason != "angle" { return instruction }
+        guard let current = currentDegrees else { return "소리와 카메라 자세 연결 대기 중" }
         let phoneTurn = current - targetDegrees
         if abs(phoneTurn) <= 3 { return "그대로 멈추세요 · 다음 단계까지 약 3초" }
         return phoneTurn > 0 ? "→ 폰이 오른쪽을 보도록 돌리세요" : "← 폰이 왼쪽을 보도록 돌리세요"
@@ -124,6 +126,7 @@ public struct RotationCalibrator {
     private var group: [RotationCalibrationSample]=[]
     private var groups: [[RotationCalibrationSample]]=[]
     private var diagnostics: RotationFitDiagnostics?
+    private var blockingReason: String?
     private var phase="idle"
     private var message="고정된 소리 하나를 화면 중앙에 맞춘 뒤 보정을 시작하세요."
     public private(set) var profile: BearingProfile?
@@ -132,25 +135,36 @@ public struct RotationCalibrator {
     public mutating func begin(pose: SpatialPose) {
         guard pose.valid else { return }
         self=Self(); reference=pose; startedAt=pose.time; phase="collecting"
-        message="폰 위치를 유지하고 안내 각도에서 잠시 멈추세요."
+        blockingReason="waitingForPose"
+        message="소리와 카메라 자세 연결 대기 중"
     }
     public mutating func cancel(_ reason: String) { phase="idle"; group=[]; message=reason; profile=nil }
+    public mutating func waitForPose(_ reason: String, at now: Double) {
+        guard active else { return }
+        group=[]; blockingReason="poseUnavailable"; message=reason
+        tick(at: now)
+    }
+    public mutating func tick(at now: Double) {
+        guard active, now.isFinite else { return }
+        if now-startedAt>=180 { cancel("보정 시간이 초과됐습니다. 진단 JSON을 공유해 주세요.") }
+    }
     public mutating func append(features: AcousticFeatures?, pose: SpatialPose) {
         guard active, let reference, pose.valid else { return }
+        blockingReason=nil
         currentAngle=pose.bearing(of: reference.forward)
         guard pose.time-startedAt<180 else { cancel("보정 시간이 초과됐습니다. 다시 시작하세요."); return }
         guard (pose.origin-reference.origin).length<=0.04 else {
-            group=[]; message="폰 위치가 움직였습니다. 처음 위치로 돌아오거나 보정을 다시 시작하세요."; return
+            group=[]; blockingReason="translation"; message="폰 위치가 움직였습니다. 처음 위치로 돌아오거나 보정을 다시 시작하세요."; return
         }
         guard abs(pose.elevation(of: reference.forward))<6, pose.up.angle(to: reference.up)<8 else {
-            group=[]; message="보정 중에는 폰을 세로로 유지하고 좌우로만 돌리세요."; return
+            group=[]; blockingReason="tilt"; message="보정 중에는 폰을 세로로 유지하고 좌우로만 돌리세요."; return
         }
         guard let f=features, f.valid, f.levelDbfs > -60 else {
-            group=[]; message="광대역 소리를 일정하게 내주세요. 소리가 약하거나 분석 조건이 부족합니다."; return
+            group=[]; blockingReason="audio"; message="광대역 소리를 일정하게 내주세요. 소리가 약하거나 분석 조건이 부족합니다."; return
         }
         let angle=currentAngle!
         guard abs(angle-Self.targets[step])<=3 else {
-            group=[]; message="표시된 소리 각도에 맞춰 폰을 좌우로 돌린 뒤 멈추세요."; return
+            group=[]; blockingReason="angle"; message="표시된 소리 각도에 맞춰 폰을 좌우로 돌린 뒤 멈추세요."; return
         }
         if let last=group.last {
             guard pose.time>last.time else { return }
@@ -172,7 +186,7 @@ public struct RotationCalibrator {
         .init(phase: phase, step: step, targetDegrees: Self.targets[min(step,5)], currentDegrees: currentAngle,
             progress: phase == "ready" || phase == "rejected" ? 1 : min(Double(group.count)/20,
                 min(1, max(0, (group.last?.time ?? 0)-(group.first?.time ?? 0))/2.4)), instruction: message,
-            completedSamples: groups.reduce(0) { $0+$1.count }, profile: profile, diagnostics: diagnostics)
+            completedSamples: groups.reduce(0) { $0+$1.count }, profile: profile, diagnostics: diagnostics, blockingReason: blockingReason)
     }
     /// Repeated labeled rotations cross-check sign, response slope and residual.
     /// Labels are measured relative poses after user's central alignment, not

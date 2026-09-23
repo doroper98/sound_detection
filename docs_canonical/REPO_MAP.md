@@ -44,3 +44,7 @@
 | docs_bp/README.md | 원본 BP 출처와 적용 방식 |
 
 런타임 데이터는 브라우저 메모리에만 있다. 내보내기는 사용자의 기본 다운로드 경로에 JSON을 만든다. dist/는 정적 빌드, version.json은 package 버전을 노출한다. .local/은 로컬 실행/스크린샷/배포 보조 도구용이며 Git에서 제외한다. .wrangler/와 환경 파일도 제외한다.
+
+- `native/ios/Packages/StereoCore/Sources/StereoCore/SpatialAudioSynchronization.swift`: 제한된 특징 요약 큐, AR 대응 사유와 시각 진단.
+- `native/ios/Packages/StereoCore/Tests/StereoCoreTests/SpatialSynchronizationTests.swift`: 늦은 프레임 회복·정지·시각·대기 한계 회귀.
+- `docs/reports/2026-09-23-iphone17pro-build8-stalled-analysis.json`: 사용자가 제공한 실측의 선택 필드와 해석, 원본 전체의 대체물이 아님.

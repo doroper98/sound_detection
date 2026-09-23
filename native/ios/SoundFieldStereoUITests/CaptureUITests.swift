@@ -1,15 +1,50 @@
 import XCTest
 
 final class CaptureUITests: XCTestCase {
+    func testHeatIslandShowsMeasuredFrequencyAndLevelForLoudAndQuietInput() {
+        for quiet in [false,true] {
+            let extra=["--synthetic-bearing","--synthetic-position","--synthetic-heat-tone"]
+                + (quiet ? ["--synthetic-heat-quiet"] : [])
+            let app=launch(extra,details: false)
+            app.buttons["liveCaptureButton"].tap()
+            let frequency=app.staticTexts["soundHeatFrequency"]
+            expectation(for: NSPredicate(format: "label == %@","주파수 ≈ 1.0 kHz"),evaluatedWith: frequency)
+            let level=app.staticTexts["soundHeatLevel"]
+            expectation(for: NSPredicate(format: "label == %@",quiet ? "입력 -57 dBFS" : "입력 -23 dBFS"),evaluatedWith: level)
+            waitForExpectations(timeout: 30)
+            XCTAssertTrue(app.frame.contains(frequency.frame))
+            XCTAssertTrue(app.staticTexts["soundPositionCandidate"].exists)
+            XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "soundHeatLegend").firstMatch.exists)
+            let screen=XCTAttachment(screenshot: app.screenshot())
+            screen.name=quiet ? "native-build7-heat-quiet" : "native-build7-heat-tone"
+            screen.lifetime = .keepAlways; add(screen)
+            app.buttons["liveCaptureButton"].tap()
+            XCTAssertFalse(frequency.exists)
+            XCTAssertFalse(level.exists)
+            app.terminate()
+        }
+    }
+    func testHeatFrequencyAndRegionClearWhenAudioBecomesStale() {
+        let app=launch(["--synthetic-bearing","--synthetic-position","--synthetic-heat-tone","--synthetic-waveform-stale"],details: false)
+        app.buttons["liveCaptureButton"].tap()
+        let frequency=app.staticTexts["soundHeatFrequency"]
+        XCTAssertTrue(frequency.waitForExistence(timeout: 5))
+        expectation(for: NSPredicate(format: "exists == false"),evaluatedWith: frequency)
+        waitForExpectations(timeout: 6)
+        XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
+        XCTAssertEqual(app.buttons["liveCaptureButton"].label,"계측 중지")
+    }
     func testIndependentPoseFixtureProjectsCandidateAndClearsInBackground() {
         let app=launch(["--synthetic-bearing","--synthetic-position"],details: false)
         app.buttons["liveCaptureButton"].tap()
         XCTAssertTrue(app.staticTexts["soundPositionCandidate"].waitForExistence(timeout: 30))
         XCTAssertTrue(app.staticTexts["soundPositionCandidate"].label.contains("위치 후보"))
+        XCTAssertTrue(app.staticTexts["soundHeatFrequency"].label.hasPrefix("대역"))
         let screen=XCTAttachment(screenshot: app.screenshot())
-        screen.name="native-build6-position-synthetic"; screen.lifetime = .keepAlways; add(screen)
+        screen.name="native-build7-position-synthetic"; screen.lifetime = .keepAlways; add(screen)
         XCUIDevice.shared.press(.home); app.activate()
         XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
+        XCTAssertFalse(app.staticTexts["soundHeatFrequency"].exists)
         XCTAssertEqual(app.buttons["liveCaptureButton"].label,"카메라·수음 시작")
     }
     func testBearingOverlayUsesEmpiricalProfileAndClearsOnStop() {
@@ -20,7 +55,7 @@ final class CaptureUITests: XCTestCase {
         waitForExpectations(timeout: 30)
         XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
         let screen=XCTAttachment(screenshot: app.screenshot())
-        screen.name="native-build6-bearing-synthetic"; screen.lifetime = .keepAlways; add(screen)
+        screen.name="native-build7-bearing-synthetic"; screen.lifetime = .keepAlways; add(screen)
         app.buttons["liveCaptureButton"].tap()
         XCTAssertTrue(status.label.contains("소리 방향·위치 찾기"))
         XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "soundBearingBand").firstMatch.exists)
@@ -40,7 +75,7 @@ final class CaptureUITests: XCTestCase {
         reveal(start,in: app)
         XCTAssertFalse(start.isEnabled) // Simulator cannot impersonate a physical AR camera.
         let screen=XCTAttachment(screenshot: app.screenshot())
-        screen.name="native-build6-guide-synthetic"; screen.lifetime = .keepAlways; add(screen)
+        screen.name="native-build7-guide-synthetic"; screen.lifetime = .keepAlways; add(screen)
     }
     private func awaitLivePCM(_ app: XCUIApplication) {
         // Startup/lifecycle readiness means a real analysis arrived. A rolling

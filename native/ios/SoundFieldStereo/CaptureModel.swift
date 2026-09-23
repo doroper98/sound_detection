@@ -17,6 +17,7 @@ struct FrameReading: Codable {
     let analyzedTimelineGaps: Int
     let analysis: StereoAnalysis
     var acousticFeatures: AcousticFeatures? = nil
+    var soundSpectrum: SoundSpectrum? = nil
 }
 
 struct MarkedReading: Codable, Identifiable {
@@ -59,8 +60,8 @@ struct AudioRouteInspection: Encodable {
 }
 
 struct NativeReport: Encodable {
-    var schemaVersion = 6
-    var appVersion = "0.4.0-native-spatial-build6"
+    var schemaVersion = 7
+    var appVersion = "0.4.0-native-heatmap-build7"
     var inputOrigin = "AVAudioEngine.inputNode"
     var operatingSystem = UIDevice.current.systemVersion
     var startedAt: Date?
@@ -240,7 +241,8 @@ private final class TapPipeline: @unchecked Sendable {
                 lock.lock(); let skippedCount = skipped; lock.unlock()
                 finish(.success(FrameReading(sequence: sequence, sampleTime: sampleTime, hostTime: hostTime,
                     skippedBuffers: skippedCount, analyzedTimelineGaps: gaps, analysis: analysis,
-                    acousticFeatures: AcousticFeatures.measure(left: left,right: right,analysis: analysis))))
+                    acousticFeatures: AcousticFeatures.measure(left: left,right: right,analysis: analysis),
+                    soundSpectrum: SoundSpectrumAnalyzer.measure(left: left,right: right,sampleRate: sampleRate))))
             } catch { finish(.failure(error)) }
         }
     }
@@ -675,10 +677,11 @@ final class CaptureModel: ObservableObject {
             if isSynthetic && ProcessInfo.processInfo.arguments.contains("--synthetic-bearing") {
                 fixture = true
                 spatial.acceptSyntheticDisplay(at: ProcessInfo.processInfo.systemUptime,
-                    silent: reading.acousticFeatures == nil)
+                    silent: reading.acousticFeatures == nil,spectrum: reading.soundSpectrum)
             }
             #endif
-            if !fixture { spatial.accept(features: reading.acousticFeatures,pose: spatialPoseProvider?(midpoint,duration),midpoint: midpoint) }
+            if !fixture { spatial.accept(features: reading.acousticFeatures,spectrum: reading.soundSpectrum,
+                pose: spatialPoseProvider?(midpoint,duration),midpoint: midpoint) }
         }
         updated.spatial = spatial.report
         updated.positionTrackingEnabled = spatial.report.trackingAvailable
@@ -838,11 +841,17 @@ final class CaptureModel: ObservableObject {
         report.selectedSource = "합성 테스트"
         syntheticPCMEnabled = !ProcessInfo.processInfo.arguments.contains("--synthetic-startup-override")
         var state: UInt64 = 7
-        let left: [Float] = (0..<4800).map { _ in
+        var left: [Float] = (0..<4800).map { _ in
             state = state &* 6364136223846793005 &+ 1
             return Float(Double(state >> 33) / Double(UInt32.max) - 0.25)
         }
         let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--synthetic-heat-tone") {
+            let gain=arguments.contains("--synthetic-heat-quiet") ? 0.02 : 1.0
+            left=left.enumerated().map { i,noise in
+                Float(gain*(Double(noise)*0.08+0.1*sin(2 * .pi*1000*Double(i)/48000)))
+            }
+        }
         let right: [Float] = arguments.contains("--synthetic-silent-right")
             ? [Float](repeating: 0, count: left.count)
             : (0..<4800).map { $0 >= 7 ? left[$0 - 7] : 0 }

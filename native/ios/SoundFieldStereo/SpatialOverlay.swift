@@ -1,6 +1,28 @@
 import SwiftUI
 import StereoCore
 
+private enum HeatPalette {
+    static let colors: [Color] = [.blue,.cyan,.green,.yellow,.orange,.red]
+    static func color(_ value: Double, opacity: Double) -> Color {
+        Color(hue: (1-min(1,max(0,value)))*0.66,saturation: 0.95,brightness: 1).opacity(opacity)
+    }
+    static func radial(_ dbfs: Double) -> [Gradient.Stop] {
+        let level=SoundHeatLevel.normalized(dbfs)
+        return (0...16).map { i in
+            let radius=Double(i)/16, weight=i==16 ? 0 : exp(-3.5*radius*radius)
+            return .init(color: color(level*weight,opacity: weight*(0.4+0.4*level)),location: radius)
+        }
+    }
+    static func band(_ dbfs: Double) -> [Gradient.Stop] {
+        let level=SoundHeatLevel.normalized(dbfs)
+        return (0...32).map { i in
+            let x=Double(i)/32, radius=abs(x-0.5)*2
+            let weight=(i==0 || i==32) ? 0 : exp(-3.5*radius*radius)
+            return .init(color: color(level*weight,opacity: weight*(0.4+0.4*level)),location: x)
+        }
+    }
+}
+
 struct SpatialOverlay: View {
     @ObservedObject var spatial: SpatialModel
     @ObservedObject var camera: CameraModel
@@ -19,27 +41,31 @@ struct SpatialOverlay: View {
                         .accessibilityLabel("소리 정렬용 카메라 중앙 기준점")
                         .accessibilityIdentifier("cameraAlignmentReticle")
                 }
-                if let bearing=data.bearing {
+                if let bearing=data.bearing, data.solution?.estimate == nil, let sound=data.sound {
                     let range=band(bearing,size: size)
                     if let range {
                         Rectangle()
-                            .fill(LinearGradient(colors: [.clear,tint.opacity(0.32),.clear],startPoint: .leading,endPoint: .trailing))
-                            .frame(width: max(24,range.1-range.0),height: size.height*0.55)
-                            .position(x: (range.0+range.1)/2,y: size.height*0.43)
-                            .accessibilityLabel("실험적 수평 소리 방향 범위")
+                            .fill(LinearGradient(stops: HeatPalette.band(sound.levelDbfs),startPoint: .leading,endPoint: .trailing))
+                            .frame(width: max(36,range.1-range.0),height: size.height)
+                            .position(x: (range.0+range.1)/2,y: size.height/2)
+                            .accessibilityLabel("수평 방향 열지도 · 높이 미정")
                             .accessibilityIdentifier("soundBearingBand")
+                        frequencyTag(sound)
+                            .position(x: min(max((range.0+range.1)/2,100),size.width-100),y: size.height*0.56)
                     }
                 }
                 if let estimate=data.solution?.estimate,
                    let p=project(estimate.point,size: size),
-                   let pose=data.latestPose {
+                   let pose=data.latestPose, let sound=data.sound {
                     if (20...size.width-20).contains(p.x) && (110...size.height-260).contains(p.y) {
                         let edge=project(estimate.point+pose.right*estimate.uncertaintyRadiusMeters,size: size)
-                        let radius=min(90,max(24,abs((edge?.x ?? p.x+35)-p.x)))
+                        let radius=min(120,max(64,abs((edge?.x ?? p.x+64)-p.x)))
                         ZStack {
-                            Circle().fill(tint.opacity(0.15))
-                            Circle().stroke(tint,style: StrokeStyle(lineWidth: 2,dash: [5,4]))
-                            Image(systemName: "waveform").font(.title2.bold()).foregroundStyle(tint)
+                            Circle().fill(RadialGradient(stops: HeatPalette.radial(sound.levelDbfs),
+                                center: .center,startRadius: 0,endRadius: radius))
+                                .accessibilityLabel("소리 위치 후보 열섬")
+                                .accessibilityIdentifier("soundHeatIsland")
+                            frequencyTag(sound)
                         }.frame(width: radius*2,height: radius*2).position(p)
                         Text(String(format: "위치 후보 · 약 %.1fm",(estimate.point-pose.origin).length))
                             .font(.caption.bold()).padding(8).background(.black.opacity(0.8),in: Capsule())
@@ -66,7 +92,7 @@ struct SpatialOverlay: View {
                     }.padding(16).background(.black.opacity(0.8),in: RoundedRectangle(cornerRadius: 16))
                         .frame(maxWidth: size.width-40).position(x: size.width/2,y: size.height*0.34)
                 } else if data.solution?.estimate != nil {
-                    Text("실험적 위치 후보 · 계산상 민감도 범위")
+                    Text("실험적 위치 열지도 · 한 소리 추정")
                         .font(.caption.bold()).padding(10).background(.black.opacity(0.65),in: Capsule())
                         .position(x: size.width/2,y: size.height*0.25)
                         .accessibilityIdentifier("spatialStatus")
@@ -82,9 +108,31 @@ struct SpatialOverlay: View {
                     .frame(maxWidth: size.width-48)
                     .position(x: size.width/2,y: size.height*0.32)
                 }
+                if data.bearing != nil, data.sound != nil {
+                    VStack(spacing: 4) {
+                        HStack(spacing: 7) {
+                            Text("약함 −65")
+                            LinearGradient(colors: HeatPalette.colors,startPoint: .leading,endPoint: .trailing)
+                                .frame(width: 90,height: 5).clipShape(Capsule())
+                            Text("−15 강함 · dBFS")
+                        }
+                        Text("색: 입력 크기 · 영역: 추정 범위")
+                    }.font(.system(size: 10)).padding(9).background(.black.opacity(0.7),in: RoundedRectangle(cornerRadius: 10))
+                        .position(x: size.width/2,y: size.height-285)
+                        .accessibilityElement(children: .combine).accessibilityIdentifier("soundHeatLegend")
+                }
             }.frame(width: size.width,height: size.height)
         }
         .allowsHitTesting(data.calibration.phase=="collecting" || data.state=="alignSource")
+    }
+    private func frequencyTag(_ sound: SoundSpectrum) -> some View {
+        VStack(spacing: 3) {
+            Text(sound.frequencyLabel).font(.system(size: 11,weight: .semibold,design: .rounded))
+                .accessibilityIdentifier("soundHeatFrequency")
+            Text(String(format: "입력 %.0f dBFS",sound.levelDbfs)).font(.system(size: 10).monospacedDigit())
+                .foregroundStyle(.white.opacity(0.85)).accessibilityIdentifier("soundHeatLevel")
+        }.foregroundStyle(.white).padding(.horizontal,8).padding(.vertical,6)
+            .background(.black.opacity(0.6),in: RoundedRectangle(cornerRadius: 7)).fixedSize()
     }
     private var calibrationCard: some View {
         VStack(spacing: 10) {
@@ -115,11 +163,11 @@ struct SpatialOverlay: View {
             return "고정된 한 소리 · 먼저 보정, 이후 이동 관측"
         }
         switch data.solution?.state {
-        case "candidate": return "실험적 위치 후보 · 원은 계산상 민감도 범위"
+        case "candidate": return "실험적 위치 열섬 · 강도와 주파수는 현재 입력 기준"
         case "needTranslation": return "거리를 좁히려면 폰을 옆으로 30cm 이상 옮기세요."
         case "needTiltOrParallax": return "높이를 좁히려면 이동 후 폰을 조금 기울여 관측하세요."
         case "inconsistent","uncertain","outOfRange": return "위치가 일치하지 않아 방향 범위만 표시합니다."
-        default: return "세로 띠는 수평 방향 범위 · 높이·거리 미정\n옆으로 이동하고 조금 기울린 뒤 잠시 멈추세요."
+        default: return "열지도는 수평 방향 범위 · 높이·거리 미정\n옆으로 이동하고 조금 기울린 뒤 잠시 멈추세요."
         }
     }
     private func band(_ b: BearingEstimate, size: CGSize) -> (CGFloat,CGFloat)? {
@@ -158,15 +206,17 @@ struct SpatialGuide: View {
         ScrollView {
             VStack(alignment: .leading,spacing: 20) {
                 Text("소리 방향·위치 찾기").font(.largeTitle.bold())
-                Text("빌드 5 검사는 생략해도 됩니다. 여기서 보정과 위치 표시를 이어서 진행합니다.").foregroundStyle(.secondary)
+                Text("카메라 위 열지도에서 방향·위치 후보와 입력 주파수를 확인합니다.").foregroundStyle(.secondary)
                 Group {
                     Text("1. 고정된 소리 하나 준비").font(.headline)
                     Text("조용하고 밝은 곳에서 한 스피커로 일정한 광대역 소리(잡음 등)를 재생하세요. 여러 스피커·음악·기침처럼 계속 달라지는 소리는 피하세요. 폰에서 1m 이상 떨어진 소리를 후면 카메라 중앙, 같은 높이에 맞추세요.")
                     Text("2. 화면 안내대로 좌우 회전").font(.headline)
                     Text("아래 버튼을 누른 뒤 폰 위치를 최대한 고정하고 좌우로만 돌리세요. 화면의 소리 각도가 목표 0°·−25°·+25°에 맞으면 2.5초 정도 멈춥니다. 두 번 반복하며 자동으로 수집합니다. 원음이나 영상은 저장하지 않습니다.")
                     Text("3. 카메라 위 방향 → 위치 후보").font(.headline)
-                    Text("보정이 통과하면 초록 띠로 수평 방향을 표시합니다. 같은 소리는 고정해 두고 폰을 옆으로 30~80cm 옮기며 여러 번 멈추세요. 높이도 좁히려면 폰을 조금 좌우로 기울여 다른 자세에서 관측하세요. 조건이 충분하면 원과 대략적인 거리가 나타납니다.")
-                    Text("띠는 높이를 정하지 않습니다. 위치 원과 거리는 실험적 후보이며 정확도는 아직 실기기에서 검증되지 않았습니다. 반사·여러 소리·움직이는 소리에서는 보류될 수 있습니다.").font(.footnote).foregroundStyle(.secondary)
+                    Text("보정이 통과하면 세로 열지도로 수평 방향을 표시합니다. 같은 소리는 고정해 두고 폰을 옆으로 30~80cm 옮기며 여러 번 멈추세요. 높이도 좁히려면 폰을 조금 좌우로 기울여 다른 자세에서 관측하세요. 조건이 충분하면 위치 주변의 열섬과 대략적인 거리가 나타납니다.")
+                    Text("4. 색과 작은 주파수 읽기").font(.headline)
+                    Text("파랑→청록→노랑→빨강은 폰에서 받은 입력이 약함→강함을 뜻합니다. 열섬 안에 대표 주파수(Hz/kHz)와 입력 크기(dBFS)를 작게 표시합니다. 뚜렷한 주파수가 없는 잡음은 분석 대역 에너지의 가운데 80% 구간을 표시합니다. 색은 고정 −65~−15 dBFS 척도이며 소음계 dB SPL이 아닙니다.")
+                    Text("세로 열지도는 높이를 정하지 않습니다. 열섬의 모양은 추정 영역을 부드럽게 강조한 표시이며 물체 크기나 실제 음압 분포가 아닙니다. 주파수는 현재 입력 전체 기준이며 여러 음원을 분리한 값이 아닙니다. 위치·거리 정확도는 실기기 미검증이고 반사·여러 소리·움직이는 소리에서는 보류될 수 있습니다.").font(.footnote).foregroundStyle(.secondary)
                 }
                 Text(camera.trackingStatus).font(.caption).accessibilityIdentifier("spatialTrackingStatus")
                 Button("카메라로 중앙 정렬") {

@@ -1,5 +1,9 @@
 # 아키텍처
 
+빌드 7은 `SoundSpectrumAnalyzer`가 동일 PCM 버퍼 가운데 최대 4096샘플의 좌우 FFT power를 평균해 주파수/대역과 DC 제거 RMS dBFS를 계산한다. PCM 합산을 피하므로 역상에서도 스펙트럼이 상쇄되지 않는다. 공간 계산과 별도인 `SpatialReport.sound`는 유효한 현재 방향과 함께만 표시하며 실패/중지/오래된 자료에서 제거한다. `SpatialOverlay`는 고정 −65~−15 dBFS 색상과 공간 추정 영역의 부드러운 감쇠를 결합한다. 3D 후보는 방사형 열섬, 높이 미정은 세로 열지도다. 크기는 시인성을 위해 64~120pt로 제한되므로 음압장/신뢰구간/SPL로 해석하지 않는다. 대표 주파수는 80Hz~min(16kHz,Nyquist)의 가장 강한 peak 주변 3bin 합이 대역 power 12% 이상일 때만 표시하고 나머지는 10~90% 에너지 대역이다. 주파수는 현재 입력 전체이며 음원별 분리 결과가 아니다.
+
+구현 참고: [Apple RadialGradient](https://developer.apple.com/documentation/swiftui/radialgradient), [MathWorks periodogram/Hann](https://www.mathworks.com/help/signal/ref/periodogram.html). Swift 순수 FFT는 별도 단위 테스트로 주파수·레벨·역상을 검증한다.
+
 빌드 6은 후면에서 `ARWorldTrackingConfiguration(providesAudioData=false)`와 ARSCNView로 영상/기기 자세를 얻으며 기존 AVCaptureSession을 동시에 실행하지 않는다. `[ARCamera.viewMatrix(for: .portrait)]⁻¹`의 축으로 화면 오른쪽/위/전방을 정의한다. AR 시각을 오디오 버퍼 중간 host 시각과 최대 60ms 안에서 맞추고 버퍼 전후 2.5cm/3° 이상 움직이면 관측을 거부한다. 추적 손실과 세션 재시작은 위치 누적을 지운다.
 
 `AcousticFeatures`는 실제 동일 PCM의 레벨 차이·유효한 신호 지연·대략적인 세 대역 에너지 비율을 만든다. 이는 소리 일치 검사이며 음원 인식이 아니다. `RotationCalibrator`는 중앙 정렬을 사용자가 선언한 고정 소리를 제자리 회전하여 6개 구간에서 측정하고, 레벨/지연의 각도 응답을 반복 검증한다. ±25° 보정 구간을 벗어난 응답·상반된 특성·대역 비율 변화·약한 신호를 거부한다. `BearingTracker`는 표시만 평활화하고 공간 계산에는 각 버퍼의 원래 추정과 대응 자세를 사용한다.

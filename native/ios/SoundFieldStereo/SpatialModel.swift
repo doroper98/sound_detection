@@ -9,11 +9,13 @@ struct SpatialReport: Encodable {
     var lastCandidate: SpatialEstimate?
     var lastBearing: BearingEstimate?
     var latestPose: SpatialPose?
+    var sound: SoundSpectrum?
     var acceptedFrames=0
     var rejectedFrames=0
     var trackingAvailable=false
     let coordinateSystem="ARKit session-local meters; portrait view right/up/forward. No saved world map."
     let assumption="One stationary broadband source in front, same source/room as calibration. Experimental empirical bearing/plane intersection; physical accuracy unverified."
+    let heatmapMeaning="Estimated region weighted by current receiver dBFS (-65 to -15 fixed scale), not spatial SPL. Frequency is current stereo input, not separated sources."
 }
 
 @MainActor
@@ -36,6 +38,7 @@ final class SpatialModel: ObservableObject {
         tracker=BearingTracker(); accumulator.reset()
         calibrator.begin(pose: pose)
         report.lastBearing=nil; report.lastCandidate=nil
+        report.sound=nil
         report.bearing=nil; report.solution=nil; report.calibration=calibrator.snapshot(); report.state="calibrating"
     }
     func prepareAlignment() {
@@ -44,6 +47,7 @@ final class SpatialModel: ObservableObject {
         report.state="alignSource"
     }
     func cancelCalibration() {
+        report.sound=nil
         calibrator.cancel("보정을 취소했습니다. 소리를 중앙에 맞추고 다시 시작하세요.")
         tracker=BearingTracker(); accumulator.reset()
         report.bearing=nil; report.solution=nil; report.calibration=calibrator.snapshot(); report.state="needsCalibration"
@@ -56,11 +60,13 @@ final class SpatialModel: ObservableObject {
         tracker=BearingTracker(); accumulator.reset()
         if calibrator.active { calibrator.cancel("AR 추적이 중단되어 보정을 취소했습니다. 중앙 정렬부터 다시 시작하세요.") }
         report.bearing=nil; report.solution=nil; report.latestPose=nil; report.trackingAvailable=false
+        report.sound=nil
         report.calibration=calibrator.snapshot(); report.state="trackingLost"
     }
-    func accept(features: AcousticFeatures?, pose: SpatialPose?, midpoint: Double) {
+    func accept(features: AcousticFeatures?, spectrum: SoundSpectrum?, pose: SpatialPose?, midpoint: Double) {
         guard running else { return }
         var next=report
+        next.sound=nil
         defer { report=next }
         let now=ProcessInfo.processInfo.systemUptime
         guard midpoint.isFinite, now-midpoint >= -0.06, now-midpoint<0.3, let pose else {
@@ -82,6 +88,7 @@ final class SpatialModel: ObservableObject {
             next.rejectedFrames+=1; next.bearing=nil; next.solution=nil; next.state="signalUnreliable"; return
         }
         lastAccepted=midpoint; next.acceptedFrames+=1; next.bearing=bearing
+        next.sound=spectrum
         next.lastBearing=bearing
         // Use this buffer's bearing with this buffer's pose. The smoothed display
         // value must never be paired with a different pose for geometry.
@@ -96,6 +103,7 @@ final class SpatialModel: ObservableObject {
         let now=ProcessInfo.processInfo.systemUptime
         if report.bearing != nil, now-lastAccepted>0.35 {
             tracker=BearingTracker(); report.bearing=nil; report.solution=nil; report.state="signalUnreliable"
+            report.sound=nil
         }
         if now-lastAccepted>1 { accumulator.reset() }
     }
@@ -103,6 +111,7 @@ final class SpatialModel: ObservableObject {
         running=false; tracker=BearingTracker(); accumulator.reset()
         if calibrator.active { calibrator.cancel("수음을 중지해 보정을 취소했습니다.") }
         report.calibration=calibrator.snapshot(); report.bearing=nil; report.solution=nil
+        report.sound=nil
         report.latestPose=nil; report.trackingAvailable=false; report.state="stopped"
     }
 
@@ -118,16 +127,18 @@ final class SpatialModel: ObservableObject {
         fixtureProfile=RotationCalibrator.fit(groups)
     }
     private var fixtureProfile: BearingProfile?
-    func acceptSyntheticDisplay(at now: Double, silent: Bool) {
+    func acceptSyntheticDisplay(at now: Double, silent: Bool, spectrum: SoundSpectrum?) {
         guard running else { return }
         let features=AcousticFeatures(sampleRate: 48000,levelDbfs: -20,differenceDb: 2.4,lagSamples: 4.8,shape: [0.1,0.2,0.7])
         let value=silent ? nil : fixtureProfile?.estimate(features,at: now)
         tracker.append(value)
         report.bearing=tracker.estimate(at: now)
+        report.sound=report.bearing == nil ? nil : spectrum
         report.state=report.bearing == nil ? "signalUnreliable" : "bearing"
         report.trackingAvailable=true
         report.latestPose=SpatialPose(time: now,origin: .zero,right: .init(1,0,0),up: .init(0,1,0),forward: .init(0,0,-1))
         lastAccepted=now
+        if silent { report.solution=nil }
         if !silent && ProcessInfo.processInfo.arguments.contains("--synthetic-position") {
             var fixtureAccumulator=SpatialAccumulator()
             let source=Vector3(0.1,0.15,-1.6)

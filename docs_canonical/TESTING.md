@@ -1,5 +1,15 @@
 # 검증
 
+## 빌드 7 열지도와 영역 주파수 (EXP-017)
+
+코드 `13864bd`에서 [Native iOS](https://github.com/doroper98/sound_detection/actions/runs/35804076363) Swift 59/59·합성 UI 23/23·Release 기기 빌드·IPA 포장 PASS. [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35804076241) 단위 40/40·E2E 16/16 PASS. 로컬 gate·웹 E2E 및 실제 시뮬레이터 캡처 검토를 완료했다. 실기기 음향 위치·SPL 정확도는 미검증이다.
+
+순음(44.1/48kHz)의 주파수 한 bin 이내, 진폭 10배의 20dB 변화, 역상 채널 스펙트럼 보존, 광대역 대역 표시, 다중 성분의 대표 peak, Nyquist 경계, 무음/DC/포화/잘못된 입력 거부를 검증했다. UI는 실제 합성 PCM의 1kHz 입력을 FFT bin에 해당하는 약 996Hz로 표시하고, −23/−57dBFS의 입력 레벨, 현재 열섬/방향 열지도, stale/중지/배경 제거와 기존 파형을 검사했다. DEBUG 공간 자세는 합성이며 실제 AR 동작/음향 정확도 검증이 아니다.
+
+빌드 7 IPA 505,134바이트, SHA-256 `18d76f5758c3f4c0a29c5d53f4d1321dea1c82f04090e9eb74968f72bb19a649`. ZIP CRC·arm64 iPhoneOS·빌드 번호·신규 DEBUG 입력 인자 제외를 확인했다. [검증 JSON](../docs/reports/2026-09-23-native-build7-verification.json), [열섬과 주파수](../docs/assets/native-build7-heat-tone.png), [작은 입력](../docs/assets/native-build7-heat-quiet.png), [방향 열지도](../docs/assets/native-build7-bearing-synthetic.png).
+
+열섬은 추정 영역의 강조이고 색은 수신 dBFS다. 원거리 음압장, 여러 음원의 주파수별 위치 분리, 물체 크기 또는 검증된 신뢰구간이 아니다. 시인성을 위한 64~120pt의 크기 제한을 사용한다.
+
 ## 빌드 6 카메라 위 방향·공간 후보 (EXP-016)
 
 코드 `5facebb`에서 [Native iOS](https://github.com/doroper98/sound_detection/actions/runs/35795916043) Swift 53/53·합성 UI 21/21·Release 기기 빌드·IPA 포장 PASS. [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35795915981) 단위 40/40·E2E 16/16 PASS. 로컬 gate·웹 E2E와 최종 화면 검토도 완료했다.

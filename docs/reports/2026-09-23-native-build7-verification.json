@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-23",
+  "kind": "native-heatmap-frequency-software-verification",
+  "sourceHeadCommit": "13864bd439404be0afdbc770ae3cac3ada4fb2f8",
+  "buildMergeCommit": "ec3f7d6231d0f8564cc43f1d6c5d32e1d2b23d50",
+  "nativeWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35804076363",
+  "webWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35804076241",
+  "swiftUnitTests": {
+    "passed": 59,
+    "failed": 0
+  },
+  "simulatorUITests": {
+    "passed": 23,
+    "failed": 0
+  },
+  "webUnitTests": {
+    "passed": 40,
+    "failed": 0
+  },
+  "webE2ETests": {
+    "passed": 16,
+    "failed": 0
+  },
+  "screenshotVisuallyReviewed": true,
+  "ipa": {
+    "filename": "SoundFieldStereo-build7-unsigned.ipa",
+    "sha256": "18d76f5758c3f4c0a29c5d53f4d1321dea1c82f04090e9eb74968f72bb19a649",
+    "bytes": 505134,
+    "buildNumber": "7",
+    "platform": "arm64 iPhoneOS",
+    "signing": "unsigned; user must sign before installation"
+  },
+  "heatmap": {
+    "region": "Estimated single-source direction or position",
+    "color": "Current receiver stereo DC-removed RMS dBFS",
+    "scaleDbfs": [
+      -65,
+      -15
+    ],
+    "spatialSPL": false,
+    "sourceSeparation": false
+  },
+  "spectrum": {
+    "window": "periodic Hann, centered maximum 4096 samples",
+    "channelMix": "mean power, no PCM downmix",
+    "frequencyRangeHz": [
+      80,
+      16000
+    ],
+    "upperBoundAlsoLimitedToNyquist": true,
+    "prominentPeakMinimumThreeBinPowerFraction": 0.12,
+    "broadbandEnergyQuantiles": [
+      0.1,
+      0.9
+    ]
+  },
+  "simulatorInput": "Explicit DEBUG-only synthetic PCM and AR poses; not real microphone/camera measurements",
+  "physicalInstallationVerified": false,
+  "physicalARAndStereoVerified": false,
+  "physicalDirectionAccuracyVerified": false,
+  "physicalPositionAccuracyVerified": false,
+  "physicalSoundPressureCalibrationVerified": false,
+  "screenshots": [
+    "native-build7-bearing-synthetic",
+    "native-build7-position-synthetic",
+    "native-build7-heat-tone",
+    "native-build7-heat-quiet",
+    "native-build7-guide-synthetic"
+  ],
+  "renderedHeatPixelsVerifiedInUITests": true
+}

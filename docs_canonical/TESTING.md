@@ -214,3 +214,5 @@ WebKit의 미지원 처리 재현: `npx playwright install webkit` 후 PowerShel
 ## 빌드 9 첫 단계 정지 회귀
 
 `SpatialSynchronizationTests`는 늦은 실제 시각의 합성 카메라 프레임이 첫 보정 단계를 통과하는지, 영구 누락/오래된 시각/빠른 이동 거부, 대기 큐 한계·세션 폐기, 잘못된 큰 안내를 검사한다. iOS UI는 `--synthetic-pose-delay` 및 `--synthetic-pose-stalled`로 실제 SpatialModel 큐·calibrator 경로를 구동한다. 열지도용 완성 프로필 fixture를 쓰지 않는다. DEBUG 밖에서는 해당 입력 경로가 없다. Mac CI 결과 대기이며 실제 기기 해결을 뜻하지 않는다.
+
+빌드 9 전달 검증: 코드 `7a0b468`의 [Native iOS](https://github.com/doroper98/sound_detection/actions/runs/35856433903)에서 Swift 73/73, 합성 UI 27/27, Release 기기 빌드·IPA 포장 PASS. [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35856433756)의 단위 40/40·E2E 16/16 PASS. 로컬 gate 및 직전 앱 코드의 로컬 웹 E2E 16/16 PASS(웹 코드는 동일). 캡처 2개를 직접 확인하고 IPA CRC/arm64 iPhoneOS/빌드 9/SHA-256/Release의 합성 플래그 제외를 확인했다. 별도 focused 실행 35856434110은 보정 회귀 2개를 포함해 5/6 통과했고 기존 파형 UI 5초 대기에서 시간 초과했다. 전체 실행은 같은 앱 코드에서 통과했다. 이후 UI 검사만 양쪽 순차 30초 대기로 보완했으며 앱의 350ms 만료/수음/위치 코드는 변경하지 않았다. 보완한 검사 대기 설정의 CI는 별도다. 실기기 정지 해결과 음향 위치 정확도는 미검증. [검증 보고서](../docs/reports/2026-09-23-native-build9-verification.json).

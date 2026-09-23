@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-23",
+  "kind": "native-pose-synchronization-software-verification",
+  "sourceHeadCommit": "7a0b4686006a62a16202ce3094d8cee44019a421",
+  "buildMergeCommit": "9d39d6e058dc475bd9546227f7f82a1008c14dbf",
+  "nativeWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35856433903",
+  "webWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35856433756",
+  "swiftUnitTests": {
+    "passed": 73,
+    "failed": 0
+  },
+  "simulatorUITests": {
+    "passed": 27,
+    "failed": 0,
+    "scope": "full"
+  },
+  "priorFocusedAttempt": {
+    "commit": "7a0b468",
+    "run": 35856434110,
+    "passed": 5,
+    "failedTests": 1,
+    "issue": "Existing waveform UI 5-second wait expired on first simulator launch; both new synchronization tests passed. Subsequent full run validates delivered app."
+  },
+  "priorFullUIAttempt": {
+    "commit": "cbd5b59",
+    "run": 35854761145,
+    "passed": 26,
+    "failedTests": 1,
+    "failedAssertions": 2,
+    "issue": "Camera wait expiry replaced the causal message; corrected in delivered build and covered by focused UI."
+  },
+  "webUnitTests": {
+    "passed": 40,
+    "failed": 0
+  },
+  "webE2ETests": {
+    "passed": 16,
+    "failed": 0
+  },
+  "localWebE2EAllPassed": true,
+  "screenshots": [
+    "native-build9-delayed-pose-recovered-synthetic",
+    "native-build9-missing-pose-reason-synthetic"
+  ],
+  "screenshotVisuallyReviewed": true,
+  "screenshotNotes": "Delayed-pose screenshot shows the complete screen at 2/6. Missing-pose screenshot clearly shows the causal message, but header/footer are partly missing from simulator capture; it is labeled partial and is not evidence of complete layout rendering.",
+  "ipa": {
+    "filename": "SoundFieldStereo-build9-unsigned.ipa",
+    "sha256": "51c3b7dbf484560fb81a98a6fb3fea8249b45025f835a3674381b66484830517",
+    "bytes": 564994,
+    "buildNumber": "9",
+    "platform": "arm64 iPhoneOS",
+    "signing": "unsigned; user must sign before installation"
+  },
+  "reportSchemaVersion": 9,
+  "poseTimingToleranceSeconds": 0.06,
+  "audioFreshnessSeconds": 0.3,
+  "cameraFreshnessSeconds": 0.2,
+  "maximumCameraWaitSeconds": 0.18,
+  "maximumPendingSummaries": 4,
+  "calibrationAcceptanceLimitsUnchanged": true,
+  "stoppedCalibrationSnapshotPreserved": true,
+  "physicalRootCauseConfirmed": false,
+  "physicalInstallationVerified": false,
+  "physicalStallResolved": false,
+  "physicalLocalizationAccuracyVerified": false,
+  "limitations": "Synthetic tests reproduce late/missing camera delivery; build8 device report omitted AR rejection reasons. Device cause and recovery still require installation. Portrait only.",
+  "fullNativeRegression": {
+    "workflow": "https://github.com/doroper98/sound_detection/actions/runs/35856433903",
+    "status": "success",
+    "sourceCommit": "7a0b4686006a62a16202ce3094d8cee44019a421"
+  }
+}

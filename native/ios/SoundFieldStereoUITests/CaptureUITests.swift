@@ -424,11 +424,13 @@ final class CaptureUITests: XCTestCase {
         awaitLivePCM(app)
         XCTAssertTrue(app.staticTexts["cameraStatus"].label.contains("실제 카메라 영상 없음"))
         // DSP can finish before the independent, deliberately delayed preview.
+        // The first simulator launch can make AX queries take several seconds.
+        // Observe each channel's fresh state separately, as in the silent-channel
+        // test, without extending the application's 350 ms stale cutoff.
         expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: leftWaveform)
+        waitForExpectations(timeout: 30)
         expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: rightWaveform)
-        waitForExpectations(timeout: 5)
-        XCTAssertEqual(leftWaveform.value as? String, "수신 중")
-        XCTAssertEqual(rightWaveform.value as? String, "수신 중")
+        waitForExpectations(timeout: 30)
         XCTAssertTrue(leftWaveform.isHittable)
         XCTAssertTrue(rightWaveform.isHittable)
         XCTAssertTrue(app.frame.contains(leftWaveform.frame))

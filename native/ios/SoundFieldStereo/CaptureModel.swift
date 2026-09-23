@@ -848,14 +848,18 @@ final class CaptureModel: ObservableObject {
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("--synthetic-heat-tone") {
             let gain=arguments.contains("--synthetic-heat-quiet") ? 0.02 : 1.0
-            left=left.enumerated().map { i,noise in
-                Float(gain*(Double(noise)*0.08+0.1*sin(2 * .pi*1000*Double(i)/48000)))
+            for i in left.indices {
+                let angle=2.0*Double.pi*1000.0*Double(i)/48000.0
+                let noise=Double(left[i])*0.08
+                let sample=gain*(noise+0.1*sin(angle))
+                left[i]=Float(sample)
             }
         }
         let right: [Float] = arguments.contains("--synthetic-silent-right")
             ? [Float](repeating: 0, count: left.count)
             : (0..<4800).map { $0 >= 7 ? left[$0 - 7] : 0 }
         let fixtureStartedAt = ProcessInfo.processInfo.systemUptime
+        let fixtureLeft=left
         let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self, self.syntheticPCMEnabled, self.phase == .running else { return }
@@ -864,7 +868,7 @@ final class CaptureModel: ObservableObject {
                 // Use the fixture's sample clock, not jitter between main-loop
                 // timer callbacks. Missed slots remain real timeline gaps.
                 let slot = max(0, Int(floor((ProcessInfo.processInfo.systemUptime - fixtureStartedAt) * 10)) - 1)
-                processor.submitSynthetic(left: left, right: right, sampleTime: Int64(slot * 4800),
+                processor.submitSynthetic(left: fixtureLeft, right: right, sampleTime: Int64(slot * 4800),
                     bufferStart: fixtureStartedAt + Double(slot) / 10)
             }
         }

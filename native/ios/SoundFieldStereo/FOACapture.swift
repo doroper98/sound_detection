@@ -31,6 +31,9 @@ final class FOACapture: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, 
     private let spatialOutput=AVCaptureAudioDataOutput()
     private let stereoOutput=AVCaptureAudioDataOutput()
     private var active=false
+    private let cancellationLock=NSLock()
+    private var cancelled=false
+    private func isCancelled() -> Bool { cancellationLock.lock(); defer { cancellationLock.unlock() }; return cancelled }
     private var observers=[NSObjectProtocol]()
     private var foaWindows=PCMWindowAssembler(channels: 4)
     private var stereoWindows=PCMWindowAssembler(channels: 2,size: 4800)
@@ -49,10 +52,13 @@ final class FOACapture: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void,Error>) in
             Self.queue.async { [self] in
                 do {
+                    guard !isCancelled() else { throw CancellationError() }
                     try configure()
+                    guard !isCancelled() else { throw CancellationError() }
                     active=true
                     installObservers()
                     session.startRunning()
+                    guard !isCancelled() else { throw CancellationError() }
                     guard session.isRunning else { throw CaptureFailure.message("공간 오디오 세션이 시작되지 않았습니다.") }
                     diagnostics.running=true
                     continuation.resume()
@@ -109,7 +115,10 @@ final class FOACapture: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, 
             })
         }
     }
-    func stop() { Self.queue.async { [self] in tearDown() } }
+    func stop() {
+        cancellationLock.lock(); cancelled=true; cancellationLock.unlock()
+        Self.queue.async { [self] in tearDown() }
+    }
     private func tearDown() {
         active=false
         spatialOutput.setSampleBufferDelegate(nil,queue: nil)
@@ -119,7 +128,7 @@ final class FOACapture: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, 
         diagnostics.running=false
     }
     private func fail(_ message: String) {
-        guard active else { return }
+        guard active, !isCancelled() else { return }
         diagnostics.lastError=message; diagnostics.events.append(message)
         if diagnostics.events.count>20 { diagnostics.events.removeFirst() }
         tearDown()

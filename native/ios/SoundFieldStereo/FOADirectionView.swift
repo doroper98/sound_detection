@@ -86,7 +86,7 @@ final class FOADirectionModel: ObservableObject {
         switch report.state {
         case "idle": return "카메라·수음 시작으로 소리 방향을 확인하세요"
         case "candidate": return "공간 오디오 방향 후보 · 거리 미측정"
-        case "quiet": return "소리가 작습니다 · 공간 오디오 수음 중"
+        case "quiet": return "측정 대역의 소리가 작습니다 · 공간 오디오 수음 중"
         case "ambiguous": return "여러 방향이 섞여 방향 표시를 보류합니다"
         case "clipped": return "입력이 너무 큽니다 · 소리를 조금 줄여 주세요"
         case "invalidPCM": return "공간 오디오 샘플 형식을 확인해 주세요"
@@ -126,11 +126,9 @@ struct FOADirectionOverlay: View {
                     if let point=project(region.worldDirection,size: geometry.size),
                        (0...geometry.size.width).contains(point.x), (0...geometry.size.height).contains(point.y) {
                         let strength=SoundHeatLevel.normalized(region.acoustic.levelDbfs)
-                        let radius=CGFloat(max(55,min(110,55+region.acoustic.spreadDegrees*2)))
+                        let radius=CGFloat(max(75,min(130,75+region.acoustic.spreadDegrees*2)))
                         ZStack {
-                            Circle().fill(RadialGradient(colors: [
-                                Color(hue: (1-strength)*0.66,saturation: 0.95,brightness: 1).opacity(0.85),
-                                .cyan.opacity(0.35),.blue.opacity(0.08),.clear],center: .center,startRadius: 0,endRadius: radius))
+                            Circle().fill(RadialGradient(stops: heatStops(strength),center: .center,startRadius: 0,endRadius: radius))
                                 .accessibilityIdentifier("foaHeatIsland")
                             VStack(spacing: 2) {
                                 Text(region.acoustic.frequencyLabel).font(.system(size: 12,weight: .bold))
@@ -159,6 +157,14 @@ struct FOADirectionOverlay: View {
             if !chosen.contains(where: { $0.worldDirection.angle(to: region.worldDirection)<18 }) { chosen.append(region) }
         }
         return chosen
+    }
+    private func heatStops(_ strength: Double) -> [Gradient.Stop] {
+        (0...10).map { index in
+            let radius=Double(index)/10
+            let value=strength*(1-0.45*radius*radius)
+            return .init(color: Color(hue: (1-value)*0.66,saturation: 0.95,brightness: 1)
+                .opacity(index==10 ? 0 : 0.85*(1-radius*radius)),location: radius)
+        }
     }
     private func project(_ direction: Vector3,size: CGSize) -> CGPoint? {
         #if DEBUG

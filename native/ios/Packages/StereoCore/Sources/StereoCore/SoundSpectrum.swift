@@ -13,6 +13,8 @@ public struct SoundSpectrum: Codable, Sendable {
 
     public var frequencyLabel: String {
         if let dominantHz { return "주파수 ≈ " + Self.hertz(dominantHz) }
+        if lowerHz>=1000 { return String(format: "대역 %.1f–%.1f kHz",lowerHz/1000,upperHz/1000) }
+        if upperHz<1000 { return String(format: "대역 %.0f–%.0f Hz",lowerHz,upperHz) }
         return "대역 " + Self.hertz(lowerHz) + "–" + Self.hertz(upperHz)
     }
     private static func hertz(_ value: Double) -> String {

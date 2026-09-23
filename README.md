@@ -74,6 +74,8 @@ node packages/localization/examples/replay.mjs experiment.json
 
 ## 배포와 문서
 
+- [빌드 1~9 개발·실패·수정 이력과 iPhone 위치 추정 가능성 재진단](docs_canonical/NATIVE_LOCALIZATION_FEASIBILITY.md) — 크기 차이 실패 조건, 시간차 구현 비교, 미확정 원인과 다음 증거
+
 - [Cloudflare 배포 절차 및 상태](docs_canonical/DEPLOYMENT.md)
 - [v0.2.1 배포 결과와 카메라 웹앱 안내문](docs/updates/2026-09-22-v0.2.1.md)
 - [변경 이력](CHANGELOG.md) · [릴리즈](https://github.com/doroper98/sound_detection/releases)

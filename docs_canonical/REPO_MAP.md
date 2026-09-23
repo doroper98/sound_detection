@@ -40,6 +40,10 @@
 | docs_canonical/ | 설계·모델·검증·운영 문서 |
 | docs_canonical/LIDAR_SPATIAL_EXPORT_PLAN.md | 기본 기능 검증 뒤 검토할 라이다 공간 지도·음향 결합·내보내기 및 리마인드 조건 |
 | docs_canonical/NATIVE_FIELD_VALIDATION.md | 현재 기본 기능의 실기기 반복 측정·기준 위치·오탐 억제·증거 수집 순서 |
+| docs_canonical/NATIVE_LOCALIZATION_FEASIBILITY.md | 빌드 1~9 이력 인덱스, 실패 조건/미확정 원인, 시뮬레이션과 실제 입력 차이, 후속 기준 |
+| scripts/audit-localization-feasibility.mjs | 기존 엔진과 네이티브 계산의 JS 전사 비교, 강한 반사·고정 지연·동일 자세 반복의 합성 반례 |
+| docs/reports/2026-09-23-localization-feasibility-synthetic.json | 오프라인 합성 실험 결과, 실기기 검증 아님 |
+| docs/reports/2026-09-23-iphone17pro-build9-audio-only-analysis.json | 사용자 JSON 선택 필드와 해석, 원본 전체/실패한 6단계 기록 아님 |
 | docs_canonical/FIELD_ACOUSTICS_FEASIBILITY.md | 사용자 논의, 주파수별 지도, 500m/±50m 기하 계산과 합성개구 검토, 미검증 범위 |
 | docs_bp/README.md | 원본 BP 출처와 적용 방식 |
 

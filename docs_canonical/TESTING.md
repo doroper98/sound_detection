@@ -1,5 +1,13 @@
 # 검증
 
+## 2026-09-23 가능성 감사 (EXP-021)
+
+[통합 이력·진단](NATIVE_LOCALIZATION_FEASIBILITY.md), [build9 선택 필드](../docs/reports/2026-09-23-iphone17pro-build9-audio-only-analysis.json), [합성 결과](../docs/reports/2026-09-23-localization-feasibility-synthetic.json)를 보존했다. 실제 실패한 보정의 단계별 통계가 없어 물리 원인은 미확정이다. 현재 방식의 보류/오검출 반례와 GCC 비교를 기기 정확도 증거로 쓰지 않는다.
+
+재현은 `npm run build:engine` → `node scripts/audit-localization-feasibility.mjs`다. 3종 신호×12 seed, 방향 무관 고정 지연 3개, 단일/반복/독립 8자세의 3D 격자 결과를 출력한다. Swift 바이너리 대신 진단 계산의 JS 전사를 비교하므로 실제 앱 실행 검증과 구분한다. 강한 반사에서 두 방식 모두 틀린 결과도 삭제하지 않는다.
+
+직전 `92b8c50`의 [Native iOS](https://github.com/doroper98/sound_detection/actions/runs/35857827251)와 [Verify](https://github.com/doroper98/sound_detection/actions/runs/35857827175)는 완료 SUCCESS다. 아래 이전 기록에서 대기 상태였던 UI 검사 대기 시간 보완의 후속 결과이며 실제 음향 검증은 아니다.
+
 2026-09-23: 다음 실기기 검증은 [기본 기능 실기기 검증 순서](NATIVE_FIELD_VALIDATION.md)를 따른다. 빌드 7의 자동 검증과 실제 음향 정확도 판정을 분리한다. 기본 검증 후 [라이다 공간 지도·내보내기 계획](LIDAR_SPATIAL_EXPORT_PLAN.md)을 재검토한다.
 
 ## 빌드 8 보정 진단 (EXP-019)

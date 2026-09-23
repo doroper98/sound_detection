@@ -1,0 +1,715 @@
+{
+  "evidenceType": "synthetic_counterexamples_and_existing_engine_experiment_NOT_iPhone_validation",
+  "sourceRevision": "92b8c5008b1ace28b12428f8d9db9800a1feb419",
+  "sampleRate": 48000,
+  "samplesPerFrame": 4096,
+  "seedsPerLagCase": 12,
+  "assumptions": [
+    "One known synthetic waveform; no device DSP, clock error, pose error, or sensor noise.",
+    "Known virtual 12 cm spacing; no claim about iPhone microphone geometry.",
+    "Spatial source is off the search grid; known diverse poses span several meters.",
+    "GCC engine always returns a peak; its returned number is not an acceptance or physical-validity test.",
+    "Swift method transliterated into JS for comparison; production Swift binary not run.",
+    "Stronger-echo fixture intentionally demonstrates a possible failure, not typical-room statistics."
+  ],
+  "lagCases": [
+    {
+      "name": "broadband_direct",
+      "seeds": 12,
+      "nativeAccepted": 12,
+      "nativeAcceptedMeanAbsoluteErrorSamples": 0.34999999999999964,
+      "gccMeanAbsoluteErrorSamples": 0.016063461694502863,
+      "rows": [
+        {
+          "seed": 1,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 5,
+            "margin": 0.6505728510537054,
+            "peak": 0.962088594658647
+          },
+          "gcc": {
+            "lag": 5.333136781669985,
+            "peakRatio": 3.618206504047178
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.016863218330014362
+        },
+        {
+          "seed": 2,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 5,
+            "margin": 0.6393143719215335,
+            "peak": 0.9656173276691058
+          },
+          "gcc": {
+            "lag": 5.334642566281312,
+            "peakRatio": 3.63435040020063
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.015357433718687474
+        },
+        {
+          "seed": 3,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 5,
+            "margin": 0.720884067069893,
+            "peak": 0.9704555735508706
+          },
+          "gcc": {
+            "lag": 5.334437017246665,
+            "peakRatio": 3.527993318885629
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.015562982753334786
+        },
+        {
+          "seed": 4,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 5,
+            "margin": 0.7350047699340956,
+            "peak": 0.9655958219692443
+          },
+          "gcc": {
+            "lag": 5.3349331021937205,
+            "peakRatio": 3.5372226371990405
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.015066897806279123
+        },
+        {
+          "seed": 5,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 5,
+            "margin": 0.6185274610439226,
+            "peak": 0.9644111430697967
+          },
+          "gcc": {
+            "lag": 5.333396887741702,
+            "peakRatio": 3.511303693821059
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.016603112258297692
+        },
+        {
+          "seed": 6,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 5,
+            "margin": 0.653718842864758,
+            "peak": 0.9611092365407248
+          },
+          "gcc": {
+            "lag": 5.333169593145345,
+            "peakRatio": 3.61080296984139
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.016830406854654534
+        },
+        {
+          "seed": 7,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 5,
+            "margin": 0.7298927584603372,
+            "peak": 0.9679015057929279
+          },
+          "gcc": {
+            "lag": 5.334931067919809,
+            "peakRatio": 3.5462315700881435
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.015068932080190223
+        },
+        {
+          "seed": 8,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 5,
+            "margin": 0.7052922119635736,
+            "peak": 0.9661692375830983
+          },
+          "gcc": {
+            "lag": 5.333372833203523,
+            "peakRatio": 3.6896568197589725
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.0166271667964768
+        },
+        {
+          "seed": 9,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 5,
+            "margin": 0.7156315319009583,
+            "peak": 0.9626430547572181
+          },
+          "gcc": {
+            "lag": 5.334076425065014,
+            "peakRatio": 3.704226961860326
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.01592357493498575
+        },
+        {
+          "seed": 10,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 5,
+            "margin": 0.7117131020411298,
+            "peak": 0.9704377840777708
+          },
+          "gcc": {
+            "lag": 5.334123265229717,
+            "peakRatio": 3.537296810316553
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.015876734770282397
+        },
+        {
+          "seed": 11,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 5,
+            "margin": 0.7435359700546101,
+            "peak": 0.9674661638150823
+          },
+          "gcc": {
+            "lag": 5.333870996477266,
+            "peakRatio": 3.6006170164577864
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.016129003522733498
+        },
+        {
+          "seed": 12,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 5,
+            "margin": 0.6820432273436952,
+            "peak": 0.9628170800186154
+          },
+          "gcc": {
+            "lag": 5.333147923491902,
+            "peakRatio": 3.6159016333713376
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.016852076508097724
+        }
+      ]
+    },
+    {
+      "name": "low_frequency_direct",
+      "seeds": 12,
+      "nativeAccepted": 0,
+      "nativeAcceptedMeanAbsoluteErrorSamples": null,
+      "gccMeanAbsoluteErrorSamples": 0.017001831999785333,
+      "rows": [
+        {
+          "seed": 1,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "ambiguous",
+            "lag": 5,
+            "margin": 0.015259955720761997,
+            "peak": 0.9997278351730562
+          },
+          "gcc": {
+            "lag": 5.33173907221403,
+            "peakRatio": 1.2463876898834787
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.01826092778596955
+        },
+        {
+          "seed": 2,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "ambiguous",
+            "lag": 5,
+            "margin": 0.015220474470418077,
+            "peak": 0.9997285007106306
+          },
+          "gcc": {
+            "lag": 5.338385287545087,
+            "peakRatio": 1.2482542445539562
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.011614712454912635
+        },
+        {
+          "seed": 3,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "ambiguous",
+            "lag": 5,
+            "margin": 0.010713044513301573,
+            "peak": 0.9998009658708013
+          },
+          "gcc": {
+            "lag": 5.325357566172639,
+            "peakRatio": 1.255284597913649
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.024642433827360755
+        },
+        {
+          "seed": 4,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "ambiguous",
+            "lag": 5,
+            "margin": 0.01292718838153084,
+            "peak": 0.9997640532017167
+          },
+          "gcc": {
+            "lag": 5.33806575385589,
+            "peakRatio": 1.2460359842078765
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.01193424614410965
+        },
+        {
+          "seed": 5,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "ambiguous",
+            "lag": 5,
+            "margin": 0.015249119187019433,
+            "peak": 0.9997237441607595
+          },
+          "gcc": {
+            "lag": 5.321608445128853,
+            "peakRatio": 1.2500056381953837
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.02839155487114642
+        },
+        {
+          "seed": 6,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "ambiguous",
+            "lag": 5,
+            "margin": 0.012780807835222951,
+            "peak": 0.9997718421859337
+          },
+          "gcc": {
+            "lag": 5.327524954715296,
+            "peakRatio": 1.2553521245843462
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.02247504528470401
+        },
+        {
+          "seed": 7,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "ambiguous",
+            "lag": 5,
+            "margin": 0.011465454659989494,
+            "peak": 0.9997957187647619
+          },
+          "gcc": {
+            "lag": 5.35093186693934,
+            "peakRatio": 1.247822152968987
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.0009318669393403312
+        },
+        {
+          "seed": 8,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "ambiguous",
+            "lag": 5,
+            "margin": 0.014742720934068698,
+            "peak": 0.9997369753204312
+          },
+          "gcc": {
+            "lag": 5.336373157312273,
+            "peakRatio": 1.2413414828754912
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.01362684268772707
+        },
+        {
+          "seed": 9,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "ambiguous",
+            "lag": 5,
+            "margin": 0.013490577254967828,
+            "peak": 0.9997592812088988
+          },
+          "gcc": {
+            "lag": 5.335377774535713,
+            "peakRatio": 1.2489181829498492
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.014622225464286487
+        },
+        {
+          "seed": 10,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "ambiguous",
+            "lag": 5,
+            "margin": 0.01439772528557981,
+            "peak": 0.9997425361089882
+          },
+          "gcc": {
+            "lag": 5.328685251158399,
+            "peakRatio": 1.250716976307629
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.02131474884160056
+        },
+        {
+          "seed": 11,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "ambiguous",
+            "lag": 5,
+            "margin": 0.012211864498160807,
+            "peak": 0.9997825040464455
+          },
+          "gcc": {
+            "lag": 5.327568127264369,
+            "peakRatio": 1.252505582818129
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.02243187273563052
+        },
+        {
+          "seed": 12,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "ambiguous",
+            "lag": 5,
+            "margin": 0.01614110671826874,
+            "peak": 0.999711036871266
+          },
+          "gcc": {
+            "lag": 5.336224493039364,
+            "peakRatio": 1.2436019262755493
+          },
+          "nativeAbsoluteErrorSamples": 0.34999999999999964,
+          "gccAbsoluteErrorSamples": 0.013775506960636008
+        }
+      ]
+    },
+    {
+      "name": "broadband_with_stronger_different_echo",
+      "seeds": 12,
+      "nativeAccepted": 12,
+      "nativeAcceptedMeanAbsoluteErrorSamples": 4.6499999999999995,
+      "gccMeanAbsoluteErrorSamples": 4.644045658925293,
+      "rows": [
+        {
+          "seed": 1,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 10,
+            "margin": 0.308336604872178,
+            "peak": 0.5837230970928271
+          },
+          "gcc": {
+            "lag": 10.060422146452714,
+            "peakRatio": 3.7414709765498713
+          },
+          "nativeAbsoluteErrorSamples": 4.65,
+          "gccAbsoluteErrorSamples": 4.710422146452714
+        },
+        {
+          "seed": 2,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 10,
+            "margin": 0.3343648619464043,
+            "peak": 0.5830341933854147
+          },
+          "gcc": {
+            "lag": 10.033977489973982,
+            "peakRatio": 3.6751941861925865
+          },
+          "nativeAbsoluteErrorSamples": 4.65,
+          "gccAbsoluteErrorSamples": 4.683977489973982
+        },
+        {
+          "seed": 3,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 10,
+            "margin": 0.37206883539094693,
+            "peak": 0.6198408241097573
+          },
+          "gcc": {
+            "lag": 10.029585787594876,
+            "peakRatio": 3.6222649635104847
+          },
+          "nativeAbsoluteErrorSamples": 4.65,
+          "gccAbsoluteErrorSamples": 4.679585787594876
+        },
+        {
+          "seed": 4,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 10,
+            "margin": 0.33823190295297073,
+            "peak": 0.6301723429167992
+          },
+          "gcc": {
+            "lag": 10.024384858520007,
+            "peakRatio": 3.5827784756960614
+          },
+          "nativeAbsoluteErrorSamples": 4.65,
+          "gccAbsoluteErrorSamples": 4.674384858520007
+        },
+        {
+          "seed": 5,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 10,
+            "margin": 0.28105743503911074,
+            "peak": 0.6937604913861939
+          },
+          "gcc": {
+            "lag": 9.910661872502395,
+            "peakRatio": 3.36223425631473
+          },
+          "nativeAbsoluteErrorSamples": 4.65,
+          "gccAbsoluteErrorSamples": 4.560661872502395
+        },
+        {
+          "seed": 6,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 10,
+            "margin": 0.29870626169291953,
+            "peak": 0.6106302374297399
+          },
+          "gcc": {
+            "lag": 9.913842779643092,
+            "peakRatio": 3.6995515332341156
+          },
+          "nativeAbsoluteErrorSamples": 4.65,
+          "gccAbsoluteErrorSamples": 4.5638427796430925
+        },
+        {
+          "seed": 7,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 10,
+            "margin": 0.3289335058796063,
+            "peak": 0.6475634448443148
+          },
+          "gcc": {
+            "lag": 10.027731586190573,
+            "peakRatio": 3.4507479631231033
+          },
+          "nativeAbsoluteErrorSamples": 4.65,
+          "gccAbsoluteErrorSamples": 4.677731586190573
+        },
+        {
+          "seed": 8,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 10,
+            "margin": 0.3118297235629379,
+            "peak": 0.6585834339168343
+          },
+          "gcc": {
+            "lag": 10.121134002361828,
+            "peakRatio": 3.6393035232420288
+          },
+          "nativeAbsoluteErrorSamples": 4.65,
+          "gccAbsoluteErrorSamples": 4.771134002361828
+        },
+        {
+          "seed": 9,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 10,
+            "margin": 0.2823003478187751,
+            "peak": 0.6619761326830134
+          },
+          "gcc": {
+            "lag": 10.06054761530681,
+            "peakRatio": 3.7719243883876303
+          },
+          "nativeAbsoluteErrorSamples": 4.65,
+          "gccAbsoluteErrorSamples": 4.71054761530681
+        },
+        {
+          "seed": 10,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 10,
+            "margin": 0.2723486704336236,
+            "peak": 0.6907654839320492
+          },
+          "gcc": {
+            "lag": 9.964954266514148,
+            "peakRatio": 3.351623506464691
+          },
+          "nativeAbsoluteErrorSamples": 4.65,
+          "gccAbsoluteErrorSamples": 4.6149542665141485
+        },
+        {
+          "seed": 11,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 10,
+            "margin": 0.34868281071270807,
+            "peak": 0.6281727841491977
+          },
+          "gcc": {
+            "lag": 9.866974923680143,
+            "peakRatio": 3.6245268796193932
+          },
+          "nativeAbsoluteErrorSamples": 4.65,
+          "gccAbsoluteErrorSamples": 4.516974923680143
+        },
+        {
+          "seed": 12,
+          "trueDirectLagSamples": 5.35,
+          "native": {
+            "status": "candidate",
+            "lag": 10,
+            "margin": 0.2870532495060793,
+            "peak": 0.6492113811517336
+          },
+          "gcc": {
+            "lag": 9.914330578362955,
+            "peakRatio": 3.4325119021262576
+          },
+          "nativeAbsoluteErrorSamples": 4.65,
+          "gccAbsoluteErrorSamples": 4.564330578362956
+        }
+      ]
+    }
+  ],
+  "skewCounterexample": [
+    {
+      "declaredAngle": -25,
+      "native": {
+        "status": "candidate",
+        "lag": 5,
+        "margin": 0.8325088491290953,
+        "peak": 0.9999976575161384
+      },
+      "gccLag": 4.999899900971567
+    },
+    {
+      "declaredAngle": 0,
+      "native": {
+        "status": "candidate",
+        "lag": 5,
+        "margin": 0.8325088491290953,
+        "peak": 0.9999976575161384
+      },
+      "gccLag": 4.999899900971567
+    },
+    {
+      "declaredAngle": 25,
+      "native": {
+        "status": "candidate",
+        "lag": 5,
+        "margin": 0.8325088491290953,
+        "peak": 0.9999976575161384
+      },
+      "gccLag": 4.999899900971567
+    }
+  ],
+  "spatialCases": [
+    {
+      "name": "single_pose",
+      "observations": 1,
+      "solution": {
+        "position": [
+          -1.2999999999999998,
+          0.5,
+          -2.8
+        ],
+        "cost": 2.2696776026445118e-7,
+        "candidates": 3306,
+        "spread": 5.3,
+        "resolution": 0.1
+      },
+      "errorMeters": 1.678898448388109
+    },
+    {
+      "name": "eight_frames_same_pose",
+      "observations": 8,
+      "solution": {
+        "position": [
+          -1.2999999999999998,
+          0.5,
+          -2.8
+        ],
+        "cost": 0.0000018157420821156094,
+        "candidates": 1155,
+        "spread": 5.3,
+        "resolution": 0.1
+      },
+      "errorMeters": 1.678898448388109
+    },
+    {
+      "name": "eight_different_positions_and_axes",
+      "observations": 8,
+      "solution": {
+        "position": [
+          -0.8999999999999999,
+          1.4000000000000001,
+          -1.4
+        ],
+        "cost": 1.500023710960047,
+        "candidates": 4,
+        "spread": 0.14142135623730964,
+        "resolution": 0.1
+      },
+      "errorMeters": 0.051961524227066305
+    }
+  ],
+  "freeFieldLevelCounterexample": {
+    "virtualSpacingMeters": 0.12,
+    "sourceDistanceMeters": 1,
+    "angleDegrees": 25,
+    "absoluteDifferenceAt25DegreesDb": 0.4392919328935777,
+    "build9MinimumLevelSlopeDbPerDegree": 0.04,
+    "note": "Inverse-distance attenuation of virtual omnidirectional sensors only, NOT an iPhone response model."
+  },
+  "calibrationGateCounterexample": {
+    "hypotheticalRepeatableLagSlopeSamplesPerDegree": 0.1,
+    "build9MinimumLagSlopeSamplesPerDegree": 0.12,
+    "implication": "A repeatable, informative relation can be rejected by the heuristic slope gate. This does not demonstrate that the actual iPhone has such a relation."
+  }
+}

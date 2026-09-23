@@ -6,6 +6,8 @@
 
 ## 기준 상태
 
+2026-09-23 추가: 최신 build9 JSON은 audioDetails로 시작한 별도 audio-only 세션이다. 실패한 회전 보정의 `diagnostics.steps`/`responses`가 없다. **실패 직후 측정 상세에서 새 수음을 시작하지 말고 JSON을 공유**해야 한다. 보고서는 새 수음 시작 때 초기화된다. 원인 판정과 다음 계측 기준은 [가능성 재진단](NATIVE_LOCALIZATION_FEASIBILITY.md)을 먼저 적용한다. 아래 절차를 재시도만 하는 방식으로 사용하지 않는다.
+
 빌드 7 코드 `13864bd`의 Swift 59개·합성 iOS UI 23개·Release 빌드는 통과했다. 빌드 3/4의 실측은 후면 카메라와 스테레오 입력 활성의 근거다. 빌드 7의 AR와 스테레오 동시 사용, 보정 재현성, 음향 위치 정확도는 아직 실기기 증거가 없다. 세부 근거는 [TESTING.md](TESTING.md)에 보존한다.
 
 ## 측정 순서

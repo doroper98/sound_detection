@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "kind": "user-report-selected-fields-and-analysis-not-original-export",
+  "date": "2026-09-23",
+  "provenance": "사용자가 붙여넣은 build9 JSON의 선택 필드와 별도로 인용한 화면 문구. 원본 전체를 재구성하지 않음.",
+  "reportedScreenMessage": "방향 보정 보류: 폰을 돌려도 좌우 소리 크기 차이가 충분히 변하지 않았습니다. 측정 상세의 진단 JSON을 공유해 주세요.",
+  "selectedFields": {
+    "appVersion": "0.4.0-native-pose-sync-build9",
+    "schemaVersion": 9,
+    "startedAt": "2026-09-23T12:04:08Z",
+    "stoppedAt": "2026-09-23T12:04:23Z",
+    "startControl": "audioDetails",
+    "cameraSessionRunningAtAudioStart": false,
+    "analyzedFrames": 147,
+    "activeLeftFrames": 147,
+    "activeRightFrames": 147,
+    "candidateLagFrames": 13,
+    "duplicateFrames": 0,
+    "actualSampleRate": 48000,
+    "sessionChannels": 2,
+    "hardwareChannels": 2,
+    "tapFormatChannels": 2,
+    "selectedSource": "뒷면",
+    "selectedPolarPattern": "Stereo",
+    "latest": {
+      "analysis": {
+        "status": "ambiguous",
+        "peakCorrelation": 0.853056243765232,
+        "peakMargin": 0.008969258743608544,
+        "leftRmsDbfs": -56.35603561815323,
+        "rightRmsDbfs": -56.43028664054346
+      },
+      "acousticFeatures": {
+        "differenceDb": -0.07425102239022863,
+        "shape": [0.8391050753471848, 0.13102577808393323, 0.029869146568881986]
+      },
+      "skippedBuffers": 0,
+      "analyzedTimelineGaps": 0,
+      "dominantHz": 210.9375
+    },
+    "spatial": {
+      "calibration": {
+        "phase": "idle", "step": 0, "completedSamples": 0,
+        "instruction": "고정된 소리 하나를 화면 중앙에 맞춘 뒤 보정을 시작하세요."
+      },
+      "acceptedFrames": 0,
+      "rejectedFrames": 147,
+      "synchronization": {
+        "receivedFrames": 147,
+        "matchedFrames": 0,
+        "recoveredAfterWait": 0,
+        "rejectedByReason": {"cameraStopped": 147},
+        "lastRejection": {
+          "issue": "cameraStopped", "trackingState": "stopped", "cameraFrameCount": 0,
+          "audioAgeSeconds": 0.05425387500145007
+        }
+      }
+    },
+    "waveformRecentFreshFPS": 60
+  },
+  "derived": {
+    "candidateFraction": 0.08843537414965986,
+    "someRecentCandidateLagSamples": -5,
+    "someRecentCandidateLagMicroseconds": -104.16666666666667,
+    "candidateSignConvention": "right-minus-left"
+  },
+  "conclusions": {
+    "audioOnlySessionConfirmed": true,
+    "failedSixStepCalibrationPresent": false,
+    "physicalCauseOfWeakResponseConfirmed": false,
+    "physicalLocalizationFeasibilityVerified": false,
+    "note": "147개 모두 cameraStopped이고 시작부터 카메라가 없었다. 중지 후 tracking=false만으로 추측한 것이 아니다.",
+    "recordResetPath": "CaptureModel.start()가 보고서와 공간 보정을 초기화한다. 새 audio-only 세션에서 이전 실패 기록이 사라질 수 있다. 사용자의 실제 버튼 순서는 미확인.",
+    "missingEvidence": "같은 실패 실행의 spatial.calibration.diagnostics.steps 및 responses",
+    "latestFrameLimitation": "마지막 구간의 저주파·레벨·작은 좌우 차이를 이전 보정 실패 원인으로 소급하지 않는다."
+  }
+}

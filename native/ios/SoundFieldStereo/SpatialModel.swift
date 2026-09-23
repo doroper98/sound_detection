@@ -119,6 +119,27 @@ final class SpatialModel: ObservableObject {
     /// UI fixture goes through the production profile fitter and estimator.
     /// Fake AR pose is never reachable in Release.
     func prepareSyntheticCalibration() {
+        let arguments=ProcessInfo.processInfo.arguments
+        if arguments.contains("--synthetic-rotation-rejected") || arguments.contains("--synthetic-rotation-guide") {
+            let start=ProcessInfo.processInfo.systemUptime-20
+            func pose(_ time: Double, _ angle: Double) -> SpatialPose {
+                let yaw = -angle * .pi/180
+                return .init(time: time,origin: .zero,right: .init(cos(yaw),0,sin(yaw)),
+                    up: .init(0,1,0),forward: .init(sin(yaw),0,-cos(yaw)))
+            }
+            calibrator.begin(pose: pose(start,0))
+            var time=start
+            let targets=arguments.contains("--synthetic-rotation-guide") ? [0.0] : RotationCalibrator.targets
+            for angle in targets {
+                for _ in 0..<28 {
+                    time+=0.1
+                    calibrator.append(features: AcousticFeatures(sampleRate: 48000,levelDbfs: -24,
+                        differenceDb: 1,lagSamples: nil,shape: [0.1,0.2,0.7]),pose: pose(time,angle))
+                }
+            }
+            report.calibration=calibrator.snapshot()
+            return
+        }
         let groups=RotationCalibrator.targets.enumerated().map { (step,angle) in
             (0..<25).map { i in RotationCalibrationSample(angle: angle,
                 features: AcousticFeatures(sampleRate: 48000,levelDbfs: -20,differenceDb: angle*0.2,

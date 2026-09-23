@@ -60,8 +60,8 @@ struct AudioRouteInspection: Encodable {
 }
 
 struct NativeReport: Encodable {
-    var schemaVersion = 7
-    var appVersion = "0.4.0-native-heatmap-build7"
+    var schemaVersion = 8
+    var appVersion = "0.4.0-native-calibration-diagnostics-build8"
     var inputOrigin = "AVAudioEngine.inputNode"
     var operatingSystem = UIDevice.current.systemVersion
     var startedAt: Date?

@@ -2,6 +2,40 @@ import XCTest
 import UIKit
 
 final class CaptureUITests: XCTestCase {
+    func testRejectedRotationExplainsCauseAndCannotShowLocation() {
+        let app=launch(["--synthetic-bearing","--synthetic-rotation-rejected"],details: false)
+        app.buttons["liveCaptureButton"].tap()
+        let detail=app.staticTexts["spatialDetail"]
+        expectation(for: NSPredicate(format: "label CONTAINS %@","좌우 소리 크기 차이가 충분히 변하지"),evaluatedWith: detail)
+        waitForExpectations(timeout: 30)
+        XCTAssertTrue(detail.label.contains("진단 JSON"))
+        XCTAssertTrue(app.frame.contains(detail.frame))
+        XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
+        XCTAssertFalse(app.staticTexts["soundHeatFrequency"].exists)
+        let screen=XCTAttachment(screenshot: app.screenshot())
+        screen.name="native-build8-rejected-synthetic"; screen.lifetime = .keepAlways; add(screen)
+        app.buttons["liveCaptureButton"].tap()
+        XCTAssertTrue(detail.label.contains("진단 JSON"))
+        app.buttons["detailsButton"].tap()
+        let export=app.buttons["exportButton"]
+        reveal(export,in: app)
+        XCTAssertTrue(export.isEnabled)
+    }
+    func testRotationGuideShowsPhoneMovementAndCanCancel() {
+        let app=launch(["--synthetic-bearing","--synthetic-rotation-guide"],details: false)
+        app.buttons["liveCaptureButton"].tap()
+        let guidance=app.staticTexts["rotationMovementInstruction"]
+        XCTAssertTrue(guidance.waitForExistence(timeout: 30))
+        XCTAssertTrue(guidance.label.contains("오른쪽"))
+        XCTAssertTrue(app.frame.contains(guidance.frame))
+        let cancel=app.buttons["rotationCalibrationCancel"]
+        XCTAssertTrue(cancel.isHittable)
+        let screen=XCTAttachment(screenshot: app.screenshot())
+        screen.name="native-build8-rotation-guide-synthetic"; screen.lifetime = .keepAlways; add(screen)
+        cancel.tap()
+        XCTAssertFalse(guidance.exists)
+        XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
+    }
     private func attachHeatScreenshot(_ name: String, cool: Bool = false) {
         // A passing AX label can precede a complete rendered frame. Inspect
         // real pixels too, without pausing capture or weakening stale expiry.

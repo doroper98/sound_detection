@@ -101,7 +101,7 @@ struct SpatialOverlay: View {
                         .position(x: size.width/2,y: size.height*0.38)
                 } else if data.state=="alignSource" {
                     VStack(spacing: 10) {
-                        Text("소리 나는 스피커를 화면 중앙 +에 맞추세요.").font(.subheadline.bold()).multilineTextAlignment(.center)
+                        Text("화면 가운데 + 위에 스피커가 보이게 하세요.").font(.subheadline.bold()).multilineTextAlignment(.center)
                         Text("1m 이상 거리 · 같은 높이 · 소리는 고정").font(.caption)
                         Button("정렬 완료 · 보정 시작") {
                             if let pose=camera.spatialCamera.latestPose { spatial.beginCalibration(pose: pose) }
@@ -123,6 +123,7 @@ struct SpatialOverlay: View {
                         Text(headline).font(.subheadline.bold()).multilineTextAlignment(.center)
                             .accessibilityIdentifier("spatialStatus")
                         Text(detail).font(.caption).foregroundStyle(.white.opacity(0.8)).multilineTextAlignment(.center)
+                            .accessibilityIdentifier("spatialDetail")
                     }
                     .padding(14).background(.black.opacity(0.58),in: RoundedRectangle(cornerRadius: 14))
                     .frame(maxWidth: size.width-48)
@@ -145,8 +146,13 @@ struct SpatialOverlay: View {
         VStack(spacing: 10) {
             Text("방향 보정 \(min(6,data.calibration.step+1))/6").font(.headline)
                 .accessibilityIdentifier("rotationCalibrationStep")
-            Text(String(format: "소리 각도 %+.0f° → 목표 %+.0f°",data.calibration.currentDegrees ?? 0,data.calibration.targetDegrees))
-                .font(.title3.monospacedDigit().bold()).foregroundStyle(tint)
+            Text(data.calibration.movementInstruction)
+                .font(.title3.bold()).foregroundStyle(tint).multilineTextAlignment(.center)
+                .accessibilityIdentifier("rotationMovementInstruction")
+            Text("스피커는 고정 · 폰을 옆으로 옮기지 말고 방향만 바꾸세요")
+                .font(.caption2).multilineTextAlignment(.center)
+            Text(String(format: "스피커 방향 %+.0f° / 목표 %+.0f°",data.calibration.currentDegrees ?? 0,data.calibration.targetDegrees))
+                .font(.caption.monospacedDigit()).foregroundStyle(.white.opacity(0.7))
             ProgressView(value: data.calibration.progress).tint(tint)
             Text(data.calibration.instruction).font(.caption).multilineTextAlignment(.center)
             Button("보정 취소") { spatial.cancelCalibration() }.buttonStyle(.bordered)
@@ -216,9 +222,9 @@ struct SpatialGuide: View {
                 Text("카메라 위 열지도에서 방향·위치 후보와 입력 주파수를 확인합니다.").foregroundStyle(.secondary)
                 Group {
                     Text("1. 고정된 소리 하나 준비").font(.headline)
-                    Text("조용하고 밝은 곳에서 한 스피커로 일정한 광대역 소리(잡음 등)를 재생하세요. 여러 스피커·음악·기침처럼 계속 달라지는 소리는 피하세요. 폰에서 1m 이상 떨어진 소리를 후면 카메라 중앙, 같은 높이에 맞추세요.")
-                    Text("2. 화면 안내대로 좌우 회전").font(.headline)
-                    Text("아래 버튼을 누른 뒤 폰 위치를 최대한 고정하고 좌우로만 돌리세요. 화면의 소리 각도가 목표 0°·−25°·+25°에 맞으면 2.5초 정도 멈춥니다. 두 번 반복하며 자동으로 수집합니다. 원음이나 영상은 저장하지 않습니다.")
+                    Text("PC 보정용 페이지에서 소리 시작을 누르세요. 한 스피커에서 “쉬—” 소리가 계속 나게 둡니다. 아이폰은 1m 이상 떨어져 세로로 들고, 스피커와 높이를 비슷하게 맞추세요.")
+                    Text("2. 정면 → 오른쪽 → 왼쪽, 두 번").font(.headline)
+                    Text("아래 버튼을 누르고 화면 중앙 +에 스피커를 맞춘 뒤 보정을 시작하세요. 이후에는 큰 화살표를 따라 폰이 바라보는 방향만 돌리고, 멈추라는 안내가 나오면 다음 단계까지 기다리세요. 스피커가 계속 +에 있을 필요는 없습니다. 폰은 같은 자리에 두세요.")
                     Text("3. 카메라 위 방향 → 위치 후보").font(.headline)
                     Text("보정이 통과하면 세로 열지도로 수평 방향을 표시합니다. 같은 소리는 고정해 두고 폰을 옆으로 30~80cm 옮기며 여러 번 멈추세요. 높이도 좁히려면 폰을 조금 좌우로 기울여 다른 자세에서 관측하세요. 조건이 충분하면 위치 주변의 열섬과 대략적인 거리가 나타납니다.")
                     Text("4. 색과 작은 주파수 읽기").font(.headline)

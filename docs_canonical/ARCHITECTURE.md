@@ -1,5 +1,7 @@
 # 아키텍처
 
+빌드 8의 `RotationCalibrator.evaluate`는 기존 적합 조건을 유지하면서 `RotationFitDiagnostics`를 반환한다. `spatial.calibration.diagnostics`는 최대 6개의 완료 구간 요약과 두 방법별 실패 단계·기울기·반복 오차·RMS 잔차·기준을 포함한다. JSON에 없는 선택 속성은 아직 계산하지 않았거나 없는 값이며 0으로 해석하지 않는다. `issue`가 없는 방법은 통과이며, 전체 `issue`가 없을 때만 profile을 만든다. 실패 원인은 소프트웨어 조건의 위반으로서 환경/기기/사용자 원인을 확정하지 않는다. 정상 stop은 거부 결과를 보존하고 새 begin은 초기화한다. 이동 안내는 현재 스피커 각도에서 목표 각도를 뺀 값으로 폰의 좌우 회전 부호를 결정한다.
+
 빌드 7은 `SoundSpectrumAnalyzer`가 동일 PCM 버퍼 가운데 최대 4096샘플의 좌우 FFT power를 평균해 주파수/대역과 DC 제거 RMS dBFS를 계산한다. PCM 합산을 피하므로 역상에서도 스펙트럼이 상쇄되지 않는다. 공간 계산과 별도인 `SpatialReport.sound`는 유효한 현재 방향과 함께만 표시하며 실패/중지/오래된 자료에서 제거한다. `SpatialOverlay`는 고정 −65~−15 dBFS 색상과 공간 추정 영역의 부드러운 감쇠를 결합한다. 3D 후보는 방사형 열섬, 높이 미정은 세로 열지도다. 크기는 시인성을 위해 64~120pt로 제한되므로 음압장/신뢰구간/SPL로 해석하지 않는다. 대표 주파수는 80Hz~min(16kHz,Nyquist)의 가장 강한 peak 주변 3bin 합이 대역 power 12% 이상일 때만 표시하고 나머지는 10~90% 에너지 대역이다. 주파수는 현재 입력 전체이며 음원별 분리 결과가 아니다.
 
 구현 참고: [Apple RadialGradient](https://developer.apple.com/documentation/swiftui/radialgradient), [MathWorks periodogram/Hann](https://www.mathworks.com/help/signal/ref/periodogram.html). Swift 순수 FFT는 별도 단위 테스트로 주파수·레벨·역상을 검증한다.

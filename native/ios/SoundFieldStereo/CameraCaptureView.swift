@@ -202,7 +202,7 @@ struct CaptureView: View {
                             .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 12)
                     }.buttonStyle(.borderedProminent).tint(green).foregroundStyle(.black)
                         .accessibilityIdentifier("liveCaptureButton")
-                    Text("영상·원음 저장 없음 · 실험 열지도 · 빌드 7").font(.caption2).foregroundStyle(.secondary)
+                    Text("영상·원음 저장 없음 · 실험 열지도 · 빌드 8").font(.caption2).foregroundStyle(.secondary)
                 }
                 .padding(18)
                 .background(.black.opacity(0.78), in: RoundedRectangle(cornerRadius: 22))

@@ -104,6 +104,15 @@ public struct RotationCalibrationState: Codable, Sendable {
     public let instruction: String
     public let completedSamples: Int
     public let profile: BearingProfile?
+    public let diagnostics: RotationFitDiagnostics?
+
+    public var movementInstruction: String {
+        guard phase == "collecting" else { return instruction }
+        guard let current = currentDegrees else { return "폰을 잠시 멈춰 주세요" }
+        let phoneTurn = current - targetDegrees
+        if abs(phoneTurn) <= 3 { return "그대로 멈추세요 · 다음 단계까지 약 3초" }
+        return phoneTurn > 0 ? "→ 폰이 오른쪽을 보도록 돌리세요" : "← 폰이 왼쪽을 보도록 돌리세요"
+    }
 }
 
 public struct RotationCalibrator {
@@ -114,6 +123,7 @@ public struct RotationCalibrator {
     private var currentAngle: Double?
     private var group: [RotationCalibrationSample]=[]
     private var groups: [[RotationCalibrationSample]]=[]
+    private var diagnostics: RotationFitDiagnostics?
     private var phase="idle"
     private var message="고정된 소리 하나를 화면 중앙에 맞춘 뒤 보정을 시작하세요."
     public private(set) var profile: BearingProfile?
@@ -152,50 +162,23 @@ public struct RotationCalibrator {
         guard group.count>=20, pose.time-(group.first?.time ?? pose.time)>=2.4 else { return }
         groups.append(group); group=[]; step+=1
         if step==6 {
-            profile=Self.fit(groups)
+            let result=Self.evaluate(groups)
+            profile=result.profile; diagnostics=result.diagnostics
             phase=profile == nil ? "rejected" : "ready"
-            message=profile == nil ? "좌우 응답이 충분히 구분되거나 반복되지 않았습니다. 더 일정한 한 소리로 다시 보정하세요."
-                : "보정 완료 · 같은 소리의 방향 범위를 표시합니다."
+            message=result.diagnostics.message
         }
     }
     public func snapshot() -> RotationCalibrationState {
         .init(phase: phase, step: step, targetDegrees: Self.targets[min(step,5)], currentDegrees: currentAngle,
-            progress: min(1,Double(group.count)/25), instruction: message,
-            completedSamples: groups.reduce(0) { $0+$1.count }, profile: profile)
+            progress: phase == "ready" || phase == "rejected" ? 1 : min(Double(group.count)/20,
+                min(1, max(0, (group.last?.time ?? 0)-(group.first?.time ?? 0))/2.4)), instruction: message,
+            completedSamples: groups.reduce(0) { $0+$1.count }, profile: profile, diagnostics: diagnostics)
     }
     /// Repeated labeled rotations cross-check sign, response slope and residual.
     /// Labels are measured relative poses after user's central alignment, not
     /// target positions passed into live localization.
     public static func fit(_ groups: [[RotationCalibrationSample]]) -> BearingProfile? {
-        guard groups.count==6, groups.allSatisfy({ $0.count>=20 }), let first=groups.first?.first else { return nil }
-        let all=groups.flatMap { $0 }
-        guard all.allSatisfy({ $0.features.valid && $0.features.sampleRate==first.features.sampleRate
-            && $0.angle.isFinite && $0.time.isFinite }),
-            zip(groups,targets).allSatisfy({ abs(medianValue($0.0.map(\.angle))-$0.1)<3.1 }) else { return nil }
-        let shape=(0..<3).map { band in medianValue(all.map { $0.features.shape[band] }) }
-        guard all.allSatisfy({ row in zip(row.features.shape,shape).reduce(0.0) { $0+abs($1.0-$1.1) } < 0.4 }) else { return nil }
-        var responses: [BearingResponse]=[]
-        for method in ["levelDifference","signalLag"] {
-            func value(_ s: RotationCalibrationSample) -> Double? { method=="levelDifference" ? s.features.differenceDb : s.features.lagSamples }
-            guard groups.allSatisfy({ Double($0.compactMap(value).count)>=Double($0.count)*0.75 }) else { continue }
-            let x=groups.map { medianValue($0.map(\.angle)) }
-            let y=groups.map { medianValue($0.compactMap(value)) }
-            let mx=x.reduce(0,+)/6, my=y.reduce(0,+)/6
-            let denominator=x.reduce(0) { $0+pow($1-mx,2) }
-            guard denominator>100 else { continue }
-            let slope=zip(x,y).reduce(0) { $0+($1.0-mx)*($1.1-my) }/denominator
-            guard abs(slope) >= (method=="levelDifference" ? 0.04 : 0.12) else { continue }
-            let intercept=my-slope*mx
-            guard (0..<3).allSatisfy({ abs(y[$0]-y[$0+3])/abs(slope)<6 }) else { continue }
-            let errors=all.compactMap { row -> Double? in value(row).map { (($0-intercept)/slope)-row.angle } }
-            let rms=sqrt(errors.reduce(0) { $0+$1*$1 }/Double(errors.count))
-            guard rms<=5 else { continue }
-            responses.append(.init(method: method,slope: slope,intercept: intercept,errorDegrees: max(2,rms)))
-        }
-        guard !responses.isEmpty else { return nil }
-        let shapeSum=shape.reduce(0,+)
-        return BearingProfile(responses: responses, sampleRate: first.features.sampleRate,
-            shape: shape.map { $0/shapeSum }, referenceLevelDbfs: medianValue(all.map { $0.features.levelDbfs }))
+        evaluate(groups).profile
     }
 }
 

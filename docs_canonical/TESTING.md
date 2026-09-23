@@ -2,6 +2,12 @@
 
 2026-09-23: 다음 실기기 검증은 [기본 기능 실기기 검증 순서](NATIVE_FIELD_VALIDATION.md)를 따른다. 빌드 7의 자동 검증과 실제 음향 정확도 판정을 분리한다. 기본 검증 후 [라이다 공간 지도·내보내기 계획](LIDAR_SPATIAL_EXPORT_PLAN.md)을 재검토한다.
 
+## 빌드 8 보정 진단 (EXP-019)
+
+사용자의 빌드 7 실기기 결과는 [선택 필드와 해석](../docs/reports/2026-09-23-iphone17pro-build7-rejected-analysis.json)에 기록한다. 6단계·150개 수집은 성공했지만 보정 적합은 거부됐다. 종료 직전 한 프레임을 보정 전체의 음향 조건으로 확대 해석하지 않는다.
+
+빌드 8 회귀는 평탄한 각도 응답, 반복 불일치, 구간 안 산포, 스펙트럼 변화, 시간차 없이 유효한 레벨 응답, 잘못된 입력, 실패 상태 JSON 왕복/새 측정 초기화, 회전 부호와 경과 시간 진행률을 검사한다. 합성 UI는 실패 안내 뒤 위치/주파수 미표시·정지 후 공유 버튼·회전 안내/취소를 검사한다. 결과는 Mac CI 후 기록한다.
+
 ## 빌드 7 열지도와 영역 주파수 (EXP-017)
 
 코드 `13864bd`에서 [Native iOS](https://github.com/doroper98/sound_detection/actions/runs/35804076363) Swift 59/59·합성 UI 23/23·Release 기기 빌드·IPA 포장 PASS. [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35804076241) 단위 40/40·E2E 16/16 PASS. 로컬 gate·웹 E2E 및 실제 시뮬레이터 캡처 검토를 완료했다. 실기기 음향 위치·SPL 정확도는 미검증이다.

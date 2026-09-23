@@ -41,9 +41,10 @@ final class SpatialSynchronizationTests: XCTestCase {
         queue.append(.init(features: feature,midpoint: 10.1,duration: 0.1),at: 10.16)
         let inspect: (Double,Double,Double)->PoseAlignmentInspection = { _,_,_ in .init(issue: .cameraStale) }
         XCTAssertTrue(queue.drain(at: 10.16,inspect: inspect).isEmpty)
-        let item=try XCTUnwrap(queue.drain(at: 10.35,inspect: inspect).first)
-        XCTAssertEqual(item.inspection.issue,.cameraStale)
-        calibration.waitForPose(item.inspection.issue.instruction,at: 10.35)
+        let item=try XCTUnwrap(queue.drain(at: 10.45,inspect: inspect).first)
+        XCTAssertEqual(item.inspection.issue,.audioTooOld)
+        XCTAssertEqual(item.inspection.waitingForCameraIssue,.cameraStale)
+        calibration.waitForPose(item.inspection.instruction,at: 10.45)
         XCTAssertTrue(calibration.snapshot().movementInstruction.contains("카메라 자세가 갱신되지"))
         XCTAssertEqual(calibration.snapshot().progress,0)
         XCTAssertNil(calibration.profile)

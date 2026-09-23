@@ -30,14 +30,18 @@ public struct PoseAlignmentInspection: Codable, Sendable {
     public let nearestCameraMinusAudioSeconds: Double?
     public let cameraFrameCount: Int
     public let trackingState: String
+    public let waitingForCameraIssue: PoseAlignmentIssue?
+    public var instruction: String { (waitingForCameraIssue ?? issue).instruction }
     public init(issue: PoseAlignmentIssue, pose: SpatialPose? = nil, audioAgeSeconds: Double? = nil,
                 latestCameraAgeSeconds: Double? = nil, nearestCameraMinusAudioSeconds: Double? = nil,
-                cameraFrameCount: Int = 0, trackingState: String = "unavailable") {
+                cameraFrameCount: Int = 0, trackingState: String = "unavailable",
+                waitingForCameraIssue: PoseAlignmentIssue? = nil) {
         self.issue=issue; self.pose=pose
         self.audioAgeSeconds=audioAgeSeconds.flatMap { $0.isFinite ? $0 : nil }
         self.latestCameraAgeSeconds=latestCameraAgeSeconds.flatMap { $0.isFinite ? $0 : nil }
         self.nearestCameraMinusAudioSeconds=nearestCameraMinusAudioSeconds.flatMap { $0.isFinite ? $0 : nil }
         self.cameraFrameCount=cameraFrameCount; self.trackingState=trackingState
+        self.waitingForCameraIssue=waitingForCameraIssue
     }
 }
 
@@ -64,6 +68,7 @@ public struct SpatialAudioSynchronizer {
         let sample: SpatialAudioSample
         let receivedAt: Double
         var waited=false
+        var waitingIssue: PoseAlignmentIssue?
     }
     private var pending: [Pending]=[]
     public private(set) var overflowCount=0
@@ -84,11 +89,15 @@ public struct SpatialAudioSynchronizer {
             if !now.isFinite || !first.sample.midpoint.isFinite {
                 result = .init(issue: .invalidTiming)
             } else if age>=0.3 || age < -0.06 {
-                result = .init(issue: age>=0.3 ? .audioTooOld : .audioInFuture,audioAgeSeconds: age)
+                result = .init(issue: age>=0.3 ? .audioTooOld : .audioInFuture,audioAgeSeconds: age,
+                    latestCameraAgeSeconds: result.latestCameraAgeSeconds,
+                    nearestCameraMinusAudioSeconds: result.nearestCameraMinusAudioSeconds,
+                    cameraFrameCount: result.cameraFrameCount,trackingState: result.trackingState,
+                    waitingForCameraIssue: first.waitingIssue)
             }
             latestInspection=result
             if result.issue.canWaitForCamera, now-first.receivedAt<0.18, age<0.3 {
-                first.waited=true; pending[0]=first; break
+                first.waited=true; first.waitingIssue=result.issue; pending[0]=first; break
             }
             pending.removeFirst()
             delivered.append(.init(sample: first.sample,inspection: result,waitedForCamera: first.waited))

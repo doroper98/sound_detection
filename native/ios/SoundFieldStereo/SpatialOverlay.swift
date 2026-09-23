@@ -154,7 +154,9 @@ struct SpatialOverlay: View {
             Text(String(format: "스피커 방향 %+.0f° / 목표 %+.0f°",data.calibration.currentDegrees ?? 0,data.calibration.targetDegrees))
                 .font(.caption.monospacedDigit()).foregroundStyle(.white.opacity(0.7))
             ProgressView(value: data.calibration.progress).tint(tint)
-            Text(data.calibration.instruction).font(.caption).multilineTextAlignment(.center)
+            if data.calibration.instruction != data.calibration.movementInstruction {
+                Text(data.calibration.instruction).font(.caption).multilineTextAlignment(.center)
+            }
             Button("보정 취소") { spatial.cancelCalibration() }.buttonStyle(.bordered)
                 .accessibilityIdentifier("rotationCalibrationCancel")
         }.padding(16).background(.black.opacity(0.86),in: RoundedRectangle(cornerRadius: 18))

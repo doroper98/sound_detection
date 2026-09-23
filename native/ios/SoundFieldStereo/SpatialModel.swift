@@ -115,7 +115,7 @@ final class SpatialModel: ObservableObject {
                 report.bearing=nil; report.solution=nil; report.latestPose=nil; report.sound=nil
                 tracker=BearingTracker()
                 if calibrator.active {
-                    calibrator.waitForPose(result.issue.instruction,at: now)
+                    calibrator.waitForPose(result.instruction,at: now)
                     report.calibration=calibrator.snapshot()
                 }
             }

@@ -331,3 +331,5 @@ EXP-020 · REQ-NATIVE-022/023 · SC-43/44.
 - ARSession.currentFrame에서 이미 도착한 실제 프레임을 확인하며, delegate와 중복/역순 프레임은 역사에 중복 적재하지 않는다. 미리보기 재구성이 공유 ARSession을 임의 pause하지 않게 세션 소유권을 컨트롤러로 한정한다. 이것을 관측된 기기 정지의 확정 원인으로 주장하지 않는다.
 - schema 9에 synchronization(수신/연결/지연 회복/사유별 거부/마지막 검사)과 calibrationBeforeStop을 보존한다. 자세가 없을 때도 시간 초과가 작동한다. 소리/자세 조건으로 보류될 때 큰 안내가 원인을 우선한다. 별도 검사는 ‘입력 비교’로 이름을 분리한다.
 - 검증: 로컬 npm run gate(40개 단위 테스트 포함) PASS. 새 순수 Swift 6개와 실제 큐 경로를 쓰는 합성 UI 2개를 추가했다. Mac CI 및 웹 E2E 결과 대기. 실기기 보정/위치 정확도는 미검증.
+
+빌드 9 첫 CI 보완: 코드 cbd5b59의 Native iOS 35854761145에서 Swift 73/73·Release 기기 빌드 및 지연 프레임 첫 단계 통과는 성공했지만, UI 27개 중 카메라 누락 안내 검사 한 개에서 2개 assertion이 실패했다. 대기 중 음향 신선도 제한을 넘으면 cameraStale 원인이 audioTooOld로 덮여 일반 안내가 나온 것이 실제 캡처로 확인됐다. 만료를 계속 거부하면서 `waitingForCameraIssue`에 원래 대기 원인을 보존하고 큰 안내에 표시한다. 같은 원인의 중복 문구도 제거한다. 수정 후 순수 Swift·Release·핵심 UI 6개를 수동 focused 경로로 우선 검증하고 전체 회귀는 PR 자동 실행에서 유지한다. 이전 27/27 통과로 기록하지 않는다.

@@ -4,6 +4,7 @@
 |---|---|
 | native/ios/ | SwiftUI iPhone 스테레오 진단 앱·Xcode 프로젝트·설치 안내 |
 | native/ios/Packages/StereoCore/ | UI·AVFoundation·좌표와 독립된 좌우 PCM 레벨/정규화 상호상관 진단 및 Swift 테스트 |
+| native/ios/Packages/StereoCore/Sources/StereoCore/RotationCalibrationDiagnostics.swift | 회전 보정 6단계 요약·실패 조건·방법별 적합 진단 |
 | native/ios/SoundFieldStereo/CaptureModel.swift | 내장 stereo 소스 선택, 실제 포맷 확인, bounded PCM 처리·수명·통계 보고서 |
 | native/ios/SoundFieldStereoUITests/ | 명시적으로 표시한 DEBUG 합성 입력의 iOS UI 검증 (실기기 결과 아님) |
 | src/App.tsx | 실험 상태, 입력 패널, 관측, 내보내기, 가이드/릴리즈 |

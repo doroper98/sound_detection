@@ -52,13 +52,17 @@ final class FOADirectionModel: ObservableObject {
         guard running else { return }
         let now=ProcessInfo.processInfo.systemUptime
         while let row=pending.first {
-            let inspection=poseProvider?(row.1,row.2,now) ?? .init(issue: .poseProviderUnavailable)
+            var inspection=poseProvider?(row.1,row.2,now) ?? .init(issue: .poseProviderUnavailable)
+            if !row.1.isFinite || now-row.1>=0.3 || now-row.1 < -0.06 {
+                inspection = .init(issue: !row.1.isFinite ? .invalidTiming : (now-row.1>=0.3 ? .audioTooOld : .audioInFuture),
+                    audioAgeSeconds: now-row.1,waitingForCameraIssue: inspection.issue == .matched ? nil : inspection.issue)
+            }
             report.synchronization=inspection
             if inspection.issue == .poseTimeMismatch || inspection.issue == .missingCameraFrames {
                 if now-row.3<0.18 && now-row.1<0.3 { break }
             }
             pending.removeFirst()
-            guard inspection.issue == .matched, let pose=inspection.pose,
+            guard inspection.issue == .matched, let pose=inspection.pose, pose.valid,
                   now-row.1>=(-0.06), now-row.1<0.3 else {
                 report.rejectedByReason[inspection.issue.rawValue,default: 0]+=1
                 report.state="poseUnavailable"; regions=[]; report.displayedRegions=0; continue

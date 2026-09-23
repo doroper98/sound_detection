@@ -130,6 +130,13 @@ final class FOACapture: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, 
         guard active else { return }
         do {
             let isFOA=output === spatialOutput
+            diagnostics.inputPort=AVAudioSession.sharedInstance().currentRoute.inputs.first?.portType.rawValue
+            if let description=sampleBuffer.formatDescription, CMFormatDescriptionGetMediaType(description)==kCMMediaType_Audio {
+                let format=AVAudioFormat(cmAudioFormatDescription: description)
+                let observed=FOAFormatReading(channels: format.channelCount,layoutTag: format.channelLayout?.layoutTag,
+                    sampleRate: format.sampleRate.isFinite ? format.sampleRate : 0,commonFormat: format.commonFormat.rawValue,interleaved: format.isInterleaved)
+                if isFOA { diagnostics.foaFormat=observed } else { diagnostics.stereoFormat=observed }
+            }
             let (channels,format)=try Self.readPCM(sampleBuffer,expectedChannels: isFOA ? 4 : 2,foa: isFOA)
             if isFOA { diagnostics.foaBuffers+=1; diagnostics.foaFormat=format }
             else { diagnostics.stereoBuffers+=1; diagnostics.stereoFormat=format }

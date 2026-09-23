@@ -106,7 +106,7 @@ struct NativeReport: Encodable {
     let hardwareSynchronizationVerified = false
     var localizationEnabled = false
     let lagConvention = "right-minus-left; positive means right arrives later"
-    let note = "Experimental empirical bearing and AR relative-position inference; physical acoustic accuracy unverified. Statistics, relative AR poses and estimated candidates only. No PCM, audio files, camera images, saved world map, device IDs or ground-truth source coordinates."
+    let note = "Experimental FOA band directions or legacy empirical stereo bearing; physical acoustic accuracy unverified. FOA camera-axis mapping is assumed, not validated, and no FOA range is inferred. Statistics and relative AR poses only. No PCM, audio files, camera images, saved world map, device IDs or ground-truth source coordinates."
 }
 
 @MainActor
@@ -420,6 +420,7 @@ final class CaptureModel: ObservableObject {
         timeOrigin = nil
         syntheticOrientation = OrientationHistory()
         report.requestedSource = source
+        if usesFOA { report.requestedSource="systemBuiltInFOA"; report.requestedOrientation="portraitCamera; FOA system orientation unverified" }
         report.status = "마이크 권한을 확인하고 있습니다."
         phase = .requestingPermission
         Task { [weak self] in
@@ -886,7 +887,7 @@ final class CaptureModel: ObservableObject {
     }
 
     private func archiveReport() {
-        guard report.startedAt != nil || report.foa?.capture.lastError != nil else { return }
+        guard report.startedAt != nil || report.foa?.capture.lastError != nil || (usesFOA && report.stoppedAt != nil) else { return }
         let encoder=JSONEncoder(); encoder.outputFormatting=[.prettyPrinted,.sortedKeys]; encoder.dateEncodingStrategy = .iso8601
         do {
             let data=try encoder.encode(report)

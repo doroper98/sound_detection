@@ -34,9 +34,9 @@ final class CaptureUITests: XCTestCase {
         app.buttons["liveCaptureButton"].tap()
         XCTAssertTrue(app.staticTexts["foaFrequency"].waitForExistence(timeout: 30))
         app.buttons["detailsButton"].tap()
-        let heading=app.staticTexts["savedReportHeading"]
+        let heading=app.buttons["savedReportsToggle"]
         reveal(heading,in: app)
-        XCTAssertTrue(heading.exists)
+        heading.tap()
         XCTAssertTrue(app.buttons.matching(identifier: "savedReportShare").firstMatch.exists)
     }
     func testLateCameraTimestampsAdvanceFirstStepThroughProductionQueue() {

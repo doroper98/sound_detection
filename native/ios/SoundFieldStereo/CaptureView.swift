@@ -79,6 +79,7 @@ struct CaptureDetailsView: View {
                     }.font(.caption).foregroundStyle(.secondary)
                 }.card()
 
+                if model.usesFOA { currentShareButton }
                 if let foa=model.report.foa {
                     VStack(alignment: .leading,spacing: 8) {
                         Text("4채널 공간 오디오").font(.headline)
@@ -90,23 +91,6 @@ struct CaptureDetailsView: View {
                         if let error=foa.capture.lastError { Text(error).font(.footnote) }
                     }.card()
                 }
-                if !model.savedReports.isEmpty {
-                    VStack(alignment: .leading,spacing: 10) {
-                        Text("이전 진단 · 최근 5개").font(.headline).accessibilityIdentifier("savedReportHeading")
-                        ForEach(model.savedReports) { saved in
-                            Button {
-                                if let url=model.exportSaved(saved) { sharedReport=SharedReport(url: url) }
-                            } label: {
-                                VStack(alignment: .leading,spacing: 3) {
-                                    Text(saved.date,style: .time)
-                                    Text(saved.status).font(.caption).lineLimit(2)
-                                    Text(saved.version).font(.caption2)
-                                }.frame(maxWidth: .infinity,alignment: .leading)
-                            }.accessibilityIdentifier("savedReportShare")
-                        }
-                    }.card()
-                }
-
                 let analysis = model.report.latest?.analysis
                 HStack(spacing: 12) {
                     channelCard("L · 왼쪽", level: analysis?.channels[0])
@@ -166,11 +150,24 @@ struct CaptureDetailsView: View {
                 }.card()
                 Text("내장 스테레오에는 기기 음향 처리가 포함될 수 있습니다. 시간차를 물리 마이크 간격으로 바로 환산하지 않습니다. 카메라의 방향·위치 후보는 보정된 경험적 응답을 사용하며 정확도는 미검증입니다.")
                     .font(.footnote).foregroundStyle(.secondary)
-                Button {
-                    if let url = model.export() { sharedReport = SharedReport(url: url) }
-                } label: {
-                    Label("진단 JSON 공유", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity)
-                }.buttonStyle(.bordered).accessibilityIdentifier("exportButton")
+                if !model.usesFOA { currentShareButton }
+                if !model.savedReports.isEmpty {
+                    DisclosureGroup("이전 진단 · 최근 5개") {
+                        ForEach(model.savedReports) { saved in
+                            Button {
+                                if let url=model.exportSaved(saved) { sharedReport=SharedReport(url: url) }
+                            } label: {
+                                VStack(alignment: .leading,spacing: 3) {
+                                    Text(saved.date.formatted(date: .abbreviated,time: .standard))
+                                    Text(saved.status).font(.caption).lineLimit(2)
+                                    Text(saved.version).font(.caption2)
+                                }.frame(maxWidth: .infinity,alignment: .leading)
+                            }.accessibilityIdentifier("savedReportShare")
+                        }
+                    }.accessibilityIdentifier("savedReportsToggle").card()
+                }
+
+
                 Text("녹음 파일·원음·영상은 저장하지 않습니다. 공유에는 상대 AR 좌표와 마지막 추정 통계가 포함되며, 수음을 중지합니다.")
                     .font(.caption).foregroundStyle(.secondary)
             }.padding(20)
@@ -180,6 +177,13 @@ struct CaptureDetailsView: View {
         .alert("보고서 저장 오류", isPresented: Binding(get: { model.exportError != nil }, set: { if !$0 { model.exportError = nil } })) {
             Button("확인") { model.exportError = nil }
         } message: { Text(model.exportError ?? "") }
+    }
+
+    private var currentShareButton: some View {
+        Button {
+            if let url=model.export() { sharedReport=SharedReport(url: url) }
+        } label: { Label("진단 JSON 공유",systemImage: "square.and.arrow.up").frame(maxWidth: .infinity) }
+            .buttonStyle(.bordered).accessibilityIdentifier("exportButton")
     }
 
     private func channelCard(_ name: String, level: ChannelLevel?) -> some View {

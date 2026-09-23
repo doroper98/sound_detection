@@ -37,7 +37,12 @@ final class CaptureUITests: XCTestCase {
         let heading=app.buttons["savedReportsToggle"]
         reveal(heading,in: app)
         heading.tap()
-        XCTAssertTrue(app.buttons.matching(identifier: "savedReportShare").firstMatch.exists)
+        XCTAssertEqual(heading.value as? String,"펼침")
+        let saved=app.buttons.matching(identifier: "savedReportShare").firstMatch
+        XCTAssertTrue(saved.waitForExistence(timeout: 5))
+        reveal(saved,in: app)
+        saved.tap()
+        XCTAssertTrue(app.otherElements["ActivityListView"].waitForExistence(timeout: 10))
     }
     func testLateCameraTimestampsAdvanceFirstStepThroughProductionQueue() {
         let app=launch(["--synthetic-pose-delay"],details: false)

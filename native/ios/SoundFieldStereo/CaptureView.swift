@@ -17,6 +17,7 @@ private struct ShareSheet: UIViewControllerRepresentable {
 struct CaptureDetailsView: View {
     @ObservedObject var model: CaptureModel
     @State private var sharedReport: SharedReport?
+    @State private var showSavedReports=false
     private let green = Color(red: 0.48, green: 0.95, blue: 0.68)
 
     var body: some View {
@@ -152,7 +153,16 @@ struct CaptureDetailsView: View {
                     .font(.footnote).foregroundStyle(.secondary)
                 if !model.usesFOA { currentShareButton }
                 if !model.savedReports.isEmpty {
-                    DisclosureGroup("이전 진단 · 최근 5개") {
+                    VStack(alignment: .leading,spacing: 12) {
+                        Button { showSavedReports.toggle() } label: {
+                            HStack {
+                                Text("이전 진단 · 최근 5개")
+                                Spacer()
+                                Image(systemName: showSavedReports ? "chevron.up" : "chevron.down")
+                            }.contentShape(Rectangle())
+                        }.accessibilityIdentifier("savedReportsToggle")
+                            .accessibilityValue(showSavedReports ? "펼침" : "접힘")
+                        if showSavedReports {
                         ForEach(model.savedReports) { saved in
                             Button {
                                 if let url=model.exportSaved(saved) { sharedReport=SharedReport(url: url) }
@@ -164,7 +174,8 @@ struct CaptureDetailsView: View {
                                 }.frame(maxWidth: .infinity,alignment: .leading)
                             }.accessibilityIdentifier("savedReportShare")
                         }
-                    }.accessibilityIdentifier("savedReportsToggle").card()
+                        }
+                    }.card()
                 }
 
 

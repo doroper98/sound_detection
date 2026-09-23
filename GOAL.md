@@ -46,6 +46,12 @@
 
 Apple의 내장 스테레오는 빔포밍 등을 포함할 수 있다. 두 채널이 다르다는 사실만으로 독립 물리 마이크·하드웨어 동기화를 검증하지 않는다. 교정 전에는 기존 위치 엔진에 임의 마이크 간격을 전달하지 않는다.
 
+## 현재 우선순위와 보류 계획 (2026-09-23)
+
+- 기본 수음·보정·위치 후보·열지도·영역 주파수의 정확성을 우선한다. 라이다 기능은 지금 구현하지 않는다.
+- REQ-NATIVE-018 / SC-39: 라이다 공간 재구성, 카메라/열지도와 공간 정보의 결합, 공간 및 소리 통계 내보내기를 [후속 계획](docs_canonical/LIDAR_SPATIAL_EXPORT_PLAN.md)에 보존하고 기본 검증 후 리마인드한다. 문서·리마인드 등록 완료, 기능은 DEFERRED.
+- REQ-NATIVE-019 / SC-40: [기본 기능 실기기 검증](docs_canonical/NATIVE_FIELD_VALIDATION.md)의 반복 측정·기준 위치·오류 억제·증거 항목을 준비한다. 절차 준비 완료, 실기기 결과와 정확도 판정 대기.
+
 ## 후속 실기기 검증
 
 빌드 7 검증 완료: 코드 `13864bd`에서 [Native iOS](https://github.com/doroper98/sound_detection/actions/runs/35804076363) Swift 59/59·합성 UI 23/23·Release 기기 빌드·IPA 포장 PASS. [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35804076241) 단위 40/40·E2E 16/16 PASS. 로컬 gate·웹 E2E 및 실제 시뮬레이터 캡처 검토를 완료했다. 실기기 음향 위치·SPL 정확도는 미검증이다.

@@ -1,5 +1,7 @@
 # 검증
 
+2026-09-23: 다음 실기기 검증은 [기본 기능 실기기 검증 순서](NATIVE_FIELD_VALIDATION.md)를 따른다. 빌드 7의 자동 검증과 실제 음향 정확도 판정을 분리한다. 기본 검증 후 [라이다 공간 지도·내보내기 계획](LIDAR_SPATIAL_EXPORT_PLAN.md)을 재검토한다.
+
 ## 빌드 7 열지도와 영역 주파수 (EXP-017)
 
 코드 `13864bd`에서 [Native iOS](https://github.com/doroper98/sound_detection/actions/runs/35804076363) Swift 59/59·합성 UI 23/23·Release 기기 빌드·IPA 포장 PASS. [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35804076241) 단위 40/40·E2E 16/16 PASS. 로컬 gate·웹 E2E 및 실제 시뮬레이터 캡처 검토를 완료했다. 실기기 음향 위치·SPL 정확도는 미검증이다.

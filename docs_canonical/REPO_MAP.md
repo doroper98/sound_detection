@@ -37,6 +37,8 @@
 | docs/releases/ | 버전별 한국어 노트 (UI와 GitHub가 공유) |
 | docs/reports/ | 실기기 진단 보고서 원본 JSON (원음·영상·장치 ID 없음), 해석은 TESTING.md |
 | docs_canonical/ | 설계·모델·검증·운영 문서 |
+| docs_canonical/LIDAR_SPATIAL_EXPORT_PLAN.md | 기본 기능 검증 뒤 검토할 라이다 공간 지도·음향 결합·내보내기 및 리마인드 조건 |
+| docs_canonical/NATIVE_FIELD_VALIDATION.md | 현재 기본 기능의 실기기 반복 측정·기준 위치·오탐 억제·증거 수집 순서 |
 | docs_canonical/FIELD_ACOUSTICS_FEASIBILITY.md | 사용자 논의, 주파수별 지도, 500m/±50m 기하 계산과 합성개구 검토, 미검증 범위 |
 | docs_bp/README.md | 원본 BP 출처와 적용 방식 |
 

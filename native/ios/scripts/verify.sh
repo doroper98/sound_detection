@@ -30,6 +30,8 @@ case "$ui_scope" in
     for test_name in \
       testFOAHeatmapWithoutSixStepCalibration \
       testFOASilenceClearsHeatmap \
+      testIsolatedFOACandidatesStayHiddenAndTimelineIsAvailable \
+      testCompactFOACameraKeepsScreenAwakeAndRestoresOnStopAndBackground \
       testPreviousReportSurvivesRestart \
       testFullscreenCameraControlsAndBackgroundRelease \
       testOutputOverrideWithChangedInputStillStopsCameraAndAudio \

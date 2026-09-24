@@ -39,6 +39,7 @@ public struct FOABandDiagnostic: Codable, Sendable {
     public var energyBalance: Double?
     public var spreadDegrees: Double?
     public var direction: Vector3?
+    public var failedChecks: [String] = []
 }
 
 public enum FOAAnalyzer {
@@ -81,22 +82,27 @@ public enum FOAAnalyzer {
             var diagnostic=FOABandDiagnostic(band: band,lowerHz: range.0,upperHz: range.1,state: "quiet")
             if p>0 { diagnostic.levelDbfs=10*log10(p*scale); diagnostic.directionalToOmniEnergy=v/p }
             defer { diagnostics.append(diagnostic) }
-            guard p*scale>pow(10,-65.0/10) else { rejected+=1; continue }
+            guard p*scale>pow(10,-65.0/10) else { diagnostic.failedChecks=["levelBelowMinimum"]; rejected+=1; continue }
             anyEnergy=true
             diagnostic.state="noDirectionalVector"
-            guard v>1e-12, cross.length>1e-9*p else { rejected+=1; continue }
+            guard v>1e-12, cross.length>1e-9*p else { diagnostic.failedChecks=["noDirectionalVector"]; rejected+=1; continue }
             let coherence=min(1,cross.length/sqrt(p*v)), balance=2*cross.length/(p+v)
             let direction=cross.normalized(), ratio=v/p
             diagnostic.coherence=coherence; diagnostic.energyBalance=balance; diagnostic.direction=direction
-            diagnostic.state="inconsistentComponents"
-            // Heuristics only. Even coherent reflections may pass; never a calibrated confidence.
-            guard coherence>=0.7, balance>=0.65, (0.25...1.8).contains(ratio) else { rejected+=1; continue }
             let spread=sqrt(vectors.reduce(0.0) { sum,row in
                 guard row.1>p*0.0001, row.0.length>1e-12 else { return sum }
                 return sum+row.1*pow(row.0.angle(to: direction),2)
             }/p)
-            diagnostic.spreadDegrees=spread; diagnostic.state="angularSpread"
-            guard spread<35 else { rejected+=1; continue }
+            diagnostic.spreadDegrees=spread
+            if coherence<0.7 { diagnostic.failedChecks.append("coherenceBelowMinimum") }
+            if balance<0.65 { diagnostic.failedChecks.append("energyBalanceBelowMinimum") }
+            if !(0.25...1.8).contains(ratio) { diagnostic.failedChecks.append("energyRatioOutsideModel") }
+            if spread>=35 { diagnostic.failedChecks.append("angularSpreadAboveMaximum") }
+            // Same heuristics as build 10; log every failed check, not only the first.
+            if !diagnostic.failedChecks.isEmpty {
+                diagnostic.state=diagnostic.failedChecks == ["angularSpreadAboveMaximum"] ? "angularSpread" : "inconsistentComponents"
+                rejected+=1; continue
+            }
             diagnostic.state="candidate"
             let peak=powers.max(by: { $0.1<$1.1 })!
             let peakPower=powers.filter { abs($0.0-peak.0)<=1 }.reduce(0) { $0+$1.1 }

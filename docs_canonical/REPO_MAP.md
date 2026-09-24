@@ -43,6 +43,8 @@
 | docs_canonical/NATIVE_LOCALIZATION_FEASIBILITY.md | 빌드 1~9 이력 인덱스, 실패 조건/미확정 원인, 시뮬레이션과 실제 입력 차이, 후속 기준 |
 | native/ios/SoundFieldStereo/FOACapture.swift | 공개 FOA+Stereo 수음, PCM/레이아웃 검증, 호스트 시각 변환, 단일 세션 소유권 |
 | native/ios/Packages/StereoCore/Sources/StereoCore/FOAAnalysis.swift | ACN/SN3D 대역별 방향 성분 분석과 각 대역 거부 진단, PCM 구간 큐 |
+| native/ios/Packages/StereoCore/Sources/StereoCore/FOADirectionStabilizer.swift | 대역/세계 방향 연속 확인, 표시된 직전 관측의 제한 유지 및 만료 |
+| native/ios/Packages/StereoCore/Sources/StereoCore/DiagnosticTimeline.swift | UTC·경과 시각/탈락 이력과 누계, 고유 JSON 내보내기 이름·메타데이터 |
 | native/ios/SoundFieldStereo/FOADirectionView.swift | 카메라 자세 대응·신선도·실험 방향 열지도, 미검증 축 가정 명시 |
 | native/ios/SoundFieldStereo/SavedNativeReport.swift | 최근 진단 JSON 보관/공유 메타데이터, 원음·영상 없음 |
 | scripts/audit-localization-feasibility.mjs | 기존 엔진과 네이티브 계산의 JS 전사 비교, 강한 반사·고정 지연·동일 자세 반복의 합성 반례 |

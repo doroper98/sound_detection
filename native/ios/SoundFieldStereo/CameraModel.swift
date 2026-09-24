@@ -70,7 +70,9 @@ private final class CameraController: @unchecked Sendable {
 @MainActor
 final class CameraModel: ObservableObject {
     enum Phase { case idle, starting, running }
-    @Published private(set) var phase: Phase = .idle
+    @Published private(set) var phase: Phase = .idle {
+        didSet { updateIdleTimer() }
+    }
     @Published private(set) var status = "카메라와 마이크를 시작하면 실시간 화면이 표시됩니다."
     @Published private(set) var usesSpatialCamera = false
     @Published private(set) var trackingStatus = "AR 이동 추적 대기"
@@ -80,6 +82,9 @@ final class CameraModel: ObservableObject {
     private let controller = CameraController()
     private var request = 0
     private var observers: [NSObjectProtocol] = []
+    private var applicationActive = true
+    private var previousIdleTimerSetting: Bool?
+    var screenAwake: Bool { UIApplication.shared.isIdleTimerDisabled }
     var session: AVCaptureSession { controller.session }
     var isBusy: Bool { phase != .idle }
 
@@ -114,6 +119,23 @@ final class CameraModel: ObservableObject {
     }
 
     deinit { observers.forEach(NotificationCenter.default.removeObserver) }
+
+    func setApplicationActive(_ active: Bool) {
+        applicationActive = active
+        updateIdleTimer()
+    }
+
+    private func updateIdleTimer() {
+        if phase == .running && applicationActive {
+            if previousIdleTimerSetting == nil {
+                previousIdleTimerSetting = UIApplication.shared.isIdleTimerDisabled
+            }
+            UIApplication.shared.isIdleTimerDisabled = true
+        } else if let previous = previousIdleTimerSetting {
+            UIApplication.shared.isIdleTimerDisabled = previous
+            previousIdleTimerSetting = nil
+        }
+    }
 
     func start(front: Bool) async -> Bool {
         guard !isBusy else { return phase == .running }

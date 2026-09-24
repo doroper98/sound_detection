@@ -2,6 +2,40 @@ import XCTest
 import UIKit
 
 final class CaptureUITests: XCTestCase {
+    func testCompactFOACameraKeepsScreenAwakeAndRestoresOnStopAndBackground() {
+        let app=launch(["--synthetic-foa"],details: false)
+        let button=app.buttons["liveCaptureButton"]
+        XCTAssertTrue((button.value as? String ?? "").contains("자동 잠금 기본 설정"))
+        button.tap()
+        XCTAssertTrue(app.staticTexts["foaFrequency"].waitForExistence(timeout: 30))
+        XCTAssertTrue((button.value as? String ?? "").contains("화면 켜짐 유지"))
+        let waveform=app.descendants(matching: .any).matching(identifier: "leftWaveform").firstMatch
+        XCTAssertGreaterThan(waveform.frame.minY-app.staticTexts["foaStatus"].frame.maxY,app.frame.height*0.55)
+        XCTAssertFalse(app.staticTexts["liveLagValue"].exists)
+        XCTAssertFalse(app.staticTexts["liveWaveformPerformance"].exists)
+        XCTAssertTrue(button.isHittable)
+        button.tap()
+        XCTAssertTrue((button.value as? String ?? "").contains("자동 잠금 기본 설정"))
+        button.tap()
+        XCTAssertTrue(app.staticTexts["foaFrequency"].waitForExistence(timeout: 30))
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        XCTAssertEqual(button.label,"카메라·수음 시작")
+        XCTAssertTrue((button.value as? String ?? "").contains("자동 잠금 기본 설정"))
+    }
+    func testIsolatedFOACandidatesStayHiddenAndTimelineIsAvailable() {
+        let app=launch(["--synthetic-foa","--synthetic-foa-isolated"],details: false)
+        app.buttons["liveCaptureButton"].tap()
+        let status=app.staticTexts["foaStatus"]
+        expectation(for: NSPredicate(format: "label CONTAINS %@","방향이 불안정"),evaluatedWith: status)
+        waitForExpectations(timeout: 30)
+        XCTAssertFalse(app.staticTexts["foaFrequency"].exists)
+        app.buttons["liveCaptureButton"].tap()
+        app.buttons["detailsButton"].tap()
+        XCTAssertTrue(app.staticTexts["foaTimelineSummary"].waitForExistence(timeout: 5))
+        let shot=XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name="native-build11-timeline-synthetic"; shot.lifetime = .keepAlways; add(shot)
+    }
     func testFOAHeatmapWithoutSixStepCalibration() {
         let app=launch(["--synthetic-foa"],details: false)
         app.buttons["liveCaptureButton"].tap()
@@ -12,7 +46,7 @@ final class CaptureUITests: XCTestCase {
         XCTAssertFalse(app.buttons["calibrationButton"].exists)
         XCTAssertFalse(app.staticTexts["soundPositionCandidate"].exists)
         XCTAssertTrue(app.staticTexts["foaStatus"].label.contains("거리 미측정"))
-        attachHeatScreenshot("native-build10-foa-heatmap-synthetic")
+        attachHeatScreenshot("native-build11-foa-heatmap-synthetic")
         app.buttons["liveCaptureButton"].tap()
         XCTAssertFalse(frequency.exists)
         app.buttons["detailsButton"].tap()
@@ -145,7 +179,7 @@ final class CaptureUITests: XCTestCase {
                 let fraction=Double(y)/Double(height)
                 if g>120 && g>r+20 && g>b+10 {
                     if (0.07...0.17).contains(fraction) { upper+=1 }
-                    if (0.83...0.93).contains(fraction) { lower+=1 }
+                    if (0.83...0.97).contains(fraction) { lower+=1 }
                 }
                 if (0.3...0.7).contains(fraction) {
                     if cool ? (b>25 && b>r+15 && b>g+8) : (r>65 && g>25 && r>g+8 && g>b+10) { heat+=1 }
@@ -237,8 +271,8 @@ final class CaptureUITests: XCTestCase {
     func testFreshWaveformsExceedAnalysisCadence() {
         let app = launch(details: false)
         app.buttons["liveCaptureButton"].tap()
-        let performance = app.staticTexts["liveWaveformPerformance"]
-        expectation(for: NSPredicate(format: "label MATCHES %@", ".*최근 [2-6][0-9] fps.*"), evaluatedWith: performance)
+        let performance = app.buttons["liveCaptureButton"]
+        expectation(for: NSPredicate(format: "value MATCHES %@", ".*최근 [2-6][0-9] fps.*"), evaluatedWith: performance)
         waitForExpectations(timeout: 30)
         XCTAssertTrue(app.staticTexts["liveCaptureStatus"].label.contains("합성"))
         let screen = XCTAttachment(screenshot: app.screenshot())
@@ -251,7 +285,7 @@ final class CaptureUITests: XCTestCase {
         app.buttons["닫기"].tap()
         let left = app.descendants(matching: .any).matching(identifier: "leftWaveform").firstMatch
         expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: left)
-        expectation(for: NSPredicate(format: "label MATCHES %@", ".*최근 [2-6][0-9] fps.*"), evaluatedWith: performance)
+        expectation(for: NSPredicate(format: "value MATCHES %@", ".*최근 [2-6][0-9] fps.*"), evaluatedWith: performance)
         waitForExpectations(timeout: 30)
     }
 
@@ -535,6 +569,7 @@ final class CaptureUITests: XCTestCase {
         waitForExpectations(timeout: 30)
         XCTAssertEqual(app.buttons["liveCaptureButton"].label, "카메라·수음 시작")
         XCTAssertEqual(app.staticTexts["liveCaptureStatus"].label, "대기")
+        XCTAssertTrue((app.buttons["liveCaptureButton"].value as? String ?? "").contains("자동 잠금 기본 설정"))
     }
 
     func testMicrophoneStartupFailureAlsoReleasesCamera() {
@@ -544,6 +579,7 @@ final class CaptureUITests: XCTestCase {
         waitForExpectations(timeout: 30)
         XCTAssertEqual(app.buttons["liveCaptureButton"].label, "카메라·수음 시작")
         XCTAssertTrue(app.staticTexts["cameraStatus"].label.contains("카메라를 중지"))
+        XCTAssertTrue((app.buttons["liveCaptureButton"].value as? String ?? "").contains("자동 잠금 기본 설정"))
     }
 
     func testCancelCameraPermissionDoesNotStartLater() {

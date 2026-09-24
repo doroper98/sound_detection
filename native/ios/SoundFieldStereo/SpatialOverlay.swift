@@ -139,8 +139,7 @@ struct SpatialOverlay: View {
                 .accessibilityIdentifier("soundHeatFrequency")
             Text(String(format: "입력 %.0f dBFS",sound.levelDbfs)).font(.system(size: 10).monospacedDigit())
                 .foregroundStyle(.white.opacity(0.85)).accessibilityIdentifier("soundHeatLevel")
-        }.foregroundStyle(.white).padding(.horizontal,8).padding(.vertical,6)
-            .background(.black.opacity(0.6),in: RoundedRectangle(cornerRadius: 7)).fixedSize()
+        }.foregroundStyle(.white).shadow(color: .black.opacity(0.95),radius: 2,x: 0,y: 1).fixedSize()
     }
     private var calibrationCard: some View {
         VStack(spacing: 10) {

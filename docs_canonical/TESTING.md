@@ -1,5 +1,9 @@
 # 검증
 
+## 빌드 11 단발 표시·시각·카메라 화면 (EXP-024)
+
+실측의 FOA 수음/카메라 병행 근거와 거부 기준은 [선택 필드 분석](../docs/reports/2026-09-24-iphone17pro-build10-flicker-analysis.json)에 기록했다. 큰 에너지 비율의 물리 원인은 미확정이다. Swift 회귀는 단발/교대 통과 미표시, 3회 확인과 제한된 과거 관측 유지, 큰 방향 변화와 카메라 회전, 무음/포화/카메라 실패/만료, UTC 밀리초·이력 한계, 같은 순간 반복 내보내기 고유 파일명, 표준 SN3D 반사 반례를 검사한다. UI는 단발 억제/시각 기록과 카메라 중앙 영역 55% 이상 확보/실제 idle timer 활성·중지·배경 복원을 검사한다. 열섬 글씨의 카드 제거는 새 스크린샷을 직접 확인한다. Mac CI 통과 전에는 iOS 빌드 성공으로 간주하지 않는다.
+
 ## 빌드 10 공간 오디오 방향 열지도 (EXP-023)
 
 2026-09-24 확인. 앱 코드 `752fdad`에서 [전체 네이티브 검사](https://github.com/doroper98/sound_detection/actions/runs/35868716850) Swift 78/78·합성 UI 30/30, [focused 검사](https://github.com/doroper98/sound_detection/actions/runs/35868713306) 6/6, Release/iphoneos 빌드와 unsigned IPA PASS. [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35868716786) 단위 40/40·E2E 16/16 및 로컬 gate PASS. Xcode 26.0.1, iPhoneOS SDK 26.0.

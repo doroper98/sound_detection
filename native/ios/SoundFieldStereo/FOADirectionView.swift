@@ -11,6 +11,8 @@ struct FOAReport: Codable {
     var synchronization: PoseAlignmentInspection?
     var state="idle"
     var displayedRegions=0
+    var timeline: FOADiagnosticTimeline?
+    let displayPolicy="3 consecutive accepted observations within 18 degrees in world axes; old observation explicitly marked for at most 0.28 s, all results expire at 0.30 s. Acoustic thresholds unchanged."
     let axisMapping="ASSUMED: FOA X forward, Y left, Z up -> portrait view (-Y,Z,X); device mapping unverified"
     let axisMappingVerified=false
     let physicalAccuracyVerified=false
@@ -21,6 +23,7 @@ struct FOAVisibleRegion: Identifiable {
     var id: Int { acoustic.band }
     let acoustic: FOARegion
     let worldDirection: Vector3
+    let recentOnly: Bool
 }
 @MainActor
 final class FOADirectionModel: ObservableObject {
@@ -29,19 +32,27 @@ final class FOADirectionModel: ObservableObject {
     var poseProvider: ((Double,Double,Double) -> PoseAlignmentInspection)?
     private var pending=[(FOAAnalysis,Double,Double,Double)]()
     private var running=false
-    private var lastAccepted=0.0
-    func start() { report=FOAReport(); report.state="waiting"; regions=[]; pending=[]; running=true; lastAccepted=0 }
+    private var stabilizer=FOADirectionStabilizer()
+    func start() {
+        report=FOAReport(); report.state="waiting"; regions=[]; pending=[]; running=true
+        stabilizer=FOADirectionStabilizer()
+        report.timeline=FOADiagnosticTimeline(uptime: ProcessInfo.processInfo.systemUptime,date: Date())
+    }
     func receive(_ analysis: FOAAnalysis, midpoint: Double, duration: Double, capture: FOACaptureDiagnostics) {
         guard running else { return }
         let events=report.capture.events
         report.capture=capture; report.capture.events=Array((events+capture.events).suffix(20))
         report.latest=analysis; report.lastMidpoint=midpoint; report.received+=1
         let now=ProcessInfo.processInfo.systemUptime
-        if pending.count>=4 { pending.removeFirst(); report.rejectedByReason["queueOverflow",default: 0]+=1 }
+        if pending.count>=4 {
+            let lost=pending.removeFirst(); report.rejectedByReason["queueOverflow",default: 0]+=1
+            report.timeline?.append(lost.0,midpoint: lost.1,duration: lost.2,poseIssue: "queueOverflow",displayState: report.state)
+        }
         pending.append((analysis,midpoint,duration,now)); tick()
     }
     func failure(_ message: String, capture: FOACaptureDiagnostics? = nil) {
         if let capture { report.capture=capture }
+        stabilizer.clear(state: "failed"); pending=[]
         report.capture.lastError=message; report.state="failed"; regions=[]; report.displayedRegions=0
     }
     func noteEvent(_ text: String) {
@@ -62,24 +73,32 @@ final class FOADirectionModel: ObservableObject {
                 if now-row.3<0.18 && now-row.1<0.3 { break }
             }
             pending.removeFirst()
+            defer {
+                report.timeline?.append(row.0,midpoint: row.1,duration: row.2,
+                    poseIssue: inspection.issue.rawValue,displayState: report.state)
+            }
             guard inspection.issue == .matched, let pose=inspection.pose, pose.valid,
                   now-row.1>=(-0.06), now-row.1<0.3 else {
                 report.rejectedByReason[inspection.issue.rawValue,default: 0]+=1
+                stabilizer.clear(state: "poseUnavailable")
                 report.state="poseUnavailable"; regions=[]; report.displayedRegions=0; continue
             }
-            report.matched+=1; report.state=row.0.state; lastAccepted=row.1
-            regions=row.0.regions.map { region in
-                // Explicit unverified device mapping; never a source/world position.
-                let d=region.direction
-                return .init(acoustic: region,worldDirection: (pose.forward*d.x-pose.right*d.y+pose.up*d.z).normalized())
-            }
-            report.displayedRegions=regions.count
+            report.matched+=1
+            stabilizer.observe(row.0,pose: pose,at: row.1,now: now)
+            updateDisplay()
         }
-        if now-lastAccepted>0.35 { regions=[]; report.displayedRegions=0; if report.state=="candidate" { report.state="stale" } }
+        stabilizer.refresh(at: now); updateDisplay()
     }
-    func trackingLost() { regions=[]; pending=[]; report.displayedRegions=0; report.state="poseUnavailable" }
+    private func updateDisplay() {
+        regions=stabilizer.regions.map { .init(acoustic: $0.acoustic,worldDirection: $0.worldDirection,recentOnly: $0.recentOnly) }
+        report.displayedRegions=regions.count; report.state=stabilizer.state
+    }
+    func trackingLost() {
+        stabilizer.clear(state: "poseUnavailable"); regions=[]; pending=[]; report.displayedRegions=0; report.state="poseUnavailable"
+    }
     func stop() {
         running=false; pending=[]; regions=[]; report.displayedRegions=0; report.capture.running=false
+        stabilizer.clear(state: "stopped")
         if report.state != "failed" { report.state="stopped" }
     }
     var status: String {
@@ -87,7 +106,9 @@ final class FOADirectionModel: ObservableObject {
         case "idle": return "카메라·수음 시작으로 소리 방향을 확인하세요"
         case "candidate": return "공간 오디오 방향 후보 · 거리 미측정"
         case "quiet": return "측정 대역의 소리가 작습니다 · 공간 오디오 수음 중"
-        case "ambiguous": return "여러 방향이 섞여 방향 표시를 보류합니다"
+        case "ambiguous": return "소리 방향이 불안정해 표시를 보류합니다"
+        case "confirming": return "같은 소리 방향이 반복되는지 확인 중입니다"
+        case "rechecking": return "방향 재확인 중 · 흐린 표시는 직전 관측입니다"
         case "clipped": return "입력이 너무 큽니다 · 소리를 조금 줄여 주세요"
         case "invalidPCM": return "공간 오디오 샘플 형식을 확인해 주세요"
         case "poseUnavailable": return report.synchronization?.instruction ?? "카메라 자세를 기다리고 있습니다"
@@ -98,13 +119,16 @@ final class FOADirectionModel: ObservableObject {
         }
     }
     #if DEBUG
-    func synthetic(at now: Double, silent: Bool) {
+    func synthetic(at now: Double, silent: Bool, isolatedCandidate: Bool = false) {
         poseProvider = { midpoint,_,_ in
             .init(issue: .matched,pose: .init(time: midpoint,origin: .zero,right: .init(1,0,0),up: .init(0,1,0),forward: .init(0,0,-1)))
         }
         let d=Vector3(1,-0.18,0.12).normalized()
-        let channels=[1,d.y,d.z,d.x].map { v in
+        var channels=[1,d.y,d.z,d.x].map { v in
             (0..<4096).map { Float(silent ? 0 : 0.08*v*sin(2 * .pi*1500*Double($0)/48000)) }
+        }
+        if isolatedCandidate && report.received % 5 != 0 {
+            for c in 1...3 { channels[c]=(0..<4096).map { Float(0.08*cos(2 * .pi*1500*Double($0)/48000)) } }
         }
         var capture=FOACaptureDiagnostics(); capture.supported=true; capture.running=true
         capture.foaBuffers=report.received+1
@@ -131,23 +155,21 @@ struct FOADirectionOverlay: View {
                             Circle().fill(RadialGradient(stops: heatStops(strength),center: .center,startRadius: 0,endRadius: radius))
                                 .accessibilityIdentifier("foaHeatIsland")
                             VStack(spacing: 2) {
+                                if region.recentOnly { Text("직전 관측").font(.system(size: 10)) }
                                 Text(region.acoustic.frequencyLabel).font(.system(size: 12,weight: .bold))
                                     .accessibilityIdentifier("foaFrequency")
                                 Text(String(format: "%.0f dBFS",region.acoustic.levelDbfs)).font(.system(size: 10))
-                            }.padding(6).background(.black.opacity(0.65),in: RoundedRectangle(cornerRadius: 7))
-                        }.frame(width: radius*2,height: radius*2).position(point)
+                            }.shadow(color: .black.opacity(0.95),radius: 2,x: 0,y: 1)
+                        }.frame(width: radius*2,height: radius*2).opacity(region.recentOnly ? 0.45 : 1).position(point)
                     }
                 }
-                VStack(spacing: 5) {
-                    Text(model.status).font(.subheadline.bold()).accessibilityIdentifier("foaStatus")
-                    Text("실험 방향 열지도 · 카메라 축 대응·정확도 확인 전")
-                        .font(.caption2).foregroundStyle(.white.opacity(0.8))
+                VStack {
                     if !model.regions.isEmpty && visibleRegions.allSatisfy({ region in
                         guard let p=project(region.worldDirection,size: geometry.size) else { return true }
                         return !CGRect(origin: .zero,size: geometry.size).contains(p)
-                    }) { Text("방향 후보가 화면 밖에 있습니다").font(.caption) }
-                }.multilineTextAlignment(.center).padding(12).background(.black.opacity(0.6),in: RoundedRectangle(cornerRadius: 12))
-                    .frame(maxWidth: geometry.size.width-40).position(x: geometry.size.width/2,y: geometry.size.height*0.27)
+                    }) { Text("방향 후보가 화면 밖에 있습니다").font(.caption).shadow(color: .black,radius: 2) }
+                    Spacer()
+                }.padding(.top,150)
             }.frame(width: geometry.size.width,height: geometry.size.height)
         }.foregroundStyle(.white).allowsHitTesting(false)
     }
@@ -178,5 +200,15 @@ struct FOADirectionOverlay: View {
         guard let pose=camera.spatialCamera.calibrationPose else { return nil }
         // Distance 2 is a projection helper only; no source range or world point is inferred.
         return camera.spatialCamera.project(pose.origin+direction*2,size: size)
+    }
+}
+
+struct FOAStatusLine: View {
+    @ObservedObject var model: FOADirectionModel
+    var body: some View {
+        Text(model.status).font(.caption).lineLimit(2)
+            .frame(maxWidth: .infinity,alignment: .leading)
+            .shadow(color: .black,radius: 2,x: 0,y: 1)
+            .accessibilityIdentifier("foaStatus")
     }
 }

@@ -9,8 +9,10 @@ final class FOAStabilityTests: XCTestCase {
         return FOAAnalyzer.analyze(channels,sampleRate: 48000)
     }
     private func ambiguous() -> FOAAnalysis {
-        let w=(0..<4096).map { Float(0.08*sin(2 * .pi*750*Double($0)/48000)) }
-        let v=(0..<4096).map { Float(0.08*sin(2 * .pi*750*Double($0)/48000 + .pi/3)) }
+        let step=2.0 * Double.pi * 750.0 / 48000.0
+        let offset=Double.pi / 3.0
+        let w: [Float]=(0..<4096).map { Float(0.08 * sin(step * Double($0))) }
+        let v: [Float]=(0..<4096).map { Float(0.08 * sin(step * Double($0) + offset)) }
         let zero=Array(repeating: Float(0),count: 4096)
         return FOAAnalyzer.analyze([w,zero,zero,v],sampleRate: 48000)
     }

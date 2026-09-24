@@ -35,6 +35,7 @@ final class FOADirectionModel: ObservableObject {
     private var stabilizer=FOADirectionStabilizer()
     #if DEBUG
     private var syntheticWindows = PCMWindowAssembler(channels: 4)
+    private var syntheticAnalyses = [Int: FOAAnalysis]()
     #endif
     func start() {
         report=FOAReport(); report.state="waiting"; regions=[]; pending=[]; running=true
@@ -143,7 +144,12 @@ final class FOADirectionModel: ObservableObject {
         let start = now - 0.05 - duration / 2
         guard let window = syntheticWindows.append(channels, at: start, sampleRate: 48000).first else { return }
         let midpoint = window.start + duration / 2
-        let analysis = FOAAnalyzer.analyze(window.channels, sampleRate: 48000)
+        // The fixture repeats identical PCM. Reuse its computed result so an
+        // instrumented UI test does not run FFT on the main actor every tick.
+        // Device capture still analyzes every window on its audio queue.
+        let key = silent ? 0 : (isolatedCandidate && report.received % 5 != 0 ? 1 : 2)
+        let analysis = syntheticAnalyses[key] ?? FOAAnalyzer.analyze(window.channels, sampleRate: 48000)
+        syntheticAnalyses[key] = analysis
         if let research = ResearchRecordingHub.shared.current {
             for offset in [-duration / 2, 0, duration / 2] {
                 research.appendPose(.init(timestamp: midpoint + offset, quaternion: [0,0,0,1],

@@ -20,7 +20,7 @@ final class CaptureUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["researchREC"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["foaFrequency"].waitForExistence(timeout: 30))
         let badge = app.staticTexts["researchREC"]
-        expectation(for: NSPredicate(format: "label CONTAINS %@", "2초"), evaluatedWith: badge)
+        expectation(for: NSPredicate(format: "label MATCHES %@", ".*REC ([2-9]|[1-9][0-9]+)초"), evaluatedWith: badge)
         waitForExpectations(timeout: 30)
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         shot.name = "native-build12-research-rec-synthetic"
@@ -45,7 +45,7 @@ final class CaptureUITests: XCTestCase {
         app.buttons["닫기"].tap()
         app.buttons["liveCaptureButton"].tap()
         XCTAssertTrue(app.staticTexts["foaFrequency"].waitForExistence(timeout: 30))
-        expectation(for: NSPredicate(format: "label CONTAINS %@", "2초"), evaluatedWith: app.staticTexts["researchREC"])
+        expectation(for: NSPredicate(format: "label MATCHES %@", ".*REC ([2-9]|[1-9][0-9]+)초"), evaluatedWith: app.staticTexts["researchREC"])
         waitForExpectations(timeout: 30)
         XCUIDevice.shared.press(.home)
         app.activate()

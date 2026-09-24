@@ -77,14 +77,15 @@ xcodebuild -project SoundFieldStereo.xcodeproj -scheme SoundFieldStereo \
 # of the simulator merely to capture the inactive launch screen.
 xcrun xcresulttool export attachments --path DerivedData/evidence/NativeUI.xcresult \
   --output-path DerivedData/evidence/attachments || true
+app_data=$(xcrun simctl get_app_container "$device_id" dev.soundfield.stereo data)
+cli="$(swift build --package-path Packages/StereoCore -c release --show-bin-path)/foa-replay"
+python3 scripts/verify-app-research.py "$app_data" "$cli" --inspect-only
 if [ "$test_status" -ne 0 ]; then
   tail -150 DerivedData/evidence/simulator-tests.log
   exit "$test_status"
 fi
 
 # Re-open the files actually produced by the simulator UI recording path.
-app_data=$(xcrun simctl get_app_container "$device_id" dev.soundfield.stereo data)
-cli="$(swift build --package-path Packages/StereoCore -c release --show-bin-path)/foa-replay"
 "${TMPDIR:-/tmp}/soundfield-schema-env/bin/python" scripts/verify-app-research.py "$app_data" "$cli"
 
 # The user can re-sign this device build on Windows. It is not installable by

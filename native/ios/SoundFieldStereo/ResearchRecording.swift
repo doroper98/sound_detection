@@ -24,6 +24,7 @@ final class ResearchRecordingSession: @unchecked Sendable {
     private var failed = false
     private var limitReached = false
     private var pendingBytes = 0
+    private var abortRequested = false
     private var stopReason = "captureStopped"
     private var writer: ResearchSessionWriter?
     private var earlyPoses = [ResearchPoseSample]()
@@ -107,6 +108,7 @@ final class ResearchRecordingSession: @unchecked Sendable {
             guard !failed else { return }
             do {
                 guard let writer else { throw ResearchError.invalid("FOA 입력이 없어 연구 녹음이 생성되지 않았습니다.") }
+                notify("closing")
                 _ = try writer.finish(reason: reason)
                 notify("complete", seconds: Double(frames) / Double(writer.sampleRate), folder: writer.folder)
                 self.writer = nil
@@ -117,6 +119,7 @@ final class ResearchRecordingSession: @unchecked Sendable {
     func abandon(_ reason: String) {
         lock.lock()
         accepting = false
+        abortRequested = true
         lock.unlock()
         queue.async { [self] in failOnQueue(reason) }
     }
@@ -126,6 +129,7 @@ final class ResearchRecordingSession: @unchecked Sendable {
         guard accepting else { lock.unlock(); return }
         guard pendingBytes + bytes <= 8 * 1024 * 1024 else {
             accepting = false
+            abortRequested = true
             lock.unlock()
             queue.async { [self] in failOnQueue("저장 속도가 수음을 따라가지 못해 미완료로 중지했습니다.") }
             return
@@ -137,7 +141,10 @@ final class ResearchRecordingSession: @unchecked Sendable {
                 pendingBytes -= bytes
                 lock.unlock()
             }
-            guard !failed, !limitReached else { return }
+            lock.lock()
+            let aborted = abortRequested
+            lock.unlock()
+            guard !failed, !limitReached, !aborted else { return }
             do { try operation() }
             catch { failOnQueue(error.localizedDescription) }
         }
@@ -266,6 +273,10 @@ final class ResearchRecordingModel: ObservableObject {
     private func received(id: UUID, state: String, seconds: Double, folder: URL?) {
         guard id == active?.id else { return }
         self.seconds = seconds
+        if state == "closing" {
+            status = "연구 파일 무결성 확인 중"
+            return
+        }
         if state == "recording" {
             if recording { status = String(format: "REC · %.1f초 · 아이폰에 저장 중", seconds) }
             return
@@ -295,7 +306,7 @@ final class ResearchRecordingModel: ObservableObject {
         guard !recording, !finalizing, !exporting else { return nil }
         exporting = true
         defer { exporting = false }
-        let folder = root.appendingPathComponent(manifest.sessionID.uuidString)
+        let folder = root.appendingPathComponent(manifest.sessionID.uuidString, isDirectory: true)
         let stamp = manifest.startedAtUTC.replacingOccurrences(of: ":", with: "-")
         let destination = FileManager.default.temporaryDirectory
             .appendingPathComponent("SoundField-research-\(stamp)-\(UUID().uuidString).zip")

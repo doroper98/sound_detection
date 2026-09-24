@@ -6,11 +6,32 @@ import subprocess
 import shutil
 import sys
 import zipfile
+import struct
 
 container = Path(sys.argv[1])
 cli = sys.argv[2]
 evidence = Path("DerivedData/evidence/research/app")
 evidence.mkdir(parents=True, exist_ok=True)
+if "--inspect-only" in sys.argv:
+    inventory = []
+    for folder in (container / "Documents/ResearchSessions").glob("*"):
+        if not folder.is_dir():
+            continue
+        row = {"sessionID": folder.name, "files": {p.name: p.stat().st_size for p in folder.iterdir() if p.is_file()}}
+        manifest_path = folder / "manifest.json"
+        if manifest_path.exists():
+            manifest = json.loads(manifest_path.read_text())
+            assert manifest["synthetic"]
+            row["manifest"] = manifest
+        wav = folder / "foa.wav"
+        if wav.exists():
+            with wav.open("rb") as stream:
+                header = stream.read(12)
+            if len(header) == 12:
+                row["wavHeaderDeclaredBytes"] = struct.unpack_from("<I", header, 4)[0] + 8
+        inventory.append(row)
+    (evidence / "recording-file-inventory.json").write_text(json.dumps(inventory, indent=2) + "\n")
+    raise SystemExit(0)
 manifests = list((container / "Documents/ResearchSessions").glob("*/manifest.json"))
 assert len(manifests) >= 2, "Stop and background must each create a complete session"
 rows = []

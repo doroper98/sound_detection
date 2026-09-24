@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(CryptoKit)
+import CryptoKit
+#endif
 
 public enum ResearchError: Error, LocalizedError {
     case invalid(String)
@@ -65,9 +68,15 @@ public struct ResearchSHA256 {
     public static func file(_ url: URL) throws -> String {
         let handle = try FileHandle(forReadingFrom: url)
         defer { try? handle.close() }
+        #if canImport(CryptoKit)
+        var hash = CryptoKit.SHA256()
+        while let data = try handle.read(upToCount: 65536), !data.isEmpty { hash.update(data: data) }
+        return hash.finalize().map { String(format: "%02x", $0) }.joined()
+        #else
         var hash = Self()
         while let data = try handle.read(upToCount: 65536), !data.isEmpty { hash.update(data) }
         return hash.hexDigest()
+        #endif
     }
 
     private func rotate(_ x: UInt32, _ n: UInt32) -> UInt32 { (x >> n) | (x << (32 - n)) }
@@ -121,9 +130,14 @@ public final class FloatWAVWriter {
               frames + count <= sampleRate * 120 else {
             throw ResearchError.invalid("WAV 입력 불일치 또는 연구 녹음 120초 한도입니다.")
         }
-        var data = Data(capacity: count * channels * 4)
-        for i in 0..<count {
-            for channel in pcm { data.appendLE(channel[i].bitPattern) }
+        var data = Data(count: count * channels * 4)
+        data.withUnsafeMutableBytes { (bytes: UnsafeMutableRawBufferPointer) in
+            for i in 0..<count {
+                for c in 0..<channels {
+                    bytes.storeBytes(of: pcm[c][i].bitPattern.littleEndian,
+                        toByteOffset: (i * channels + c) * 4, as: UInt32.self)
+                }
+            }
         }
         try handle.write(contentsOf: data)
         frames += count

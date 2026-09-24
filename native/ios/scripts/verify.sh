@@ -77,6 +77,15 @@ xcodebuild -project SoundFieldStereo.xcodeproj -scheme SoundFieldStereo \
 # of the simulator merely to capture the inactive launch screen.
 xcrun xcresulttool export attachments --path DerivedData/evidence/NativeUI.xcresult \
   --output-path DerivedData/evidence/attachments || true
+# Xcode may shut the selected simulator down after testing. Boot that same
+# device before querying its data container; this does not relaunch the app.
+device_state=$(xcrun simctl list devices -j | python3 -c '
+import json,sys
+data=json.load(sys.stdin)
+print(next(d["state"] for devices in data["devices"].values() for d in devices if d["udid"]==sys.argv[1]))
+' "$device_id")
+if [ "$device_state" = Shutdown ]; then xcrun simctl boot "$device_id"; fi
+xcrun simctl bootstatus "$device_id" -b > DerivedData/evidence/container-boot.log 2>&1
 app_data=$(xcrun simctl get_app_container "$device_id" dev.soundfield.stereo data)
 cli="$(swift build --package-path Packages/StereoCore -c release --show-bin-path)/foa-replay"
 python3 scripts/verify-app-research.py "$app_data" "$cli" --inspect-only

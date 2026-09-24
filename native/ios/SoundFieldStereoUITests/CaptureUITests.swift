@@ -10,7 +10,9 @@ final class CaptureUITests: XCTestCase {
         XCTAssertEqual(toggle.value as? String, "0")
         app.buttons["닫기"].tap()
         app.buttons["liveCaptureButton"].tap()
-        XCTAssertTrue(app.staticTexts["foaFrequency"].waitForExistence(timeout: 30))
+        // Recording must work even while direction is unconfirmed. Heatmap
+        // confirmation has its own tests; use actual PCM arrival here.
+        awaitLivePCM(app)
         XCTAssertFalse(app.staticTexts["researchREC"].exists)
         app.buttons["liveCaptureButton"].tap()
         app.buttons["detailsButton"].tap()
@@ -18,7 +20,6 @@ final class CaptureUITests: XCTestCase {
         app.buttons["닫기"].tap()
         app.buttons["liveCaptureButton"].tap()
         XCTAssertTrue(app.staticTexts["researchREC"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["foaFrequency"].waitForExistence(timeout: 30))
         let badge = app.staticTexts["researchREC"]
         expectation(for: NSPredicate(format: "label MATCHES %@", ".*REC ([2-9]|[1-9][0-9]+)초"), evaluatedWith: badge)
         waitForExpectations(timeout: 30)
@@ -44,7 +45,6 @@ final class CaptureUITests: XCTestCase {
         app.switches["researchToggle"].tap()
         app.buttons["닫기"].tap()
         app.buttons["liveCaptureButton"].tap()
-        XCTAssertTrue(app.staticTexts["foaFrequency"].waitForExistence(timeout: 30))
         expectation(for: NSPredicate(format: "label MATCHES %@", ".*REC ([2-9]|[1-9][0-9]+)초"), evaluatedWith: app.staticTexts["researchREC"])
         waitForExpectations(timeout: 30)
         XCUIDevice.shared.press(.home)

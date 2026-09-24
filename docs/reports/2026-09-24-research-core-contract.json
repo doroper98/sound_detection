@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "kind": "synthetic-research-recording-replay-contract",
-  "sourceCommit": "ba62a25ca3198d78327949bd4116baf79cf32f17",
-  "ciRunURL": "https://github.com/doroper98/sound_detection/actions/runs/35942994806",
+  "sourceCommit": "eddbe2dfbc48626b27e5f246e1539780830de5e2",
+  "ciRunURL": "https://github.com/doroper98/sound_detection/actions/runs/35945681243",
   "schemaValidated": true,
   "hashlibMatchesSwiftSHA256": true,
   "float32WAVValidated": true,

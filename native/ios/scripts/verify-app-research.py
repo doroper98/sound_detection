@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import shutil
 import sys
 import zipfile
 
@@ -39,6 +40,7 @@ for path in archives:
             data = archive.read(entry["name"])
             assert len(data) == entry["bytes"]
             assert hashlib.sha256(data).hexdigest() == entry["sha256"]
+        shutil.copyfile(path, evidence / ("synthetic-shared-" + manifest["sessionID"] + ".zip"))
 report = {
     "schemaVersion": 1, "sourceCommit": os.environ["GITHUB_SHA"],
     "ciRunURL": "https://github.com/doroper98/sound_detection/actions/runs/" + os.environ["GITHUB_RUN_ID"],

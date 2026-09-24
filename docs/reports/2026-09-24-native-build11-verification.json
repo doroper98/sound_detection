@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-24",
+  "kind": "native-foa-display-camera-ui-and-export-software-verification",
+  "sourceHeadCommit": "ef68caa237e3f44e59d485dc5dacd7cf85e0b03c",
+  "fullTestMergeCommit": "86771ea9a300bf6711e4ea094f11e43dec5805f6",
+  "nativeWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35940268845",
+  "focusedWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35940265241",
+  "webWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35940268849",
+  "toolchain": {
+    "xcode": "26.0.1",
+    "iPhoneOSSDK": "26.0"
+  },
+  "swiftUnitTests": {
+    "passed": 85,
+    "failed": 0
+  },
+  "simulatorUITests": {
+    "passed": 32,
+    "failed": 0,
+    "scope": "full"
+  },
+  "focusedUITests": {
+    "passed": 8,
+    "failed": 0
+  },
+  "webUnitTests": {
+    "passed": 40,
+    "failed": 0
+  },
+  "webE2ETests": {
+    "passed": 16,
+    "failed": 0
+  },
+  "localGatePassed": true,
+  "priorFailures": [
+    35940022867,
+    35940023012
+  ],
+  "priorFailureDescription": "Swift compiler type-check timeout in the new test phase fixture; explicit Double phase constants fixed it. No production thresholds were changed.",
+  "screenshots": [
+    "native-build11-foa-heatmap-synthetic"
+  ],
+  "screenshotVisuallyReviewed": true,
+  "screenshotNotes": "Synthetic scene, not real camera/device evidence. Compact header/status and bottom waveforms/button leave the center clear; heat frequency/dBFS have no card background.",
+  "cameraClearVerticalFractionTestedMinimum": 0.55,
+  "idleTimerUITested": "Actual UIApplication idle timer property while camera runs, after stop/background, and on startup failure. Previous setting is restored.",
+  "ipa": {
+    "artifact": "SoundFieldStereo-unsigned.ipa",
+    "sha256": "3dc5d406cd4c6e93e9e71d3629a4ccd5255deb549d9bae176db8e671a8fc5c7d",
+    "bytes": 694195,
+    "sourceCommit": "ef68caa237e3f44e59d485dc5dacd7cf85e0b03c",
+    "bundleIdentifier": "dev.soundfield.stereo",
+    "buildNumber": "11",
+    "minimumOSVersion": "17.0",
+    "platform": "iPhoneOS",
+    "configuration": "Release",
+    "signing": "unsigned; user must sign before installation",
+    "physicalInstallationVerified": false,
+    "filename": "SoundFieldStereo-build11-unsigned.ipa",
+    "sourceRun": 35940265241,
+    "crcVerified": true,
+    "debugFixturesExcluded": true,
+    "fullAndFocusedPackageContentsByteIdentical": true
+  },
+  "reportSchemaVersion": 11,
+  "historyCapacity": 240,
+  "timeMeaning": "UTC milliseconds reconstructed from wall-clock/host-clock anchor, audio window midpoint; elapsed from first FOA midpoint. Recent processed windows and all-processed counters, not a video or complete recording.",
+  "exportNaming": "UTC export time + session prefix + unique export UUID; historical measurement timestamps preserved.",
+  "physicalFOACaptureAndCameraConcurrencyEvidence": "User build10 session 0842E25E-9565-4936-B352-D6F5CF7E8B92; not a build11 installation test.",
+  "physicalIdleTimerBehaviorVerified": false,
+  "axisMappingVerified": false,
+  "physicalLocalizationAccuracyVerified": false,
+  "distanceEstimated": false,
+  "limitations": "Physical cause of high directional/omni energy remains unresolved. Acoustic gates unchanged; temporal display confirmation does not validate acoustic accuracy. No source range, spatial SPL or general source separation."
+}

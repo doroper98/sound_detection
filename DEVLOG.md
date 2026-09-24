@@ -12,6 +12,7 @@
 - 자동 잠금 수정: 카메라 실행·앱 활성 상태에서만 UIApplication idle timer를 막는다. 기존 설정을 저장하고 중지·실패·비활성화/백그라운드에서 복원한다. 원래 꺼짐 방지 설정을 무조건 false로 덮어쓰지 않는다.
 - 검증 준비: Swift 시간 연속성/반사 반례/시각/고유 파일명 7개, 합성 UI 단발 억제 및 중앙 영역·실제 idle timer/중지/배경 복구 검사를 추가했다. 로컬 gate PASS. Mac 빌드·UI 결과는 최종 검증 기록에 추가한다. 실기기 정확도 개선이나 실제 에너지 비율 원인 해결을 선언하지 않는다.
 - 첫 Mac CI(`35940022867`, `35940023012`)는 새 테스트의 위상 이동 사인 수식에서 Swift 타입 추론 시간 초과로 컴파일이 중단됐다. Double 상수와 위상 단계를 분리해 해결하고 재검증한다. 앱 분석 기준/수식 변경은 아니다.
+- 최종 검증: 코드 `ef68caa`의 Swift **85/85**, 전체 합성 UI **32/32**([35940268845](https://github.com/doroper98/sound_detection/actions/runs/35940268845)), focused **8/8**([35940265241](https://github.com/doroper98/sound_detection/actions/runs/35940265241)), Release 기기 빌드·IPA 포장 PASS. 웹 단위 **40/40**, E2E **16/16**([35940268849](https://github.com/doroper98/sound_detection/actions/runs/35940268849)), 로컬 gate PASS. 새 화면을 직접 검토했고 중앙 영역/글씨만 표시/실제 idle timer 복구 검사를 통과했다. IPA CRC·arm64/iPhoneOS·빌드 11·Release 합성 입력 제외 및 두 CI 패키지 내부 파일 일치를 확인했다. [최종 검증 보고서](docs/reports/2026-09-24-native-build11-verification.json). 빌드 11 실기기 설치·자동 잠금 지속 동작·물리 방향 정확도는 별도 확인 전이다.
 
 ## 추적 매트릭스
 

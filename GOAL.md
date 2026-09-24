@@ -2,14 +2,14 @@
 
 | REQ | 요구사항 | SC 및 증거 | 상태 |
 |---|---|---|---|
-| REQ-NATIVE-031 | 기본 OFF 연구 모드: FOA Float32 WAV·AR 자세·시각·SHA-256 manifest·명시적 REC·로컬 공유 | SC-53: 원음 재생 일치, 중지/백그라운드 완료, 비정상 세션 구분; reports JSON + CI URL | 구현 중 |
-| REQ-ENGINE-002 | 동일 Swift PCMWindowAssembler/FOAAnalyzer를 쓰는 foa-replay CLI | SC-54: 앱 관측과 재생 ±1e-6, 포즈 대응·파일 무결성 확인; reports JSON + CI URL | 구현 중 |
+| REQ-NATIVE-031 | 기본 OFF 연구 모드: FOA Float32 WAV·AR 자세·시각·SHA-256 manifest·명시적 REC·로컬 공유 | SC-53: 원음 재생 일치, 중지/백그라운드 완료, 비정상 세션 구분; reports JSON + CI URL | 소프트웨어 PASS: [앱 저장·공유 검증과 CI](docs/reports/2026-09-24-native-build12-verification.json) · 실제 녹음 확인 대기 |
+| REQ-ENGINE-002 | 동일 Swift PCMWindowAssembler/FOAAnalyzer를 쓰는 foa-replay CLI | SC-54: 앱 관측과 재생 ±1e-6, 포즈 대응·파일 무결성 확인; reports JSON + CI URL | Apple 합성 앱→CLI 및 각 호스트 자체 계약 PASS · Windows 교차 strict 불일치 보존: [검증과 CI](docs/reports/2026-09-24-native-build12-verification.json) |
 | REQ-NATIVE-032 | 정답 라벨 입력과 최소 10세션/전체 90세션 프로토콜 | SC-55: 실측 10개 manifest와 SHA-256 인덱스; reports JSON + CI URL | 도구 준비 후 사용자 측정 필요 |
 | REQ-NATIVE-033 | FOA→카메라 축 검증 | SC-56: 최소 세트 5방위 부호 5/5·평균 오차, >15°이면 매핑 재검토; reports JSON + CI URL | 실측 데이터 대기 |
 | REQ-NATIVE-034 | 전체 세트 기준선 후 방향 히스토그램·반사 억제·ROC | SC-57: 오차 중앙값/90분위·부호 오류율 비교; reports JSON + CI URL | 전체 90세션 및 기준선 대기 |
 | REQ-NATIVE-035 | 기존 FOA 합성 스크립트의 SNR/반사/방위/seed 격자 | SC-58: 1,440조건 오차·보류율, 실기기 예측/gate 아님; reports JSON + CI URL | PASS: [합성 격자와 CI](docs/reports/2026-09-24-foa-synthetic-grid.json), 반사 조건의 큰 오차 확인 · 실측 아님 |
 | REQ-NATIVE-036 | 축 검증 통과 후 기존 Stereo 보정 경로 폐기 | SC-59: 파형/수음 유지, 기존 회귀·줄 수 보고; reports JSON + CI URL | SC-56 통과 대기 |
-| REQ-DOC-004 | 세션 manifest 스키마·검증 및 실패 기록 규칙 | SC-60: 앱/CLI 계약 스키마와 합성 세션 검증; reports JSON + CI URL | 구현 중 |
+| REQ-DOC-004 | 세션 manifest 스키마·검증 및 실패 기록 규칙 | SC-60: 앱/CLI 계약 스키마와 합성 세션 검증; reports JSON + CI URL | PASS: [실제 앱 합성 파일의 schema·SHA·WAV·ZIP 검증과 CI](docs/reports/2026-09-24-native-build12-verification.json) |
 | REQ-NATIVE-037 | 수음 중 소리 영역의 방향·수신 강도·주파수를 계속 갱신하는 열지도 | SC-61: 연속 유효 관측으로 위치·색·진하기 갱신, 직전 관측 표시와 만료 구분; 단일 스냅샷이나 오래된 위치 고정 금지 | 기존 연속 표시 경로 확인 · 실기기 안정성/방향 정확도 검증 대기 |
 | NFR-001 연구 모드 예외 | 사용자가 명시적으로 연구 모드를 켠 세션만 원음·자세를 로컬 저장·직접 공유 | 기본 OFF·서버 전송 없음·카메라 영상 저장 없음 | 적용 |
 

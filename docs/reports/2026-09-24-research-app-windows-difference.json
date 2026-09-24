@@ -1,0 +1,372 @@
+{
+  "kind": "local-windows-replay-of-shared-research-archive",
+  "sessionID": "CF38A7B0-AD85-4EE0-B6C6-98EF6153A51C",
+  "synthetic": true,
+  "sourceZIP": "synthetic-shared-CF38A7B0-AD85-4EE0-B6C6-98EF6153A51C.zip",
+  "zipSHA256": "ca9481c299834b62080a17e08511167e6edf6abfa1107d141f2d95328ccb53cf",
+  "binarySHA256": "bdf947f37ac5b84a6052c0efa3c28145999005176ca87817a547cf87a3ce4884",
+  "swiftSDKOnPATH": false,
+  "comparedWindows": 25,
+  "mismatchedWindows": 25,
+  "unmatchedLiveWindows": 0,
+  "strictParityPassed": false,
+  "strictCLIReturnCode": 1,
+  "differencesOutsideQuietBandsBelowMinus240Dbfs": 0,
+  "differences": [
+    {
+      "path": "window[0].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[0].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[1].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[1].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[2].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[2].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[3].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[3].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[4].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[4].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[5].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[5].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[6].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[6].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[7].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[7].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[8].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[8].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[9].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[9].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[10].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[10].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[11].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[11].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[12].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[12].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[13].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[13].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[14].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[14].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[15].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[15].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[16].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[16].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[17].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[17].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[18].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[18].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[19].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[19].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[20].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[20].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[21].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[21].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[22].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[22].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[23].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[23].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[24].bandDiagnostics[0].directionalToOmniEnergy",
+      "live": 0.9927252467519806,
+      "replay": 0.9955938221209697,
+      "absoluteDifference": 0.0028685753689891014,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[24].bandDiagnostics[0].levelDbfs",
+      "live": -326.7571669446013,
+      "replay": -326.77448281034884,
+      "absoluteDifference": 0.017315865747548287,
+      "numericFloorOnly": true
+    }
+  ],
+  "poseMatchedWindows": 25,
+  "realDeviceAccuracyVerified": false,
+  "sourceCommit": "a7e90da2a8e8ab8a009551a82536ea8b5346b4f7",
+  "sourceCIURL": "https://github.com/doroper98/sound_detection/actions/runs/35947606032",
+  "interpretation": "Strict cross-platform equality FAIL. In this synthetic file, all differences are levelDbfs and directionalToOmniEnergy in the quiet band near -327 dBFS. Active-band directions/levels/decisions agree within 1e-6. No comparator or acoustic thresholds changed; not a general cross-platform guarantee."
+}

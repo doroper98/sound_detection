@@ -61,4 +61,4 @@ ZIP을 세션 폴더 하나로 푼 후 `foa-replay <폴더> --output <결과.jso
 
 poseAlignment는 기록된 AR 프레임을 같은 대응 검사에 넣은 **오프라인 재대응**이다. 가상 처리 시각은 윈도우 종료+60ms이며 실시간 UI 스케줄링 지연을 재연한 결과가 아니다. 실시간 FOAAnalysis 일치와 카메라 전달 시점 재현을 혼동하지 않는다. 소스 위치 라벨을 바꿔도 추론은 같아야 한다.
 
-Mac→Windows의 극단적으로 작은 무음 FFT 잔차는 dB 변환 후 ±1e-6보다 다를 수 있다. 현재 CLI는 이 경우에도 strict 불일치(exit 1)를 보고하고 결과 JSON을 남긴다. 유효 대역의 방향 차이와 무음 진단 수치 차이를 필드별로 확인하며, strict 실패를 자동으로 PASS 처리하지 않는다. [재현 기록](../docs/reports/2026-09-24-research-cross-platform-difference.json). 사용자가 이 명령을 직접 실행할 필요는 없다.
+Apple→Windows의 극단적으로 작은 무음 FFT 잔차는 dB 변환이나 성분 에너지 비율에서 ±1e-6보다 다를 수 있다. 현재 CLI는 이 경우에도 strict 불일치(exit 1)를 보고하고 결과 JSON을 남긴다. 유효 대역의 방향 차이와 무음 진단 수치 차이를 필드별로 확인하며, strict 실패를 자동으로 PASS 처리하지 않는다. [CLI 합성 파일 재현](../docs/reports/2026-09-24-research-cross-platform-difference.json) · [실제 앱의 공유 합성 ZIP 재현](../docs/reports/2026-09-24-research-app-windows-difference.json). 사용자가 이 명령을 직접 실행할 필요는 없다.

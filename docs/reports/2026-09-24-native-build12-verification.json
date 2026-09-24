@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-24",
+  "kind": "native-research-recording-sharing-and-replay-software-verification",
+  "sourceHeadCommit": "a7e90da2a8e8ab8a009551a82536ea8b5346b4f7",
+  "fullTestMergeCommit": "505bd65f51efab76cdf3886d8c72ac233f4e1e57",
+  "mergedCommit": "047c3d226df998061290365a161562436d666595",
+  "pullRequest": "https://github.com/doroper98/sound_detection/pull/9",
+  "nativeSourceTree": "38e972a3f6c30b998ac7173413c6ec6eb3024d7e",
+  "corePackageTree": "eaa721695d480f65db350e2acd77fda95f3bf687",
+  "nativeWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35947609442",
+  "focusedWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35947606032",
+  "webWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35947609634",
+  "replayWorkflow": "https://github.com/doroper98/sound_detection/actions/runs/35947609481",
+  "toolchain": {
+    "xcode": "26.0.1",
+    "iPhoneOSSDK": "26.0",
+    "windowsSwift": "6.2.3"
+  },
+  "swiftUnitTests": {
+    "passed": 90,
+    "failed": 0
+  },
+  "simulatorUITests": {
+    "passed": 34,
+    "failed": 0,
+    "scope": "full"
+  },
+  "focusedUITests": {
+    "passed": 10,
+    "failed": 0
+  },
+  "webUnitTests": {
+    "passed": 40,
+    "failed": 0
+  },
+  "webE2ETests": {
+    "passed": 16,
+    "failed": 0
+  },
+  "localGatePassed": true,
+  "appRecordingProofs": [
+    {
+      "schemaVersion": 1,
+      "sourceCommit": "505bd65f51efab76cdf3886d8c72ac233f4e1e57",
+      "ciRunURL": "https://github.com/doroper98/sound_detection/actions/runs/35947609442",
+      "appRecordingLifecycleVerified": true,
+      "syntheticOnly": true,
+      "completedSessions": [
+        {
+          "sessionID": "5BF826F0-A67F-47D8-A2FE-3BEFA7106DF9",
+          "stopReason": "userStopped",
+          "frames": 86016,
+          "analyzedWindows": 21,
+          "verification": {
+            "schemaVersion": 1,
+            "kind": "synthetic-research-recording-replay-contract",
+            "sourceCommit": "505bd65f51efab76cdf3886d8c72ac233f4e1e57",
+            "ciRunURL": "https://github.com/doroper98/sound_detection/actions/runs/35947609442",
+            "schemaValidated": true,
+            "hashlibMatchesSwiftSHA256": true,
+            "float32WAVValidated": true,
+            "liveReplayComparedWindows": 21,
+            "absoluteNumericTolerance": 1e-06,
+            "mismatches": 0,
+            "realDeviceAccuracyVerified": false,
+            "appRecordingLifecycleVerified": false
+          }
+        },
+        {
+          "sessionID": "E1A236B3-427A-4672-8ED9-1A1CF27393FA",
+          "stopReason": "enteredBackground",
+          "frames": 98304,
+          "analyzedWindows": 24,
+          "verification": {
+            "schemaVersion": 1,
+            "kind": "synthetic-research-recording-replay-contract",
+            "sourceCommit": "505bd65f51efab76cdf3886d8c72ac233f4e1e57",
+            "ciRunURL": "https://github.com/doroper98/sound_detection/actions/runs/35947609442",
+            "schemaValidated": true,
+            "hashlibMatchesSwiftSHA256": true,
+            "float32WAVValidated": true,
+            "liveReplayComparedWindows": 24,
+            "absoluteNumericTolerance": 1e-06,
+            "mismatches": 0,
+            "realDeviceAccuracyVerified": false,
+            "appRecordingLifecycleVerified": false
+          }
+        }
+      ],
+      "sharedArchivesVerified": 1,
+      "realDeviceAccuracyVerified": false,
+      "archives": [
+        {
+          "filename": "synthetic-shared-5BF826F0-A67F-47D8-A2FE-3BEFA7106DF9.zip",
+          "sha256": "d951371391e70a44057a3c8b643940aa4938ea2dd4cd63b2f24c29d0badb4c6e",
+          "crcAndManifestFileHashesVerified": true
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "sourceCommit": "a7e90da2a8e8ab8a009551a82536ea8b5346b4f7",
+      "ciRunURL": "https://github.com/doroper98/sound_detection/actions/runs/35947606032",
+      "appRecordingLifecycleVerified": true,
+      "syntheticOnly": true,
+      "completedSessions": [
+        {
+          "sessionID": "A6EAB437-9546-42D5-8DB8-3354B1936750",
+          "stopReason": "enteredBackground",
+          "frames": 102400,
+          "analyzedWindows": 25,
+          "verification": {
+            "schemaVersion": 1,
+            "kind": "synthetic-research-recording-replay-contract",
+            "sourceCommit": "a7e90da2a8e8ab8a009551a82536ea8b5346b4f7",
+            "ciRunURL": "https://github.com/doroper98/sound_detection/actions/runs/35947606032",
+            "schemaValidated": true,
+            "hashlibMatchesSwiftSHA256": true,
+            "float32WAVValidated": true,
+            "liveReplayComparedWindows": 25,
+            "absoluteNumericTolerance": 1e-06,
+            "mismatches": 0,
+            "realDeviceAccuracyVerified": false,
+            "appRecordingLifecycleVerified": false
+          }
+        },
+        {
+          "sessionID": "CF38A7B0-AD85-4EE0-B6C6-98EF6153A51C",
+          "stopReason": "userStopped",
+          "frames": 102400,
+          "analyzedWindows": 25,
+          "verification": {
+            "schemaVersion": 1,
+            "kind": "synthetic-research-recording-replay-contract",
+            "sourceCommit": "a7e90da2a8e8ab8a009551a82536ea8b5346b4f7",
+            "ciRunURL": "https://github.com/doroper98/sound_detection/actions/runs/35947606032",
+            "schemaValidated": true,
+            "hashlibMatchesSwiftSHA256": true,
+            "float32WAVValidated": true,
+            "liveReplayComparedWindows": 25,
+            "absoluteNumericTolerance": 1e-06,
+            "mismatches": 0,
+            "realDeviceAccuracyVerified": false,
+            "appRecordingLifecycleVerified": false
+          }
+        }
+      ],
+      "sharedArchivesVerified": 1,
+      "realDeviceAccuracyVerified": false,
+      "archives": [
+        {
+          "filename": "synthetic-shared-CF38A7B0-AD85-4EE0-B6C6-98EF6153A51C.zip",
+          "sha256": "ca9481c299834b62080a17e08511167e6edf6abfa1107d141f2d95328ccb53cf",
+          "crcAndManifestFileHashesVerified": true
+        }
+      ]
+    }
+  ],
+  "windowsSelfPlatformContract": {
+    "schemaVersion": 1,
+    "kind": "synthetic-research-recording-replay-contract",
+    "sourceCommit": "a7e90da2a8e8ab8a009551a82536ea8b5346b4f7",
+    "ciRunURL": "https://github.com/doroper98/sound_detection/actions/runs/35947606032",
+    "schemaValidated": true,
+    "hashlibMatchesSwiftSHA256": true,
+    "float32WAVValidated": true,
+    "liveReplayComparedWindows": 11,
+    "absoluteNumericTolerance": 1e-06,
+    "mismatches": 0,
+    "realDeviceAccuracyVerified": false,
+    "appRecordingLifecycleVerified": false
+  },
+  "windowsAppZIPReplay": {
+    "kind": "local-windows-replay-of-shared-research-archive",
+    "sessionID": "CF38A7B0-AD85-4EE0-B6C6-98EF6153A51C",
+    "synthetic": true,
+    "sourceZIP": "synthetic-shared-CF38A7B0-AD85-4EE0-B6C6-98EF6153A51C.zip",
+    "zipSHA256": "ca9481c299834b62080a17e08511167e6edf6abfa1107d141f2d95328ccb53cf",
+    "binarySHA256": "bdf947f37ac5b84a6052c0efa3c28145999005176ca87817a547cf87a3ce4884",
+    "swiftSDKOnPATH": false,
+    "comparedWindows": 25,
+    "mismatchedWindows": 25,
+    "unmatchedLiveWindows": 0,
+    "strictParityPassed": false,
+    "strictCLIReturnCode": 1,
+    "differencesOutsideQuietBandsBelowMinus240Dbfs": 0,
+    "poseMatchedWindows": 25,
+    "realDeviceAccuracyVerified": false,
+    "sourceCommit": "a7e90da2a8e8ab8a009551a82536ea8b5346b4f7",
+    "sourceCIURL": "https://github.com/doroper98/sound_detection/actions/runs/35947606032",
+    "interpretation": "Strict cross-platform equality FAIL. In this synthetic file, all differences are levelDbfs and directionalToOmniEnergy in the quiet band near -327 dBFS. Active-band directions/levels/decisions agree within 1e-6. No comparator or acoustic thresholds changed; not a general cross-platform guarantee."
+  },
+  "crossPlatformDetailedReport": "docs/reports/2026-09-24-research-app-windows-difference.json",
+  "strictCrossPlatformParityPassed": false,
+  "syntheticGrid": {
+    "conditions": 1440,
+    "report": "docs/reports/2026-09-24-foa-synthetic-grid.json",
+    "realDevicePrediction": false
+  },
+  "screenshot": "docs/assets/native-build12-research-synthetic.png",
+  "screenshotVisuallyReviewed": true,
+  "screenshotMeaning": "Synthetic iOS simulator scene, not a real camera image. REC, text-only frequency/receiver dBFS, compact waveforms and stop control visually checked.",
+  "ipa": {
+    "artifact": "SoundFieldStereo-unsigned.ipa",
+    "sha256": "2842d3eb7a12f60f7ab52d026113441325c371c897a80b53aa74dd920b884654",
+    "bytes": 841205,
+    "sourceCommit": "a7e90da2a8e8ab8a009551a82536ea8b5346b4f7",
+    "bundleIdentifier": "dev.soundfield.stereo",
+    "buildNumber": "12",
+    "minimumOSVersion": "17.0",
+    "platform": "iPhoneOS",
+    "configuration": "Release",
+    "signing": "unsigned; user must sign before installation",
+    "physicalInstallationVerified": false,
+    "filename": "SoundFieldStereo-build12-unsigned.ipa",
+    "sourceRun": 35947606032,
+    "crcVerified": true,
+    "debugFixturesExcluded": true,
+    "fullAndFocusedPackageContentsByteIdentical": true
+  },
+  "recording": {
+    "defaultEnabled": false,
+    "maximumSeconds": 120,
+    "automaticUpload": false,
+    "cameraImagesSaved": false,
+    "format": "System-provided FOA Float32 ACN/SN3D W,Y,Z,X, not individual physical microphone raw channels"
+  },
+  "continuousHeatmap": "Updated on accepted ongoing observations; direction, receiver level/color/opacity and frequency change. Brief prior observation is marked and expires; invalid observations remain suppressed. Acoustic gates unchanged.",
+  "priorFailedRuns": [
+    35943772876,
+    35945681240
+  ],
+  "failureHistory": "DEVLOG.md EXP-025 preserves timeouts, REC substring mismatch, simulator shutdown retrieval failure and strict cross-platform numeric discrepancy with follow-up data requirements.",
+  "physicalRecordingLifecycleVerified": false,
+  "physicalInstallationVerified": false,
+  "axisMappingVerified": false,
+  "physicalLocalizationAccuracyVerified": false,
+  "distanceEstimated": false,
+  "actualMinimumDatasetSessions": 0,
+  "actualFullDatasetSessions": 0,
+  "limitations": "Synthetic app recording and same-engine replay verified; no real research audio received yet. Physical axis/accuracy, source range/SPL, and reflection cause remain unverified. Offline pose correspondence does not reproduce actual UI scheduling. Windows cross-platform strict comparison fails on quiet residual diagnostics; results are still written and must be inspected."
+}

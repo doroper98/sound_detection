@@ -10,6 +10,11 @@ on:
       - 'native/ios/**'
       - '.github/workflows/native-ios.yml'
   workflow_dispatch:
+    inputs:
+      researchOnly:
+        description: 'Validate recording/replay without building an IPA'
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -19,6 +24,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Verify native iPhone prototype
+        env:
+          RESEARCH_ONLY: ${{ inputs.researchOnly }}
         run: bash native/ios/scripts/verify.sh
       - uses: actions/upload-artifact@v4
         if: always()

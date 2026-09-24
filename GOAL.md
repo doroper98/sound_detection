@@ -1,5 +1,17 @@
 # SoundField — 목표와 요구사항
 
+| REQ | 요구사항 | SC 및 증거 | 상태 |
+|---|---|---|---|
+| REQ-NATIVE-031 | 기본 OFF 연구 모드: FOA Float32 WAV·AR 자세·시각·SHA-256 manifest·명시적 REC·로컬 공유 | SC-53: 원음 재생 일치, 중지/백그라운드 완료, 비정상 세션 구분; reports JSON + CI URL | 구현 중 |
+| REQ-ENGINE-002 | 동일 Swift PCMWindowAssembler/FOAAnalyzer를 쓰는 foa-replay CLI | SC-54: 앱 관측과 재생 ±1e-6, 포즈 대응·파일 무결성 확인; reports JSON + CI URL | 구현 중 |
+| REQ-NATIVE-032 | 정답 라벨 입력과 최소 10세션/전체 90세션 프로토콜 | SC-55: 실측 10개 manifest와 SHA-256 인덱스; reports JSON + CI URL | 도구 준비 후 사용자 측정 필요 |
+| REQ-NATIVE-033 | FOA→카메라 축 검증 | SC-56: 최소 세트 5방위 부호 5/5·평균 오차, >15°이면 매핑 재검토; reports JSON + CI URL | 실측 데이터 대기 |
+| REQ-NATIVE-034 | 전체 세트 기준선 후 방향 히스토그램·반사 억제·ROC | SC-57: 오차 중앙값/90분위·부호 오류율 비교; reports JSON + CI URL | 전체 90세션 및 기준선 대기 |
+| REQ-NATIVE-035 | 기존 FOA 합성 스크립트의 SNR/반사/방위/seed 격자 | SC-58: 1,440조건 오차·보류율, 실기기 예측/gate 아님; reports JSON + CI URL | 예정 |
+| REQ-NATIVE-036 | 축 검증 통과 후 기존 Stereo 보정 경로 폐기 | SC-59: 파형/수음 유지, 기존 회귀·줄 수 보고; reports JSON + CI URL | SC-56 통과 대기 |
+| REQ-DOC-004 | 세션 manifest 스키마·검증 및 실패 기록 규칙 | SC-60: 앱/CLI 계약 스키마와 합성 세션 검증; reports JSON + CI URL | 구현 중 |
+| NFR-001 연구 모드 예외 | 사용자가 명시적으로 연구 모드를 켠 세션만 원음·자세를 로컬 저장·직접 공유 | 기본 OFF·서버 전송 없음·카메라 영상 저장 없음 | 적용 |
+
 ## 빌드 11: FOA 표시 안정성과 시각 기록
 
 - REQ-NATIVE-028 / SC-50: 단발 FOA 후보는 표시하지 않고 동일 대역·세계 방향의 연속 유효 관측을 확인한다. 확정 전후·짧은 보류를 구분하고 이전 관측 유지 시간을 제한·표시한다. 무음/포화/잘못된 PCM/카메라 문제/중지에서는 즉시 제거한다. 기존 음향 품질 기준을 낮추지 않는다.

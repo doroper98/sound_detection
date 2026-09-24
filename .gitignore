@@ -17,3 +17,5 @@ Thumbs.db
 **/xcuserdata/
 *.xcuserstate
 *.xcresult/
+**/ResearchSessions/
+*.wav

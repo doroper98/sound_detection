@@ -2,6 +2,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p DerivedData/evidence
+if [ "${RESEARCH_ONLY:-false}" = true ]; then
+  swift test --package-path Packages/StereoCore 2>&1 | tee DerivedData/evidence/swift-tests.log
+  bash scripts/verify-research.sh
+  exit 0
+fi
 # FOA AudioDataOutput is an iOS 26 SDK API, even with an older deployment target.
 sdk_version=$(xcrun --sdk iphoneos --show-sdk-version)
 if [ "${sdk_version%%.*}" -lt 26 ]; then

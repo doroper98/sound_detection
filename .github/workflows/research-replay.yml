@@ -1,0 +1,29 @@
+name: Research replay contract
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'native/ios/Packages/StereoCore/**'
+      - 'docs/schemas/**'
+      - 'native/ios/scripts/*research*'
+      - '.github/workflows/research-replay.yml'
+permissions:
+  contents: read
+jobs:
+  replay:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test recording and replay core without creating an IPA
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p native/ios/DerivedData/evidence
+          swift test --package-path native/ios/Packages/StereoCore 2>&1 | tee native/ios/DerivedData/evidence/research-tests.log
+          bash native/ios/scripts/verify-research.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: research-replay-evidence
+          path: native/ios/DerivedData/evidence/

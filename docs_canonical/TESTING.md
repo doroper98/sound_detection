@@ -1,5 +1,17 @@
 # 검증
 
+## 빌드 10 공간 오디오 방향 열지도 (EXP-023)
+
+2026-09-24 확인. 앱 코드 `752fdad`에서 [전체 네이티브 검사](https://github.com/doroper98/sound_detection/actions/runs/35868716850) Swift 78/78·합성 UI 30/30, [focused 검사](https://github.com/doroper98/sound_detection/actions/runs/35868713306) 6/6, Release/iphoneos 빌드와 unsigned IPA PASS. [웹 CI](https://github.com/doroper98/sound_detection/actions/runs/35868716786) 단위 40/40·E2E 16/16 및 로컬 gate PASS. Xcode 26.0.1, iPhoneOS SDK 26.0.
+
+- 4채널 ACN/SN3D 방향 계산: 6축·비스듬한 방향, 0인 dipole 성분, 다른 대역의 두 방향, 무음/포화/복제 모노/NaN/채널 오류, 반대 방향 상쇄, 가변 블록과 시각 간격을 검사한다.
+- 강한 동일 위상 반사에서 50° 넘는 편향인데 coherence가 0.99를 넘는 반례도 통과 조건으로 남긴다. coherence를 실제 위치 정확도나 확률로 주장하지 않는다.
+- UI: 6단계 없이 열지도·주파수 표시, 픽셀상 색과 상하단 존재, 무음 시 지우기, 이전 기록을 새 측정 후 펼쳐 공유창까지 열기, 기존 생명주기·권한·경로·파형·위치 실험 회귀를 검사한다. 합성 입력 배너를 표시하고 Release에서는 해당 입력 경로를 제외한다.
+- 중간 버전의 이전 진단 버튼 검사 실패를 수정했다. 최종 결과에 앞선 실패는 DEVLOG와 [검증 JSON](../docs/reports/2026-09-24-native-build10-verification.json)에 보존한다.
+- IPA CRC/arm64 iPhoneOS/빌드 10/개인 프로비저닝 없음/합성 플래그 제외를 검사했다. focused 및 전체 검사의 소스 트리와 IPA 내부 모든 파일 바이트가 같다. 화면 캡처를 직접 확인했다.
+
+실제 iPhone의 FOA 4채널 수신, AR 카메라 동시 동작, 카메라 축 대응, 방향 정확도와 프레임 속도는 미검증이다. FOA 경로는 거리·고유 3D 위치를 추정하지 않는다. [설치 후 간단한 확인 순서](NATIVE_FIELD_VALIDATION.md#빌드-10에서-사용자가-할-일)를 따른다.
+
 ## 2026-09-23 가능성 감사 (EXP-021)
 
 [통합 이력·진단](NATIVE_LOCALIZATION_FEASIBILITY.md), [build9 선택 필드](../docs/reports/2026-09-23-iphone17pro-build9-audio-only-analysis.json), [합성 결과](../docs/reports/2026-09-23-localization-feasibility-synthetic.json)를 보존했다. 실제 실패한 보정의 단계별 통계가 없어 물리 원인은 미확정이다. 현재 방식의 보류/오검출 반례와 GCC 비교를 기기 정확도 증거로 쓰지 않는다.

@@ -2,8 +2,8 @@ import ARKit
 import SwiftUI
 import StereoCore
 
-/// ARKit owns the rear video input in spatial mode. AVCaptureSession is not run
-/// concurrently; AR audio capture is disabled and AVAudioEngine owns the mic.
+/// ARKit owns the rear video input. Its audio capture stays disabled; either
+/// an audio-only FOA AVCaptureSession or the legacy AVAudioEngine owns the mic.
 @MainActor
 final class SpatialCameraController: NSObject, ARSessionDelegate {
     let session = ARSession()

@@ -2,6 +2,21 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p DerivedData/evidence
+# FOA AudioDataOutput is an iOS 26 SDK API, even with an older deployment target.
+sdk_version=$(xcrun --sdk iphoneos --show-sdk-version)
+if [ "${sdk_version%%.*}" -lt 26 ]; then
+  for xcode_path in /Applications/Xcode*.app/Contents/Developer; do
+    candidate_sdk=$(DEVELOPER_DIR="$xcode_path" xcrun --sdk iphoneos --show-sdk-version 2>/dev/null || true)
+    if [ -n "$candidate_sdk" ] && [ "${candidate_sdk%%.*}" -ge 26 ]; then
+      export DEVELOPER_DIR="$xcode_path"
+      break
+    fi
+  done
+fi
+sdk_version=$(xcrun --sdk iphoneos --show-sdk-version)
+if [ "${sdk_version%%.*}" -lt 26 ]; then echo "iOS 26 SDK required for FOA capture" >&2; exit 2; fi
+xcodebuild -version | tee DerivedData/evidence/toolchain.txt
+printf 'iPhoneOS SDK %s\n' "$sdk_version" >> DerivedData/evidence/toolchain.txt
 # Manual development builds run the current fix and critical capture lifecycle
 # checks first. Automatic PR/main runs retain the complete regression suite.
 ui_scope="${NATIVE_UI_SCOPE:-full}"
@@ -13,10 +28,10 @@ case "$ui_scope" in
   full) ;;
   focused)
     for test_name in \
-      testLateCameraTimestampsAdvanceFirstStepThroughProductionQueue \
-      testMissingCameraShowsReasonAndPreservesItAfterStop \
+      testFOAHeatmapWithoutSixStepCalibration \
+      testFOASilenceClearsHeatmap \
+      testPreviousReportSurvivesRestart \
       testFullscreenCameraControlsAndBackgroundRelease \
-      testStartupOutputOverrideKeepsCameraAndAcceptsFirstPCM \
       testOutputOverrideWithChangedInputStillStopsCameraAndAudio \
       testSharingStopsCapture; do
       ui_args+=("-only-testing:SoundFieldStereoUITests/CaptureUITests/$test_name")

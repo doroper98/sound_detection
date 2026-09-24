@@ -12,7 +12,9 @@ final class CaptureUITests: XCTestCase {
         app.buttons["liveCaptureButton"].tap()
         // Recording must work even while direction is unconfirmed. Heatmap
         // confirmation has its own tests; use actual PCM arrival here.
-        awaitLivePCM(app)
+        let waveform = app.descendants(matching: .any).matching(identifier: "leftWaveform").firstMatch
+        expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: waveform)
+        waitForExpectations(timeout: 30)
         XCTAssertFalse(app.staticTexts["researchREC"].exists)
         app.buttons["liveCaptureButton"].tap()
         app.buttons["detailsButton"].tap()

@@ -61,8 +61,8 @@ struct AudioRouteInspection: Encodable {
 
 struct NativeReport: Encodable {
     let sessionID=UUID()
-    var schemaVersion = 10
-    var appVersion = "0.4.0-native-foa-build10"
+    var schemaVersion = 11
+    var appVersion = "0.4.0-native-foa-stability-build11"
     var foa: FOAReport?
     var inputOrigin = "AVAudioEngine.inputNode"
     var operatingSystem = UIDevice.current.systemVersion
@@ -744,7 +744,8 @@ final class CaptureModel: ObservableObject {
             #if DEBUG
             if isSynthetic {
                 let silent=ProcessInfo.processInfo.arguments.contains("--synthetic-foa-silence") && updated.analyzedFrames>20
-                foa.synthetic(at: ProcessInfo.processInfo.systemUptime,silent: silent)
+                foa.synthetic(at: ProcessInfo.processInfo.systemUptime,silent: silent,
+                    isolatedCandidate: ProcessInfo.processInfo.arguments.contains("--synthetic-foa-isolated"))
                 lastFOAFrameAt=Date()
             }
             #endif
@@ -875,12 +876,7 @@ final class CaptureModel: ObservableObject {
     func export() -> URL? {
         if isBusy { stop(reason: "보고서를 공유하기 위해 수음을 중지하고 마이크를 해제했습니다.") }
         do {
-            if let exportURL { try? FileManager.default.removeItem(at: exportURL) }
-            let url = FileManager.default.temporaryDirectory.appendingPathComponent("soundfield-native-stereo.json")
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-            encoder.dateEncodingStrategy = .iso8601
-            try encoder.encode(report).write(to: url, options: .atomic)
+            let url=try writeExport(DiagnosticExport.encoder().encode(report),sessionID: report.sessionID,historical: false)
             exportURL = url
             return url
         } catch { exportError = "보고서를 만들지 못했습니다: \(error.localizedDescription)"; return nil }
@@ -888,7 +884,7 @@ final class CaptureModel: ObservableObject {
 
     private func archiveReport() {
         guard report.startedAt != nil || report.foa?.capture.lastError != nil || (usesFOA && report.stoppedAt != nil) else { return }
-        let encoder=JSONEncoder(); encoder.outputFormatting=[.prettyPrinted,.sortedKeys]; encoder.dateEncodingStrategy = .iso8601
+        let encoder=DiagnosticExport.encoder()
         do {
             let data=try encoder.encode(report)
             savedReports.removeAll { $0.id==report.sessionID }
@@ -901,9 +897,15 @@ final class CaptureModel: ObservableObject {
     func exportSaved(_ saved: SavedNativeReport) -> URL? {
         if isBusy { stop(reason: "이전 진단을 공유하기 위해 계측을 중지했습니다.") }
         do {
-            let url=FileManager.default.temporaryDirectory.appendingPathComponent("soundfield-\(saved.id.uuidString).json")
-            try saved.json.write(to: url,options: .atomic); return url
+            return try writeExport(saved.json,sessionID: saved.id,historical: true)
         } catch { exportError=error.localizedDescription; return nil }
+    }
+    private func writeExport(_ data: Data, sessionID: UUID, historical: Bool) throws -> URL {
+        let now=Date(), exportID=UUID()
+        let url=FileManager.default.temporaryDirectory.appendingPathComponent(
+            DiagnosticExport.fileName(date: now,sessionID: sessionID,exportID: exportID))
+        let encoded=try DiagnosticExport.envelope(data,at: now,exportID: exportID,historical: historical)
+        try encoded.write(to: url,options: .atomic); return url
     }
 
     #if DEBUG

@@ -27,6 +27,7 @@ struct CaptureDetailsView: View {
                     Text("SOUNDFIELD / iPHONE").font(.caption.monospaced()).foregroundStyle(green)
                     Text(model.usesFOA ? "공간 오디오 입력" : "스테레오 입력").font(.largeTitle.bold())
                     Text("계속 듣고, 최근 변화를 계산합니다.").foregroundStyle(.secondary)
+                    Text("실험 열지도 · 빌드 11 · 영상·원음 저장 없음").font(.caption).foregroundStyle(.secondary)
                 }
                 if model.isSynthetic {
                     Text("합성 테스트 · 아이폰 실측 아님")
@@ -64,7 +65,7 @@ struct CaptureDetailsView: View {
                     Text("오디오 알림 \(model.report.audioEvents.count) · 초기 재설정 \(model.report.startupEngineRestarts)")
                         .font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("audioEventCount")
                     if let display = model.report.waveformDisplay {
-                        Text("파형 마지막 표시 \(display.recentFreshFPS) fps · 누적 \(display.presentedFrames) · 표시 지연 \(Int(display.presentationDelaySeconds * 1000))ms")
+                        Text("파형 마지막 표시 \(display.recentFreshFPS) fps · 최대 60fps · 10ms 파형 · 공통 자동 배율 · 누적 \(display.presentedFrames) · 표시 지연 \(Int(display.presentationDelaySeconds * 1000))ms")
                             .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                             .accessibilityIdentifier("waveformPerformance")
                     }
@@ -88,7 +89,14 @@ struct CaptureDetailsView: View {
                             .accessibilityIdentifier("foaSummary")
                         Text("실제 FOA \(foa.capture.foaFormat?.channels ?? 0)채널 · 별도 Stereo \(foa.capture.stereoFormat?.channels ?? 0)채널")
                         Text("상태: \(foa.state) · 시간 누락 \(foa.capture.gaps)")
+                        if let timeline=foa.timeline {
+                            Text("시각 기록 \(timeline.history.count)구간 · UTC/경과 시간 포함")
+                                .accessibilityIdentifier("foaTimelineSummary")
+                            Text("최근 최대 \(timeline.capacity)구간 · 이전 \(timeline.omittedEarlierEntries)구간은 누계만 유지")
+                                .font(.caption)
+                        }
                         Text("카메라 축 대응·물리 정확도 미검증 · 거리 계산 안 함").font(.caption)
+                        Text("열지도 파랑 → 빨강: 해당 대역 입력 크기. dBFS는 폰에서 받은 신호 크기이며 음원의 실제 소음도(dB SPL)가 아닙니다.").font(.caption)
                         if let error=foa.capture.lastError { Text(error).font(.footnote) }
                     }.card()
                 }

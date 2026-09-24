@@ -60,7 +60,6 @@ private struct InputWaveform: View {
 private struct StereoWaveformPanel: View {
     @ObservedObject var display: WaveformDisplayModel
     let green: Color
-    let freshFPS: Int
     var body: some View {
         VStack(spacing: 4) {
             HStack(spacing: 12) {
@@ -69,9 +68,6 @@ private struct StereoWaveformPanel: View {
                 InputWaveform(label: "R", columns: display.preview?.right ?? [],
                     amplitudeRange: display.preview?.amplitudeRange ?? 1, tint: .cyan, identifier: "rightWaveform")
             }
-            Text("최근 \(freshFPS) fps · 10ms 파형 · 공통 자동 배율 · 최대 60fps")
-                .font(.system(size: 10)).foregroundStyle(.secondary)
-                .accessibilityIdentifier("liveWaveformPerformance")
         }
     }
 }
@@ -113,6 +109,7 @@ struct CaptureView: View {
     @State private var showSpatialGuide = false
     private let green = Color(red: 0.48, green: 0.95, blue: 0.68)
     private var busy: Bool { camera.isBusy || model.isBusy }
+    private var foaMode: Bool { model.usesFOA || (model.prefersFOA && model.report.startedAt == nil) }
 
     var body: some View {
         ZStack {
@@ -132,47 +129,44 @@ struct CaptureView: View {
                 }.foregroundStyle(.white.opacity(0.75)).padding(32)
                     .opacity(camera.isSynthetic && (model.spatial.report.bearing != nil || (model.report.foa?.displayedRegions ?? 0)>0) ? 0 : 1)
             }
-            if model.usesFOA || (model.prefersFOA && model.report.startedAt == nil) {
+            if foaMode {
                 FOADirectionOverlay(model: model.foa,camera: camera,synthetic: model.isSynthetic).ignoresSafeArea()
             } else {
                 SpatialOverlay(spatial: model.spatial,camera: camera,synthetic: model.isSynthetic).ignoresSafeArea()
             }
             VStack(spacing: 0) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("SOUNDFIELD").font(.headline.monospaced()).foregroundStyle(green)
-                        Text("소리 방향 · 위치").font(.caption)
-                    }
+                VStack(spacing: 3) {
+                HStack {
+                    Text("SOUNDFIELD").font(.subheadline.monospaced().bold()).foregroundStyle(green)
                     Spacer()
                     if !model.prefersFOA {
                         Button { showCalibration = true } label: {
                             Label("입력 비교", systemImage: "arrow.left.and.right")
-                                .font(.caption.bold()).padding(10)
+                                .font(.caption.bold()).padding(6)
                         }
                         .background(.black.opacity(0.55), in: Capsule())
                         .accessibilityIdentifier("calibrationButton")
                     }
+                    Button { showSpatialGuide = true } label: {
+                        Image(systemName: "questionmark.circle").font(.title3).frame(width: 44,height: 44)
+                    }.accessibilityLabel(model.prefersFOA ? "공간 오디오 사용 안내" : "소리 찾기 방향 보정")
+                        .accessibilityIdentifier("spatialGuideButton")
                     Button { showDetails = true } label: {
-                        Label("측정 상세", systemImage: "waveform.path")
-                            .font(.caption.bold()).padding(10)
+                        Text("측정 상세").font(.caption.bold()).frame(minHeight: 44)
                     }
-                    .background(.black.opacity(0.55), in: Capsule())
                     .accessibilityIdentifier("detailsButton")
-                }.padding(20)
+                }
+                if foaMode { FOAStatusLine(model: model.foa) }
+                }.padding(.horizontal,20).padding(.bottom,10)
                 .background(LinearGradient(colors: [.black.opacity(0.8), .clear], startPoint: .top, endPoint: .bottom))
-                Button { showSpatialGuide = true } label: {
-                    Label(model.prefersFOA ? "공간 오디오 · 사용 안내" : "소리 찾기 · 방향 보정",systemImage: "scope").font(.subheadline.bold()).padding(.horizontal,16).padding(.vertical,9)
-                }.background(.black.opacity(0.7),in: Capsule()).foregroundStyle(green)
-                    .accessibilityIdentifier("spatialGuideButton")
                 if model.isSynthetic {
                     Text("합성 테스트 · 아이폰 실측 아님").font(.caption.bold()).foregroundStyle(.orange)
                         .accessibilityIdentifier("liveSyntheticBanner")
                 }
                 Spacer()
-                VStack(spacing: 12) {
-                    if model.usesFOA {
-                        Text("파랑 → 빨강: 해당 주파수 입력 크기 · 거리 미측정").font(.system(size: 10))
-                    } else { SoundHeatLegend(spatial: model.spatial) }
+                VStack(spacing: 8) {
+                    if !foaMode {
+                    SoundHeatLegend(spatial: model.spatial)
                     HStack(spacing: 18) {
                         meter("L", index: 0)
                         meter("R", index: 1)
@@ -184,15 +178,13 @@ struct CaptureView: View {
                             Text(model.usesFOA ? "스테레오 참고 시간차" : "연속 신호 시간차").font(.caption2)
                         }
                     }
-                    StereoWaveformPanel(display: model.waveformDisplay, green: green,
-                        freshFPS: model.report.waveformDisplay?.recentFreshFPS ?? 0)
+                    }
+                    StereoWaveformPanel(display: model.waveformDisplay, green: green)
+                    if !foaMode {
                     Text(model.report.status).font(.caption).frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityIdentifier("liveCaptureStatus")
                         .accessibilityValue("분석 \(model.report.analyzedFrames)구간")
-                    Picker("카메라와 마이크 방향", selection: $model.source) {
-                        Text("후면").tag("back")
-                        Text("전면").tag("front")
-                    }.pickerStyle(.segmented).disabled(busy)
+                    }
                     Button {
                         if busy {
                             camera.stop(); model.stop()
@@ -206,14 +198,13 @@ struct CaptureView: View {
                         }
                     } label: {
                         Label(busy ? "계측 중지" : "카메라·수음 시작", systemImage: busy ? "stop.fill" : "camera.fill")
-                            .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 12)
+                            .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 8)
                     }.buttonStyle(.borderedProminent).tint(green).foregroundStyle(.black)
                         .accessibilityIdentifier("liveCaptureButton")
-                    Text("영상·원음 저장 없음 · 실험 열지도 · 빌드 10").font(.caption2).foregroundStyle(.secondary)
+                        .accessibilityValue("\(camera.screenAwake ? "화면 켜짐 유지" : "자동 잠금 기본 설정") · 최근 \(model.report.waveformDisplay?.recentFreshFPS ?? 0) fps")
                 }
-                .padding(18)
-                .background(.black.opacity(0.78), in: RoundedRectangle(cornerRadius: 22))
-                .padding(.horizontal, 16).padding(.bottom, 8)
+                .padding(.horizontal,20).padding(.top,14).padding(.bottom,8)
+                .background(LinearGradient(colors: [.clear,.black.opacity(0.75),.black.opacity(0.9)],startPoint: .top,endPoint: .bottom))
             }
         }
         .foregroundStyle(.white)
@@ -247,6 +238,7 @@ struct CaptureView: View {
             }.presentationDetents([.large])
         }
         .onChange(of: scenePhase) { _, phase in
+            camera.setApplicationActive(phase == .active)
             if phase == .background {
                 camera.stop(reason: "백그라운드로 이동해 카메라를 해제했습니다.")
                 model.enteredBackground()
@@ -256,6 +248,7 @@ struct CaptureView: View {
         .onChange(of: showCalibration) { _, _ in model.waveformDisplay.setVisible(!showDetails && !showCalibration && !showSpatialGuide) }
         .onChange(of: showSpatialGuide) { _, _ in model.waveformDisplay.setVisible(!showDetails && !showCalibration && !showSpatialGuide) }
         .onAppear {
+            camera.setApplicationActive(scenePhase == .active)
             model.spatial.poseProvider = { [weak camera] midpoint,duration,now in
                 camera?.spatialCamera.inspect(midpoint: midpoint,duration: duration,now: now)
                     ?? .init(issue: .poseProviderUnavailable)

@@ -1,0 +1,53 @@
+{
+  "kind": "selected-fields-and-analysis-from-user-report-not-full-original",
+  "sourceSessionID": "0842E25E-9565-4936-B352-D6F5CF7E8B92",
+  "appVersion": "0.4.0-native-foa-build10",
+  "startedAt": "2026-09-24T00:18:43Z",
+  "stoppedAt": "2026-09-24T00:20:34Z",
+  "userObservation": "Candidate/ambiguous messages alternate, heatmap flashes and disappears. Three screenshots show a TV scene, intermittent 234 Hz regions, and 33-34 waveform fps.",
+  "capture": {
+    "supported": true,
+    "inputPort": "MicrophoneBuiltIn",
+    "foaChannels": 4,
+    "foaLayoutTag": 12451844,
+    "stereoChannels": 2,
+    "stereoLayoutTag": 6619138,
+    "sampleRate": 48000,
+    "commonFormat": 1,
+    "interleaved": true,
+    "foaBuffers": 4824,
+    "stereoBuffers": 4824,
+    "analyzedWindows": 1299,
+    "gaps": 1,
+    "skippedDeliveries": 1
+  },
+  "cameraAlignment": {
+    "received": 1299,
+    "matched": 1189,
+    "movementDuringAudio": 110,
+    "latestIssue": "matched",
+    "trackingState": "normal",
+    "audioAgeSeconds": 0.1303094448230695,
+    "nearestCameraMinusAudioSeconds": 0.014453986150329001
+  },
+  "lastFOAMidpointUptimeSeconds": 124609.02381234684,
+  "lastBands": [
+    {"band": 0, "lowerHz": 160, "upperHz": 600, "levelDbfs": -42.08518463358817, "coherence": 0.7461320938692272, "energyRatio": 3.1031885844323464, "energyBalance": 0.6406610531873799, "reportedState": "inconsistentComponents", "knownFailedChecks": ["energyRatioOutsideModel", "energyBalanceBelowMinimum"]},
+    {"band": 1, "lowerHz": 600, "upperHz": 2000, "levelDbfs": -63.99533267137567, "coherence": 0.1458001060982305, "energyRatio": 2.5021032701077766, "energyBalance": 0.1317078021215686, "reportedState": "inconsistentComponents", "knownFailedChecks": ["energyRatioOutsideModel", "energyBalanceBelowMinimum", "coherenceBelowMinimum"]},
+    {"band": 2, "lowerHz": 2000, "upperHz": 8000, "levelDbfs": -59.612030956754694, "coherence": 0.4183619696902251, "energyRatio": 2.2298086367836056, "energyBalance": 0.38684697020449266, "reportedState": "inconsistentComponents", "knownFailedChecks": ["energyRatioOutsideModel", "energyBalanceBelowMinimum", "coherenceBelowMinimum"]}
+  ],
+  "build10Thresholds": {"minimumLevelDbfs": -65, "minimumCoherence": 0.7, "minimumEnergyBalance": 0.65, "energyRatioRange": [0.25,1.8], "maximumSpreadDegrees": 35},
+  "waveformDisplay": {"presentedFrames": 3553, "discardedFrames": 2993, "recentFreshFPS": 32, "targetFPS": 60},
+  "confirmed": [
+    "Device delivered distinct requested FOA and stereo formats concurrently with camera alignment.",
+    "All three final bands failed the application's direction quality gate; low level was not the final rejection condition.",
+    "Build 10 maps any empty-direction energetic window to an unsupported causal claim about multiple directions.",
+    "Build 10 immediately shows a single accepted window and clears it on the next rejected window; no temporal confirmation exists."
+  ],
+  "notConfirmed": [
+    "The full-session distribution of acoustic rejection reasons: only the latest FOA analysis was exported.",
+    "Physical reason for high energy ratio: reflections, encoder response or another cause cannot be selected from this summary.",
+    "N3D output: the delivered format explicitly identifies SN3D; ratio near 3 alone is not evidence to rescale channels.",
+    "Actual source location or camera-axis accuracy. A heat island touching the TV in one screenshot does not validate direction accuracy."
+  ]
+}

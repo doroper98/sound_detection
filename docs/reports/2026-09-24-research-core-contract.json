@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "kind": "synthetic-research-recording-replay-contract",
+  "sourceCommit": "eddbe2dfbc48626b27e5f246e1539780830de5e2",
+  "ciRunURL": "https://github.com/doroper98/sound_detection/actions/runs/35945681243",
+  "schemaValidated": true,
+  "hashlibMatchesSwiftSHA256": true,
+  "float32WAVValidated": true,
+  "liveReplayComparedWindows": 11,
+  "absoluteNumericTolerance": 1e-06,
+  "mismatches": 0,
+  "realDeviceAccuracyVerified": false,
+  "appRecordingLifecycleVerified": false
+}

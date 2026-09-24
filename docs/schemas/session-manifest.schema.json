@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://soundfield.local/schemas/session-manifest-v1",
+  "title": "SoundField opt-in local research session",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "complete", "sessionID", "appVersion", "buildNumber", "deviceModel", "operatingSystem", "synthetic", "startedAtUTC", "completedAtUTC", "stopReason", "sampleRate", "layoutTag", "channelOrder", "normalization", "pcmFormat", "startHostTimeSeconds", "foaFrames", "poseFrames", "analyzedWindows", "labels", "files", "coordinateConvention", "axisMappingVerified"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "complete": {"const": true},
+    "sessionID": {"type": "string", "format": "uuid"},
+    "appVersion": {"type": "string", "minLength": 1},
+    "buildNumber": {"type": "string", "minLength": 1},
+    "deviceModel": {"type": "string", "minLength": 1},
+    "operatingSystem": {"type": "string", "minLength": 1},
+    "synthetic": {"type": "boolean"},
+    "startedAtUTC": {"type": "string", "format": "date-time", "pattern": "Z$"},
+    "completedAtUTC": {"type": "string", "format": "date-time", "pattern": "Z$"},
+    "stopReason": {"type": "string"},
+    "sampleRate": {"type": "integer", "minimum": 32000, "maximum": 96000},
+    "layoutTag": {"const": 12451844},
+    "channelOrder": {"const": ["W", "Y", "Z", "X"]},
+    "normalization": {"const": "SN3D"},
+    "pcmFormat": {"const": "Float32LE"},
+    "startHostTimeSeconds": {"type": "number", "minimum": 0},
+    "foaFrames": {"type": "integer", "minimum": 1, "maximum": 11520000},
+    "poseFrames": {"type": "integer", "minimum": 1},
+    "analyzedWindows": {"type": "integer", "minimum": 0},
+    "coordinateConvention": {"type": "string", "minLength": 1},
+    "axisMappingVerified": {"const": false},
+    "labels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "azimuthDegrees", "elevationDegrees", "signal", "repetition", "distanceMeters"],
+      "properties": {
+        "label": {"type": "string", "minLength": 1, "maxLength": 120},
+        "azimuthDegrees": {"type": "number", "minimum": -180, "maximum": 180},
+        "elevationDegrees": {"type": "number", "minimum": -90, "maximum": 90},
+        "signal": {"enum": ["whiteNoise", "tone1kHz", "speech", "other"]},
+        "repetition": {"type": "integer", "minimum": 1, "maximum": 99},
+        "distanceMeters": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "bytes", "sha256"],
+        "properties": {
+          "name": {"enum": ["foa.wav", "stereo.wav", "pose.jsonl", "audio-timeline.jsonl", "analysis.jsonl"]},
+          "bytes": {"type": "integer", "minimum": 0, "maximum": 200000000},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    }
+  }
+}

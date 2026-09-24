@@ -1,0 +1,96 @@
+{
+  "kind": "local-windows-replay-of-shared-research-archive",
+  "sessionID": "B7F3E4C2-DE33-4C1B-92AE-E34B341F364A",
+  "synthetic": true,
+  "sourceZIP": "synthetic-session.zip",
+  "zipSHA256": "750ef8e06cb3d629e7be30bca276265ffc931bfc47e7e664ed13785a961d9ee3",
+  "binarySHA256": "f2dc688906093ec0258ee40c09a4f2db1ccded6d08f6c5bd9f0392ae3eb5eead",
+  "swiftSDKOnPATH": false,
+  "comparedWindows": 11,
+  "mismatchedWindows": 11,
+  "unmatchedLiveWindows": 0,
+  "strictParityPassed": false,
+  "strictCLIReturnCode": 1,
+  "differencesOutsideQuietBandsBelowMinus240Dbfs": 0,
+  "differences": [
+    {
+      "path": "window[0].bandDiagnostics[0].levelDbfs",
+      "live": -326.8806658327229,
+      "replay": -326.8222007924998,
+      "absoluteDifference": 0.05846504022309773,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[1].bandDiagnostics[0].levelDbfs",
+      "live": -322.9034156584688,
+      "replay": -322.925143527386,
+      "absoluteDifference": 0.021727868917196247,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[2].bandDiagnostics[0].levelDbfs",
+      "live": -315.2035461609628,
+      "replay": -315.20381923630777,
+      "absoluteDifference": 0.00027307534497822417,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[3].bandDiagnostics[0].levelDbfs",
+      "live": -318.4805224887647,
+      "replay": -318.48633543340367,
+      "absoluteDifference": 0.005812944638989848,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[4].bandDiagnostics[0].levelDbfs",
+      "live": -307.346814061476,
+      "replay": -307.35166111331773,
+      "absoluteDifference": 0.004847051841750272,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[5].bandDiagnostics[0].levelDbfs",
+      "live": -307.8865770087814,
+      "replay": -307.8863619163918,
+      "absoluteDifference": 0.00021509238956696208,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[6].bandDiagnostics[0].levelDbfs",
+      "live": -307.89681642957925,
+      "replay": -307.9013300885981,
+      "absoluteDifference": 0.004513659018869021,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[7].bandDiagnostics[0].levelDbfs",
+      "live": -302.8539272479104,
+      "replay": -302.8547030645997,
+      "absoluteDifference": 0.0007758166892699592,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[8].bandDiagnostics[0].levelDbfs",
+      "live": -300.8385245859092,
+      "replay": -300.83909709420465,
+      "absoluteDifference": 0.0005725082954199934,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[9].bandDiagnostics[0].levelDbfs",
+      "live": -300.9750959693083,
+      "replay": -300.97453805787023,
+      "absoluteDifference": 0.0005579114380793726,
+      "numericFloorOnly": true
+    },
+    {
+      "path": "window[10].bandDiagnostics[0].levelDbfs",
+      "live": -301.4826903979049,
+      "replay": -301.4824846012248,
+      "absoluteDifference": 0.00020579668006348584,
+      "numericFloorOnly": true
+    }
+  ],
+  "poseMatchedWindows": 11,
+  "realDeviceAccuracyVerified": false
+}

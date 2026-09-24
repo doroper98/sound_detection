@@ -62,7 +62,7 @@ struct AudioRouteInspection: Encodable {
 struct NativeReport: Encodable {
     let sessionID=UUID()
     var schemaVersion = 11
-    var appVersion = "0.4.0-native-foa-stability-build11"
+    var appVersion = "0.4.0-native-research-build12"
     var foa: FOAReport?
     var inputOrigin = "AVAudioEngine.inputNode"
     var operatingSystem = UIDevice.current.systemVersion

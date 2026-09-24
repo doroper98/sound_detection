@@ -2,6 +2,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p DerivedData/evidence
+if [ "${RESEARCH_ONLY:-false}" = true ]; then
+  swift test --package-path Packages/StereoCore 2>&1 | tee DerivedData/evidence/swift-tests.log
+  bash scripts/verify-research.sh
+  exit 0
+fi
 # FOA AudioDataOutput is an iOS 26 SDK API, even with an older deployment target.
 sdk_version=$(xcrun --sdk iphoneos --show-sdk-version)
 if [ "${sdk_version%%.*}" -lt 26 ]; then
@@ -33,6 +38,8 @@ case "$ui_scope" in
       testIsolatedFOACandidatesStayHiddenAndTimelineIsAvailable \
       testCompactFOACameraKeepsScreenAwakeAndRestoresOnStopAndBackground \
       testPreviousReportSurvivesRestart \
+      testResearchRecordingDefaultOffAndSharedArchive \
+      testResearchBackgroundFinalizesAndOptInResetsAfterRelaunch \
       testFullscreenCameraControlsAndBackgroundRelease \
       testOutputOverrideWithChangedInputStillStopsCameraAndAudio \
       testSharingStopsCapture; do
@@ -42,6 +49,7 @@ case "$ui_scope" in
 esac
 printf '%s\n' "$ui_scope" > DerivedData/evidence/ui-test-scope.txt
 swift test --package-path Packages/StereoCore 2>&1 | tee DerivedData/evidence/swift-tests.log
+bash scripts/verify-research.sh
 plutil -lint SoundFieldStereo/Info.plist SoundFieldStereo.xcodeproj/project.pbxproj
 xcodebuild -project SoundFieldStereo.xcodeproj -scheme SoundFieldStereo \
   -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
@@ -69,10 +77,25 @@ xcodebuild -project SoundFieldStereo.xcodeproj -scheme SoundFieldStereo \
 # of the simulator merely to capture the inactive launch screen.
 xcrun xcresulttool export attachments --path DerivedData/evidence/NativeUI.xcresult \
   --output-path DerivedData/evidence/attachments || true
+# Xcode may shut the selected simulator down after testing. Boot that same
+# device before querying its data container; this does not relaunch the app.
+device_state=$(xcrun simctl list devices -j | python3 -c '
+import json,sys
+data=json.load(sys.stdin)
+print(next(d["state"] for devices in data["devices"].values() for d in devices if d["udid"]==sys.argv[1]))
+' "$device_id")
+if [ "$device_state" = Shutdown ]; then xcrun simctl boot "$device_id"; fi
+xcrun simctl bootstatus "$device_id" -b > DerivedData/evidence/container-boot.log 2>&1
+app_data=$(xcrun simctl get_app_container "$device_id" dev.soundfield.stereo data)
+cli="$(swift build --package-path Packages/StereoCore -c release --show-bin-path)/foa-replay"
+python3 scripts/verify-app-research.py "$app_data" "$cli" --inspect-only
 if [ "$test_status" -ne 0 ]; then
   tail -150 DerivedData/evidence/simulator-tests.log
   exit "$test_status"
 fi
+
+# Re-open the files actually produced by the simulator UI recording path.
+"${TMPDIR:-/tmp}/soundfield-schema-env/bin/python" scripts/verify-app-research.py "$app_data" "$cli"
 
 # The user can re-sign this device build on Windows. It is not installable by
 # opening a Safari link, and contains no certificate or provisioning profile.

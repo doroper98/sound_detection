@@ -33,9 +33,16 @@ final class FOADirectionModel: ObservableObject {
     private var pending=[(FOAAnalysis,Double,Double,Double)]()
     private var running=false
     private var stabilizer=FOADirectionStabilizer()
+    #if DEBUG
+    private var syntheticWindows = PCMWindowAssembler(channels: 4)
+    private var syntheticAnalyses = [Int: FOAAnalysis]()
+    #endif
     func start() {
         report=FOAReport(); report.state="waiting"; regions=[]; pending=[]; running=true
         stabilizer=FOADirectionStabilizer()
+        #if DEBUG
+        syntheticWindows = PCMWindowAssembler(channels: 4)
+        #endif
         report.timeline=FOADiagnosticTimeline(uptime: ProcessInfo.processInfo.systemUptime,date: Date())
     }
     func receive(_ analysis: FOAAnalysis, midpoint: Double, duration: Double, capture: FOACaptureDiagnostics) {
@@ -133,7 +140,26 @@ final class FOADirectionModel: ObservableObject {
         var capture=FOACaptureDiagnostics(); capture.supported=true; capture.running=true
         capture.foaBuffers=report.received+1
         capture.foaFormat = .init(channels: 4,layoutTag: nil,sampleRate: 48000,commonFormat: 1,interleaved: false)
-        receive(FOAAnalyzer.analyze(channels,sampleRate: 48000),midpoint: now-0.05,duration: 4096.0/48000,capture: capture)
+        let duration = 4096.0 / 48000
+        let start = now - 0.05 - duration / 2
+        guard let window = syntheticWindows.append(channels, at: start, sampleRate: 48000).first else { return }
+        let midpoint = window.start + duration / 2
+        // The fixture repeats identical PCM. Reuse its computed result so an
+        // instrumented UI test does not run FFT on the main actor every tick.
+        // Device capture still analyzes every window on its audio queue.
+        let key = silent ? 0 : (isolatedCandidate && report.received % 5 != 0 ? 1 : 2)
+        let analysis = syntheticAnalyses[key] ?? FOAAnalyzer.analyze(window.channels, sampleRate: 48000)
+        syntheticAnalyses[key] = analysis
+        if let research = ResearchRecordingHub.shared.current {
+            for offset in [-duration / 2, 0, duration / 2] {
+                research.appendPose(.init(timestamp: midpoint + offset, quaternion: [0,0,0,1],
+                    position: .zero, viewRight: .init(1,0,0), viewUp: .init(0,1,0),
+                    viewForward: .init(0,0,-1), trackingState: "normal"))
+            }
+            research.appendAudio(channels, time: start, sampleRate: 48000, stereo: false)
+            research.appendAnalysis(analysis, midpoint: midpoint, duration: duration)
+        }
+        receive(analysis,midpoint: midpoint,duration: duration,capture: capture)
     }
     #endif
 }

@@ -2,6 +2,66 @@ import XCTest
 import UIKit
 
 final class CaptureUITests: XCTestCase {
+    func testResearchRecordingDefaultOffAndSharedArchive() {
+        let app = launch(["--synthetic-foa"], details: false)
+        app.buttons["detailsButton"].tap()
+        let toggle = app.switches["researchToggle"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 10))
+        XCTAssertEqual(toggle.value as? String, "0")
+        app.buttons["닫기"].tap()
+        app.buttons["liveCaptureButton"].tap()
+        // Recording must work even while direction is unconfirmed. Heatmap
+        // confirmation has its own tests; use actual PCM arrival here.
+        let waveform = app.descendants(matching: .any).matching(identifier: "leftWaveform").firstMatch
+        expectation(for: NSPredicate(format: "value == %@", "수신 중"), evaluatedWith: waveform)
+        waitForExpectations(timeout: 30)
+        XCTAssertFalse(app.staticTexts["researchREC"].exists)
+        app.buttons["liveCaptureButton"].tap()
+        app.buttons["detailsButton"].tap()
+        toggle.tap()
+        app.buttons["닫기"].tap()
+        app.buttons["liveCaptureButton"].tap()
+        XCTAssertTrue(app.staticTexts["researchREC"].waitForExistence(timeout: 10))
+        let badge = app.staticTexts["researchREC"]
+        expectation(for: NSPredicate(format: "label MATCHES %@", ".*REC ([2-9]|[1-9][0-9]+)초"), evaluatedWith: badge)
+        waitForExpectations(timeout: 30)
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "native-build12-research-rec-synthetic"
+        shot.lifetime = .keepAlways
+        add(shot)
+        app.buttons["liveCaptureButton"].tap()
+        app.buttons["detailsButton"].tap()
+        let status = app.staticTexts["researchStatus"]
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "저장 완료"), evaluatedWith: status)
+        waitForExpectations(timeout: 30)
+        XCTAssertFalse(app.staticTexts["researchREC"].exists)
+        let share = app.buttons["researchShare"]
+        reveal(share, in: app)
+        share.tap()
+        XCTAssertTrue(app.otherElements["ActivityListView"].waitForExistence(timeout: 30))
+    }
+
+    func testResearchBackgroundFinalizesAndOptInResetsAfterRelaunch() {
+        let app = launch(["--synthetic-foa"], details: false)
+        app.buttons["detailsButton"].tap()
+        app.switches["researchToggle"].tap()
+        app.buttons["닫기"].tap()
+        app.buttons["liveCaptureButton"].tap()
+        expectation(for: NSPredicate(format: "label MATCHES %@", ".*REC ([2-9]|[1-9][0-9]+)초"), evaluatedWith: app.staticTexts["researchREC"])
+        waitForExpectations(timeout: 30)
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        XCTAssertEqual(app.buttons["liveCaptureButton"].label, "카메라·수음 시작")
+        app.buttons["detailsButton"].tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "저장 완료"), evaluatedWith: app.staticTexts["researchStatus"])
+        waitForExpectations(timeout: 30)
+        app.terminate()
+        app.launch()
+        app.buttons["detailsButton"].tap()
+        XCTAssertEqual(app.switches["researchToggle"].value as? String, "0")
+        XCTAssertTrue(app.buttons["researchShare"].waitForExistence(timeout: 10))
+    }
+
     func testCompactFOACameraKeepsScreenAwakeAndRestoresOnStopAndBackground() {
         let app=launch(["--synthetic-foa"],details: false)
         let button=app.buttons["liveCaptureButton"]

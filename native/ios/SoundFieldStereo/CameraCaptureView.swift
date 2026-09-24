@@ -103,6 +103,7 @@ private struct CameraPreview: UIViewRepresentable {
 struct CaptureView: View {
     @ObservedObject var model: CaptureModel
     @StateObject private var camera = CameraModel()
+    @ObservedObject private var research = ResearchRecordingModel.shared
     @Environment(\.scenePhase) private var scenePhase
     @State private var showDetails = false
     @State private var showCalibration = false
@@ -138,6 +139,7 @@ struct CaptureView: View {
                 VStack(spacing: 3) {
                 HStack {
                     Text("SOUNDFIELD").font(.subheadline.monospaced().bold()).foregroundStyle(green)
+                    ResearchRecordingBadge()
                     Spacer()
                     if !model.prefersFOA {
                         Button { showCalibration = true } label: {
@@ -187,13 +189,15 @@ struct CaptureView: View {
                     }
                     Button {
                         if busy {
+                            research.end()
                             camera.stop(); model.stop()
                         } else {
+                            guard research.arm(synthetic: model.isSynthetic, source: model.source) else { showDetails = true; return }
                             Task {
                                 if await camera.start(front: model.source == "front") {
                                     model.start(cameraPreviewActive: camera.phase == .running && !camera.isSynthetic,
                                                 startControl: "cameraAndAudio")
-                                }
+                                } else { research.end(reason: "cameraStartFailed") }
                             }
                         }
                     } label: {
@@ -201,6 +205,7 @@ struct CaptureView: View {
                             .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 8)
                     }.buttonStyle(.borderedProminent).tint(green).foregroundStyle(.black)
                         .accessibilityIdentifier("liveCaptureButton")
+                        .disabled(research.finalizing || research.exporting)
                         .accessibilityValue("\(camera.screenAwake ? "화면 켜짐 유지" : "자동 잠금 기본 설정") · 최근 \(model.report.waveformDisplay?.recentFreshFPS ?? 0) fps")
                 }
                 .padding(.horizontal,20).padding(.top,14).padding(.bottom,8)
@@ -211,13 +216,19 @@ struct CaptureView: View {
         .sheet(isPresented: $showDetails) {
             NavigationStack {
                 CaptureDetailsView(model: model)
-                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("닫기") { showDetails = false } } }
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) { ResearchRecordingBadge() }
+                        ToolbarItem(placement: .topBarTrailing) { Button("닫기") { showDetails = false } }
+                    }
             }.presentationDetents([.large])
         }
         .sheet(isPresented: $showCalibration) {
             NavigationStack {
                 DirectionCalibrationView(model: model)
-                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("닫기") { showCalibration = false } } }
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) { ResearchRecordingBadge() }
+                        ToolbarItem(placement: .topBarTrailing) { Button("닫기") { showCalibration = false } }
+                    }
             }.presentationDetents([.large])
         }
         .sheet(isPresented: $showSpatialGuide) {
@@ -230,16 +241,20 @@ struct CaptureView: View {
                             Text("처음에는 한 곳에서 나는 소리를 비추고 잠시 멈추세요. 후보가 잡히면 카메라에 열섬과 해당 대역 주파수가 나타납니다.")
                             Text("열섬은 소리 방향 후보입니다. 색은 폰에서 받은 입력 크기이며, 소리까지의 거리나 물체 크기를 뜻하지 않습니다. 카메라 축 대응과 실제 방향 정확도는 아직 확인 전입니다.")
                             Text("지원하지 않거나 입력·카메라 연결에 문제가 있으면 화면에 이유가 표시됩니다. 측정 상세에서 현재 진단과 이전 진단을 공유할 수 있습니다.")
-                            Text("원음·카메라 영상은 저장하지 않습니다. 최근 진단 통계만 5개 보관합니다.").font(.caption)
+                            Text("기본은 원음 저장 꺼짐입니다. 측정 상세에서 연구 녹음을 켜면 원음과 자세를 아이폰에 저장하며 ZIP으로 공유할 수 있습니다. 카메라 영상은 저장하지 않습니다.").font(.caption)
                         }.padding(22)
                     }.navigationTitle("공간 오디오 안내")
-                        .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("닫기") { showSpatialGuide=false } } }
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) { ResearchRecordingBadge() }
+                            ToolbarItem(placement: .topBarTrailing) { Button("닫기") { showSpatialGuide=false } }
+                        }
                 } else { SpatialGuide(model: model,camera: camera) }
             }.presentationDetents([.large])
         }
         .onChange(of: scenePhase) { _, phase in
             camera.setApplicationActive(phase == .active)
             if phase == .background {
+                research.end(reason: "enteredBackground")
                 camera.stop(reason: "백그라운드로 이동해 카메라를 해제했습니다.")
                 model.enteredBackground()
             }
@@ -258,6 +273,7 @@ struct CaptureView: View {
             // Cleanup must not depend on SwiftUI rendering an intermediate
             // phase; permission or route failure can return to idle immediately.
             model.onStopped = { [weak camera] in
+                ResearchRecordingModel.shared.end(reason: "captureStopped")
                 if let camera, camera.isBusy { camera.stop() }
             }
             camera.onInterrupted = { [weak model] in

@@ -1,5 +1,28 @@
 # SoundField — 개발 로그
 
+## EXP-025 · 외부 검토 반영 — 원음 저장과 동일 엔진 재생 기반
+
+- 날짜: 2026-09-24. REQ-NATIVE-031~036, REQ-ENGINE-002, REQ-DOC-004 / SC-53~60. [외부 검토 원문](docs/reviews/2026-09-24-external-review.md)을 보존했다. 원문이 빌드 10을 대상으로 해 빌드 11에서 이미 사용한 요구사항/실험 번호와 겹치므로 새 표 행으로 대응했다.
+- 우선순위: 기본 OFF인 명시적 연구 녹음 → 같은 Swift 엔진의 오프라인 재생 → 정답을 기록한 실제 데이터 수집 → 축/정확도 평가. 통계 JSON만으로 파형·반사·방향 성분을 복원할 수 없어 원인 확정이 불가능했던 한계를 먼저 해결한다. 다음 측정으로 해결 가능 Y(원인 가설 비교); 필수 파일 `foa.wav`, `pose.jsonl`, `audio-timeline.jsonl`, `analysis.jsonl`, `manifest.json`. 실기기 정확도나 반사 원인을 현재 해결했다고 기록하지 않는다.
+- 저장 계약 구현 중: Float32 4채널 ACN/SN3D WAV와 원래 오디오 버퍼 시각, AR 자세, 실제 실시간 분석 결과를 로컬 세션에 저장한다. WAV/JSONL을 닫고 SHA-256을 계산한 뒤 완료 manifest를 마지막에 원자적으로 생성한다. 중단된 세션에 완료 manifest를 만들지 않는다. 원음·자세는 자동 업로드하지 않으며 저장소에는 넣지 않는다.
+- 재생 계약 구현 중: `foa-replay`가 같은 PCMWindowAssembler와 FOAAnalyzer를 사용한다. WAV의 파일 순서만 이어 붙이지 않고 원래 버퍼 시각과 누락을 복원한다. 실시간에서 실제 계산한 구간의 결과를 ±1e-6로 비교한다. 정답 라벨은 추론 입력에서 제외한다. 합성 round-trip과 독립 Python SHA/스키마 검증을 Mac CI에서 먼저 실행하며 이 단계에서는 IPA를 만들지 않는다.
+- 검증 상태: 로컬 gate 및 Mac 컴파일 결과는 후속 기록. 앱 녹음 생명주기·실기기 데이터·축 대응은 아직 완료 전이다.
+- 기반 1차 검증: 코드 `ba62a25`, [Mac CI 35942994806](https://github.com/doroper98/sound_detection/actions/runs/35942994806), Swift 90/90, Release CLI 합성 녹음 11구간 round-trip 오차 ±1e-6 이내·불일치 0, 독립 Python SHA-256/Float32 WAV/manifest schema 검사 PASS. 이 실행은 IPA를 만들지 않았다. 실제 앱에서 중지/배경 이동 시 저장과 ZIP 공유는 별도 검증 대상이다.
+- 앱 연결: 새로운 ResearchRecording 타입이 별도 디스크 큐와 8MiB 대기 한도를 갖고 FOA delivery gate 전에 원래 버퍼를 저장한다. 과부하/저장 실패는 미완료로 남긴다. 연구 녹음 토글은 앱 시작 때 OFF, 명시적 활성화 때만 REC를 표시한다. 수음은 최대 120초 원음 저장 후 자동으로 닫고 일반 분석을 계속한다. Camera/FOACapture에 최소 연결만 추가하고 CaptureModel에는 빌드 식별자 외 새 로직을 넣지 않았다.
+- 사용자 공유 동선 반영: PC로 수동 파일 이동·명령 실행을 요구하지 않고 아이폰의 기존 공유 시트에서 ZIP 하나를 이 대화에 첨부할 수 있게 한다. ZIP에는 원음이 포함됨을 표시하며 자동 서버 전송 코드는 없다.
+- 합성 격자: 기존 `scripts/audit-foa-feasibility.mjs`에 `--grid-cli`를 추가해 Swift CLI의 실제 FOAAnalyzer를 호출한다. SNR 4 × 반사 3 × 방위 12 × seed 10 = 1,440조건에서 상태·보류율·방위 오차 분포를 기록한다. JS로 운영 추론을 재구현하지 않고, 기존 독립 수학 반례 실행은 유지한다. 벤치마크 생성 코드는 CLI target에만 들어가며 iPhone Release에는 포함되지 않는다.
+- 원문 중 동일 bin 동위상 직접음·반사의 두 피크 분리를 보장하라는 기준은 비식별성 때문에 그대로 채택하지 않는다. [반영표](docs/reviews/2026-09-24-review-disposition.md)에 수식과 보류 이유를 기록했다. 다음 측정으로 확정 가능한가 N(해당 모델의 유일 분리 불가). 필요한 데이터: 추가 실측 없음; 기존 반례와 synthetic-grid.json. 주파수가 분리되는 음원 검사는 별도로 유지한다.
+- 합성 격자 1차 결과: [35944362443](https://github.com/doroper98/sound_detection/actions/runs/35944362443)의 실제 Swift 엔진 1,440조건 실행 성공. 무잡음·반사 없음의 방위 오차 중앙값 약 0°, 같은 위상 0.7배/1.4배 반사는 각각 34.99°/54.46°인데도 보류율 0이었다. 이는 해당 합성 반사에서 현 기준의 거짓 확신을 재현한 결과이며 사용자 방의 실제 반사 원인을 확정한 결과가 아니다. 임계값은 변경하지 않았다.
+- Windows 6.2.3의 Swift 90개 및 Release 재생 계약 CI PASS, 사용자 PC에서도 합성 11구간 불일치 0으로 로컬 실행 확인. 런타임은 실제 PE import 의존성만 묶도록 보완해 컴파일러 DLL을 배포하지 않는다. 초기 전체 DLL 묶음과 최소 묶음 모두 이 PC에서 실행을 확인했다.
+- 합성 UI에서도 타이머 흔들림을 PCMWindowAssembler의 원래 시각 규칙으로 처리하도록 조정했다. 실제 iPhone 추론 코드는 바꾸지 않았고, UI가 공유한 합성 ZIP을 CI 증거에 포함해 다른 호스트에서 교차 재생할 수 있게 했다.
+- 첫 앱 CI `35943772876`: Swift 90/90·Release 컴파일·Windows 재생은 PASS, focused UI는 7/10(5 assertion 실패)이었다. 기존 방향 표시 확인 2개가 확인 중 상태에서 시간 초과했고, 연구 공유 검사는 30초 동안 “연구 데이터 저장 중”에 머물렀다. 합성 REC 12초 화면과 실패 AX 로그를 확인했으며 저장/공유 완료로 기록하지 않는다. 테스트의 “2초 포함” 판정이 12초도 허용하던 문제를 정수 시간 조건으로 수정했다.
+- 저장 대기 보완: PCM을 샘플마다 Data에 추가하던 방식을 한 버퍼로 인코딩하고, Apple 플랫폼의 파일 SHA-256은 시스템 CryptoKit을 사용한다. Windows의 검증된 portable SHA는 유지한다. 저장 실패/대기 한도 초과 시 남은 큐를 즉시 건너뛰며 파일 정리와 무결성 검사 단계를 구분해 표시한다. 앱 실패 CI에도 파일 크기·WAV 헤더/완료 manifest 유무를 남겨 하위 원인을 확인한다. 다음 측정으로 확정 가능한가 N(먼저 자동 재현으로 확인). 필요한 데이터: simulator-tests.log, recording-file-inventory.json, app-recording-verification.json.
+- UI 검사의 반복된 합성 PCM 분석은 DEBUG fixture에서 동일 결과를 재사용한다. 실제 기기 FOACapture는 원래대로 별도 큐에서 매 구간을 분석한다. 합성 UI의 메인 스레드 FFT가 시간 제한을 소비하는 것을 줄이는 조치이며 운영 음향 판정 기준 변경이 아니다.
+- 사용자 요구 보존: 한 순간의 소리 영역을 고정하는 화면이 아니라 수음 중 방향·수신 강도·주파수가 계속 변하는 열지도를 원한다(REQ-NATIVE-037/SC-61). 기존 FOADirectionModel → FOADirectionStabilizer → overlay가 새 관측마다 방향과 레벨을 갱신하는 경로를 확인했다. 짧은 보류는 ‘직전 관측’으로 구분하며 유효 기한 이후 제거한다. 지속 표시 요구를 이유로 무효한 방향을 무기한 유지하거나 음향 임계값을 완화하지 않는다. 수신 dBFS를 음원 자체 강도나 공간 SPL로 표시하지 않는다.
+- 교차 플랫폼 추가 검사: Mac이 저장한 합성 ZIP을 사용자 Windows PC의 동일 소스 CLI로 재생했다. 11구간의 유효 방향/레벨/판정/자세는 ±1e-6 안에서 일치했지만, 무음 대역의 약 −327~−301 dBFS 로그 값에서 플랫폼별 수치 잔차 차이가 나 strict 비교는 11/11 실패(exit 1)했다. [필드별 차이](docs/reports/2026-09-24-research-cross-platform-difference.json). 이를 완전 일치 PASS로 바꾸거나 운영 음향 임계값을 낮추지 않았다. 각 호스트 자체의 저장→재생 계약은 PASS와 구분한다. CLI는 strict 실패 시에도 분석 결과 JSON을 남겨 재분석은 가능하다. 다음 측정으로 해결 가능한가 N(동일 합성 파일로 재현 가능). 필요한 파일: synthetic-session.zip, Mac/Windows replay.json, 필드별 비교 JSON. 실제 사용자 녹음 검사는 별도로 수행한다.
+- 앱 재검사 `35945681240`의 전체 UI는 33/34 PASS였다. 녹음 저장 완료·공유 시트와 백그라운드 완료/다시 열기 검사는 성공했고, 연구 OFF 확인 단계의 별도 열지도 표시 대기만 실패했다. 녹음은 방향 표시가 보류되어도 되어야 하므로 그 검사에서는 PCM 도착과 REC 누적 시간을 확인하고, 열지도 확인은 기존 전용 검사에서 유지한다. 같은 실행의 파일 검사는 Xcode가 대상 시뮬레이터를 종료한 뒤 get_app_container를 호출해 SimError 405(Shutdown)로 중단됐다. 같은 대상만 다시 부팅해 컨테이너를 읽도록 검사 스크립트를 수정한다. 운영 추론·표시 기준은 변경하지 않았다. 다음 측정으로 확정 가능한가 N(자동 재검증 대상). 필요한 파일: simulator-tests.log, container-boot.log, recording-file-inventory.json, app-recording-verification.json.
+
+
 ## EXP-024 · 빌드 11 — 단발 FOA 표시·시각 기록·카메라 화면
 
 - 날짜: 2026-09-24. REQ-NATIVE-028~030 / SC-50~52.

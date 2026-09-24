@@ -11,7 +11,7 @@
     <key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
     <key>LSRequiresIPhoneOS</key><true/>
     <key>NSMicrophoneUsageDescription</key>
-    <string>좌우 스테레오 입력의 음량과 시간차를 기기에서 분석합니다. 원음은 저장하거나 전송하지 않습니다.</string>
+    <string>소리를 기기에서 분석합니다. 연구 녹음을 직접 켠 경우에만 원음을 아이폰에 저장하며, 공유를 눌러야 파일을 내보냅니다.</string>
     <key>NSCameraUsageDescription</key>
     <string>소리를 계측하면서 바라보는 장면을 전체 화면에 표시합니다. 사진이나 영상 파일은 저장하거나 전송하지 않습니다.</string>
     <key>NSMotionUsageDescription</key>

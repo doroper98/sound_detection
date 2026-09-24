@@ -12,6 +12,7 @@ Read GOAL.md, DEVLOG.md, WORKFLOWS.md and docs_canonical/ before substantive cha
 - Preserve viewport fitting and mobile preview visibility when editing controls. Check both page overflow axes and hidden-tab resize behavior.
 - Device spacings are illustrative virtual presets, not validated physical specifications.
 - Keep documentation in Korean. Preserve historical notes. Record failed approaches and fixes in DEVLOG.md.
+- Add new GOAL.md requirements as table rows only; put build history and validation narratives in DEVLOG.md. New failures must state whether the next measurement can resolve them (Y/N) and the exact required files. Research recording/replay precedes new IPA delivery; algorithm changes require the recorded-data baseline.
 - Existing user authorization governs publishing/deployment; do not request it again merely because the BP reference includes an approval example.
 
 Reference: `docs_bp/README.md` explains the adaptation of the user's YK_BP guidelines.

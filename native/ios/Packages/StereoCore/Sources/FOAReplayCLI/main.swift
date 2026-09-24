@@ -37,7 +37,10 @@ func fixture(root: URL) throws -> URL {
 
 do {
     var arguments = Array(CommandLine.arguments.dropFirst())
-    if arguments.first == "--fixture", arguments.count == 2 {
+    if arguments == ["--benchmark"] {
+        FileHandle.standardOutput.write(try syntheticBenchmark())
+        FileHandle.standardOutput.write(Data([10]))
+    } else if arguments.first == "--fixture", arguments.count == 2 {
         print(try fixture(root: URL(fileURLWithPath: arguments[1], isDirectory: true)).path)
     } else if arguments.first == "--zip", arguments.count == 3 {
         try ResearchArchive.create(folder: URL(fileURLWithPath: arguments[1], isDirectory: true),

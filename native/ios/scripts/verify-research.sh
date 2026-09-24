@@ -14,3 +14,4 @@ python3 -m venv "${TMPDIR:-/tmp}/soundfield-schema-env"
     "$folder" DerivedData/evidence/research/replay.json DerivedData/evidence/research/contract-verification.json
 cp "$folder/manifest.json" DerivedData/evidence/research/synthetic-session-manifest.json
 cp "$cli" DerivedData/evidence/research/foa-replay
+node ../../scripts/audit-foa-feasibility.mjs --grid-cli "$cli" --output DerivedData/evidence/research/synthetic-grid.json

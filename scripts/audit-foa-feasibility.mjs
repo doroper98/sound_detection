@@ -1,7 +1,30 @@
 // EXP-022: 이상적인 ACN/SN3D 합성 신호만 사용한다. iPhone 정확도 검사가 아니다.
 import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
-import FFT from 'fft.js';
+import { execFileSync } from 'node:child_process';
+
+// The extended grid uses the actual Swift analyzer. No second JS implementation
+// of production rejection logic and no generated signal enters the iPhone app.
+const cliIndex = process.argv.indexOf('--grid-cli');
+if (cliIndex >= 0) {
+  const cli = process.argv[cliIndex + 1];
+  assert.ok(cli, '--grid-cli requires the compiled foa-replay executable');
+  const grid = JSON.parse(execFileSync(cli, ['--benchmark'], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 }));
+  assert.equal(grid.conditions, 1440);
+  assert.equal(grid.rows.length, 1440);
+  assert.equal(grid.distributions.length, 12);
+  assert.equal(grid.physicalAccuracyVerified, false);
+  assert.equal(new Set(grid.rows.map(r => [r.snrDb, r.reflectionGain, r.azimuthDegrees, r.seed].join('/'))).size, 1440);
+  assert.ok(grid.rows.every(r => r.errorDegrees === undefined || (Number.isFinite(r.errorDegrees) && r.errorDegrees >= 0 && r.errorDegrees <= 180)));
+  grid.sourceCommit = process.env.GITHUB_SHA ?? 'local';
+  grid.ciRunURL = process.env.GITHUB_RUN_ID ? 'https://github.com/doroper98/sound_detection/actions/runs/' + process.env.GITHUB_RUN_ID : null;
+  const outputIndex = process.argv.indexOf('--output');
+  const output = outputIndex >= 0 ? process.argv[outputIndex + 1] : new URL('../docs/reports/2026-09-24-foa-synthetic-grid.json', import.meta.url);
+  writeFileSync(output, JSON.stringify(grid, null, 2) + '\n');
+  console.log(JSON.stringify({ conditions: grid.conditions, distributions: grid.distributions, physicalAccuracyVerified: false }));
+  process.exit(0);
+}
+const { default: FFT } = await import('fft.js');
 
 const size = 4096, sampleRate = 48000, fft = new FFT(size);
 const rad = degrees => degrees * Math.PI / 180;

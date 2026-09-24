@@ -10,6 +10,8 @@
 - 기반 1차 검증: 코드 `ba62a25`, [Mac CI 35942994806](https://github.com/doroper98/sound_detection/actions/runs/35942994806), Swift 90/90, Release CLI 합성 녹음 11구간 round-trip 오차 ±1e-6 이내·불일치 0, 독립 Python SHA-256/Float32 WAV/manifest schema 검사 PASS. 이 실행은 IPA를 만들지 않았다. 실제 앱에서 중지/배경 이동 시 저장과 ZIP 공유는 별도 검증 대상이다.
 - 앱 연결: 새로운 ResearchRecording 타입이 별도 디스크 큐와 8MiB 대기 한도를 갖고 FOA delivery gate 전에 원래 버퍼를 저장한다. 과부하/저장 실패는 미완료로 남긴다. 연구 녹음 토글은 앱 시작 때 OFF, 명시적 활성화 때만 REC를 표시한다. 수음은 최대 120초 원음 저장 후 자동으로 닫고 일반 분석을 계속한다. Camera/FOACapture에 최소 연결만 추가하고 CaptureModel에는 빌드 식별자 외 새 로직을 넣지 않았다.
 - 사용자 공유 동선 반영: PC로 수동 파일 이동·명령 실행을 요구하지 않고 아이폰의 기존 공유 시트에서 ZIP 하나를 이 대화에 첨부할 수 있게 한다. ZIP에는 원음이 포함됨을 표시하며 자동 서버 전송 코드는 없다.
+- 합성 격자: 기존 `scripts/audit-foa-feasibility.mjs`에 `--grid-cli`를 추가해 Swift CLI의 실제 FOAAnalyzer를 호출한다. SNR 4 × 반사 3 × 방위 12 × seed 10 = 1,440조건에서 상태·보류율·방위 오차 분포를 기록한다. JS로 운영 추론을 재구현하지 않고, 기존 독립 수학 반례 실행은 유지한다. 벤치마크 생성 코드는 CLI target에만 들어가며 iPhone Release에는 포함되지 않는다.
+- 원문 중 동일 bin 동위상 직접음·반사의 두 피크 분리를 보장하라는 기준은 비식별성 때문에 그대로 채택하지 않는다. [반영표](docs/reviews/2026-09-24-review-disposition.md)에 수식과 보류 이유를 기록했다. 다음 측정으로 확정 가능한가 N(해당 모델의 유일 분리 불가). 필요한 데이터: 추가 실측 없음; 기존 반례와 synthetic-grid.json. 주파수가 분리되는 음원 검사는 별도로 유지한다.
 
 
 ## EXP-024 · 빌드 11 — 단발 FOA 표시·시각 기록·카메라 화면

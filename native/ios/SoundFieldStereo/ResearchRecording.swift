@@ -214,6 +214,16 @@ final class ResearchRecordingModel: ObservableObject {
         let labels = ResearchLabels(label: label, azimuthDegrees: Double(azimuth),
             elevationDegrees: Double(elevation), signal: signal, repetition: repetition)
         guard labels.valid else { status = "세션 이름과 각도를 확인하세요."; return false }
+        do {
+            var folder = root
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            var values = URLResourceValues()
+            values.isExcludedFromBackup = true
+            try folder.setResourceValues(values)
+        } catch {
+            status = "연구 저장 폴더를 만들 수 없습니다: " + error.localizedDescription
+            return false
+        }
         var info = utsname()
         uname(&info)
         let capacity = MemoryLayout.size(ofValue: info.machine)

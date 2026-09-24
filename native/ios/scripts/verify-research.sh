@@ -6,6 +6,8 @@ swift build --package-path Packages/StereoCore -c release --product foa-replay
 cli="$(swift build --package-path Packages/StereoCore -c release --show-bin-path)/foa-replay"
 folder="$("$cli" --fixture "${TMPDIR:-/tmp}/soundfield-research-fixtures")"
 "$cli" "$folder" --output DerivedData/evidence/research/replay.json
+"$cli" --zip "$folder" DerivedData/evidence/research/synthetic-session.zip
+python3 -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); assert z.testzip() is None; assert len(z.namelist())==6' DerivedData/evidence/research/synthetic-session.zip
 python3 -m venv "${TMPDIR:-/tmp}/soundfield-schema-env"
 "${TMPDIR:-/tmp}/soundfield-schema-env/bin/pip" --quiet install jsonschema==4.23.0
 "${TMPDIR:-/tmp}/soundfield-schema-env/bin/python" scripts/validate-research.py \

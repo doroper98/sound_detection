@@ -7,6 +7,9 @@
 - 저장 계약 구현 중: Float32 4채널 ACN/SN3D WAV와 원래 오디오 버퍼 시각, AR 자세, 실제 실시간 분석 결과를 로컬 세션에 저장한다. WAV/JSONL을 닫고 SHA-256을 계산한 뒤 완료 manifest를 마지막에 원자적으로 생성한다. 중단된 세션에 완료 manifest를 만들지 않는다. 원음·자세는 자동 업로드하지 않으며 저장소에는 넣지 않는다.
 - 재생 계약 구현 중: `foa-replay`가 같은 PCMWindowAssembler와 FOAAnalyzer를 사용한다. WAV의 파일 순서만 이어 붙이지 않고 원래 버퍼 시각과 누락을 복원한다. 실시간에서 실제 계산한 구간의 결과를 ±1e-6로 비교한다. 정답 라벨은 추론 입력에서 제외한다. 합성 round-trip과 독립 Python SHA/스키마 검증을 Mac CI에서 먼저 실행하며 이 단계에서는 IPA를 만들지 않는다.
 - 검증 상태: 로컬 gate 및 Mac 컴파일 결과는 후속 기록. 앱 녹음 생명주기·실기기 데이터·축 대응은 아직 완료 전이다.
+- 기반 1차 검증: 코드 `ba62a25`, [Mac CI 35942994806](https://github.com/doroper98/sound_detection/actions/runs/35942994806), Swift 90/90, Release CLI 합성 녹음 11구간 round-trip 오차 ±1e-6 이내·불일치 0, 독립 Python SHA-256/Float32 WAV/manifest schema 검사 PASS. 이 실행은 IPA를 만들지 않았다. 실제 앱에서 중지/배경 이동 시 저장과 ZIP 공유는 별도 검증 대상이다.
+- 앱 연결: 새로운 ResearchRecording 타입이 별도 디스크 큐와 8MiB 대기 한도를 갖고 FOA delivery gate 전에 원래 버퍼를 저장한다. 과부하/저장 실패는 미완료로 남긴다. 연구 녹음 토글은 앱 시작 때 OFF, 명시적 활성화 때만 REC를 표시한다. 수음은 최대 120초 원음 저장 후 자동으로 닫고 일반 분석을 계속한다. Camera/FOACapture에 최소 연결만 추가하고 CaptureModel에는 빌드 식별자 외 새 로직을 넣지 않았다.
+- 사용자 공유 동선 반영: PC로 수동 파일 이동·명령 실행을 요구하지 않고 아이폰의 기존 공유 시트에서 ZIP 하나를 이 대화에 첨부할 수 있게 한다. ZIP에는 원음이 포함됨을 표시하며 자동 서버 전송 코드는 없다.
 
 
 ## EXP-024 · 빌드 11 — 단발 FOA 표시·시각 기록·카메라 화면

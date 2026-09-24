@@ -67,7 +67,21 @@ final class SpatialCameraController: NSObject, ARSessionDelegate {
     private var lastIngestedTime = -Double.infinity
     private func ingest(_ frame: ARFrame, publish: Bool) {
         guard running, frame.timestamp>=acceptAfter, frame.timestamp>=lastIngestedTime else { return }
+        let fresh = frame.timestamp > lastIngestedTime
         lastIngestedTime=frame.timestamp
+        if fresh, let research = ResearchRecordingHub.shared.current {
+            let transform = frame.camera.viewMatrix(for: .portrait).inverse
+            let q = simd_quatf(transform)
+            func vector(_ v: SIMD4<Float>) -> Vector3 { .init(Double(v.x), Double(v.y), Double(v.z)) }
+            let state: String
+            if case .normal = frame.camera.trackingState { state = "normal" }
+            else { state = String(describing: frame.camera.trackingState) }
+            research.appendPose(.init(timestamp: frame.timestamp,
+                quaternion: [Double(q.imag.x), Double(q.imag.y), Double(q.imag.z), Double(q.real)],
+                position: vector(transform.columns.3), viewRight: vector(transform.columns.0),
+                viewUp: vector(transform.columns.1), viewForward: vector(transform.columns.2) * -1,
+                trackingState: state))
+        }
         guard case .normal=frame.camera.trackingState else {
             trackingState=String(describing: frame.camera.trackingState)
             invalidate()

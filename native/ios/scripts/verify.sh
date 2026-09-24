@@ -38,6 +38,8 @@ case "$ui_scope" in
       testIsolatedFOACandidatesStayHiddenAndTimelineIsAvailable \
       testCompactFOACameraKeepsScreenAwakeAndRestoresOnStopAndBackground \
       testPreviousReportSurvivesRestart \
+      testResearchRecordingDefaultOffAndSharedArchive \
+      testResearchBackgroundFinalizesAndOptInResetsAfterRelaunch \
       testFullscreenCameraControlsAndBackgroundRelease \
       testOutputOverrideWithChangedInputStillStopsCameraAndAudio \
       testSharingStopsCapture; do
@@ -47,6 +49,7 @@ case "$ui_scope" in
 esac
 printf '%s\n' "$ui_scope" > DerivedData/evidence/ui-test-scope.txt
 swift test --package-path Packages/StereoCore 2>&1 | tee DerivedData/evidence/swift-tests.log
+bash scripts/verify-research.sh
 plutil -lint SoundFieldStereo/Info.plist SoundFieldStereo.xcodeproj/project.pbxproj
 xcodebuild -project SoundFieldStereo.xcodeproj -scheme SoundFieldStereo \
   -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
@@ -78,6 +81,11 @@ if [ "$test_status" -ne 0 ]; then
   tail -150 DerivedData/evidence/simulator-tests.log
   exit "$test_status"
 fi
+
+# Re-open the files actually produced by the simulator UI recording path.
+app_data=$(xcrun simctl get_app_container "$device_id" dev.soundfield.stereo data)
+cli="$(swift build --package-path Packages/StereoCore -c release --show-bin-path)/foa-replay"
+"${TMPDIR:-/tmp}/soundfield-schema-env/bin/python" scripts/verify-app-research.py "$app_data" "$cli"
 
 # The user can re-sign this device build on Windows. It is not installable by
 # opening a Safari link, and contains no certificate or provisioning profile.

@@ -39,6 +39,9 @@ do {
     var arguments = Array(CommandLine.arguments.dropFirst())
     if arguments.first == "--fixture", arguments.count == 2 {
         print(try fixture(root: URL(fileURLWithPath: arguments[1], isDirectory: true)).path)
+    } else if arguments.first == "--zip", arguments.count == 3 {
+        try ResearchArchive.create(folder: URL(fileURLWithPath: arguments[1], isDirectory: true),
+            destination: URL(fileURLWithPath: arguments[2]))
     } else {
         var output: String?
         if let index = arguments.firstIndex(of: "--output"), index + 1 < arguments.count {
@@ -46,7 +49,7 @@ do {
             arguments.removeSubrange(index...(index + 1))
         }
         guard arguments.count == 1 else {
-            throw ResearchError.invalid("사용법: foa-replay <세션 폴더> [--output 결과.json] 또는 --fixture <합성 폴더>")
+            throw ResearchError.invalid("사용법: foa-replay <세션 폴더> [--output 결과.json], --fixture <합성 폴더>, --zip <세션 폴더> <출력.zip>")
         }
         let result = try ResearchReplay.run(folder: URL(fileURLWithPath: arguments[0], isDirectory: true))
         let data = try DiagnosticExport.encoder().encode(result)

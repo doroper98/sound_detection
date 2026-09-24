@@ -1,12 +1,12 @@
 import SwiftUI
 import StereoCore
 
-private struct SharedReport: Identifiable {
+struct SharedReport: Identifiable {
     let id = UUID()
     let url: URL
 }
 
-private struct ShareSheet: UIViewControllerRepresentable {
+struct ShareSheet: UIViewControllerRepresentable {
     let url: URL
     func makeUIViewController(context: Context) -> UIActivityViewController {
         UIActivityViewController(activityItems: [url], applicationActivities: nil)
@@ -27,13 +27,14 @@ struct CaptureDetailsView: View {
                     Text("SOUNDFIELD / iPHONE").font(.caption.monospaced()).foregroundStyle(green)
                     Text(model.usesFOA ? "공간 오디오 입력" : "스테레오 입력").font(.largeTitle.bold())
                     Text("계속 듣고, 최근 변화를 계산합니다.").foregroundStyle(.secondary)
-                    Text("실험 열지도 · 빌드 11 · 영상·원음 저장 없음").font(.caption).foregroundStyle(.secondary)
+                    Text("실험 열지도 · 빌드 12 · 연구 녹음을 켜면 원음 저장").font(.caption).foregroundStyle(.secondary)
                 }
                 if model.isSynthetic {
                     Text("합성 테스트 · 아이폰 실측 아님")
                         .font(.callout.bold()).foregroundStyle(.orange)
                         .accessibilityIdentifier("syntheticBanner")
                 }
+                ResearchSettingsView(busy: model.isBusy)
                 VStack(alignment: .leading, spacing: 12) {
                     Picker("수음 방향", selection: $model.source) {
                         Text("후면").tag("back")
@@ -187,7 +188,7 @@ struct CaptureDetailsView: View {
                 }
 
 
-                Text("녹음 파일·원음·영상은 저장하지 않습니다. 공유에는 상대 AR 좌표와 마지막 추정 통계가 포함되며, 수음을 중지합니다.")
+                Text("기본 모드는 원음·영상을 저장하지 않습니다. 연구 녹음을 켜면 원음과 자세를 별도 보관합니다. 진단 JSON 공유에는 통계만 포함되며 수음을 중지합니다.")
                     .font(.caption).foregroundStyle(.secondary)
             }.padding(20)
         }

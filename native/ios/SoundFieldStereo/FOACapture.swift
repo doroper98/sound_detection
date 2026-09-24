@@ -42,11 +42,15 @@ final class FOACapture: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, 
     private let deliver: @MainActor (FOAAnalysis,Double,Double,FOACaptureDiagnostics) -> Void
     private let failure: @MainActor (String,FOACaptureDiagnostics) -> Void
     private let stereo: ([Float],[Float],Double,Double) -> Void
+    private let researchSession: ResearchRecordingSession?
+    let researchRecording: Bool
 
     init(stereo: @escaping ([Float],[Float],Double,Double) -> Void,
          deliver: @escaping @MainActor (FOAAnalysis,Double,Double,FOACaptureDiagnostics) -> Void,
          failure: @escaping @MainActor (String,FOACaptureDiagnostics) -> Void) {
         self.stereo=stereo; self.deliver=deliver; self.failure=failure
+        researchSession = ResearchRecordingHub.shared.current
+        researchRecording = researchSession != nil
     }
     func start() async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void,Error>) in
@@ -119,6 +123,9 @@ final class FOACapture: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, 
         cancellationLock.lock(); cancelled=true; cancellationLock.unlock()
         Self.queue.async { [self] in tearDown() }
     }
+    static func finishResearchWhenIdle(_ session: ResearchRecordingSession) {
+        queue.async { session.finish() }
+    }
     private func tearDown() {
         active=false
         spatialOutput.setSampleBufferDelegate(nil,queue: nil)
@@ -126,6 +133,7 @@ final class FOACapture: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, 
         if session.isRunning { session.stopRunning() }
         observers.forEach(NotificationCenter.default.removeObserver); observers=[]
         diagnostics.running=false
+        researchSession?.finish()
     }
     private func fail(_ message: String) {
         guard active, !isCancelled() else { return }
@@ -156,6 +164,7 @@ final class FOACapture: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, 
             let time=CMSyncConvertTime(sampleBuffer.presentationTimeStamp,from: clock,to: CMClockGetHostTimeClock()).seconds
             let age=ProcessInfo.processInfo.systemUptime-time
             guard time.isFinite, age >= -0.06, age<1 else { throw CaptureFailure.message("공간 오디오 시각이 기기 시각과 맞지 않습니다.") }
+            researchSession?.appendAudio(channels, time: time, sampleRate: format.sampleRate, stereo: !isFOA)
             if isFOA {
                 for window in foaWindows.append(channels,at: time,sampleRate: format.sampleRate) {
                     diagnostics.gaps=foaWindows.gaps
@@ -163,6 +172,7 @@ final class FOACapture: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, 
                     let analysis=FOAAnalyzer.analyze(window.channels,sampleRate: window.sampleRate)
                     diagnostics.analyzedWindows+=1
                     let snapshot=diagnostics, duration=Double(window.channels[0].count)/window.sampleRate
+                    researchSession?.appendAnalysis(analysis, midpoint: window.start + duration / 2, duration: duration)
                     Task { @MainActor [self] in
                         deliver(analysis,window.start+duration/2,duration,snapshot)
                         deliveryGate.signal()
